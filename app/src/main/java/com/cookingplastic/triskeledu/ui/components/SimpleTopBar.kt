@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,12 +28,18 @@ fun SimpleTopBarPreview(){
 
 @Composable
 fun SimpleTopBar (destination: Destination){
-    Surface(color = Color.Transparent){
+    val colorFondo = when (destination) {
+        Destination.MAPA -> MaterialTheme.colorScheme.primary
+        Destination.QR -> Color.Transparent
+        Destination.MONUMENTOS -> Color.Transparent
+        Destination.CONFIGURACION -> Color.Transparent
+    }
+
+    Surface(color = colorFondo){
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .statusBarsPadding()
-                .height(64.dp)
                 .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween

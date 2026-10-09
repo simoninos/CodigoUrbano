@@ -16,7 +16,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-
+import com.cookingplastic.triskeledu.ui.screens.mapa.MapaScreen
 
 
 /*
@@ -44,12 +44,10 @@ fun AppNavHost(
     modifier: Modifier = Modifier
 ) {
     NavHost(navController, startDestination = startDestination.route, modifier = modifier) {
-        Destination.entries.forEach { destination ->
-            composable(destination.route) {
-                // Reemplaza esto por tu pantalla real, ej: InicioScreen()
-                Text("Pantalla: ${destination.label}")
-            }
-        }
+        composable(Destination.MAPA.route) { MapaScreen() }
+        composable(Destination.MONUMENTOS.route) { Text("Monumentos")}
+        composable(Destination.QR.route) {Text("Pantalla de Escaneo QR")}
+        composable(Destination.CONFIGURACION.route) { Text("Pantalla de Configuración") }
 
         composable("detalle") { Text("Pantalla de Detalle")}
     }
