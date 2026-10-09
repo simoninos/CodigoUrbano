@@ -11,6 +11,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.cookingplastic.triskeledu.navigation.AppNavHost
+import com.cookingplastic.triskeledu.navigation.Destination
 
 // El objetivo de esta clase es tener un AppScaffold que se dibuje como debe ser en todos los apartados
 
@@ -22,14 +24,22 @@ fun AppScaffold(modifier: Modifier = Modifier){
     val currentRoute = navBackStackEntry?.destination?.route
 
     // ¿La pantalla actual es una pestaña?
-    val showBottomBar = Destination.entries.any { it.route == currentRoute }
+    val currentDestination = Destination.entries.find { it.route == currentRoute }
+    val isTab = Destination.entries.any { it.route == currentRoute }
 
     Scaffold(
         modifier = modifier,
+        topBar = {
+            if (currentDestination != null) {
+                SimpleTopBar(currentDestination)
+            }
+        },
         bottomBar = {
-            if (showBottomBar){
+            if (isTab){
                 NavigationBar{
                     Destination.entries.forEach { destination ->
+                        val selected = currentRoute == destination.route
+
                         NavigationBarItem(
                             selected = currentRoute == destination.route,
                             onClick = {
@@ -39,13 +49,16 @@ fun AppScaffold(modifier: Modifier = Modifier){
                                     restoreState = true
                                 }
                             },
-                            icon = { Icon(destination.icon, contentDescription = destination.contentDescription) },
+                            icon = {
+                                Icon(
+                                    imageVector = if (selected) destination.iconSelected else destination.icon
+                                    ,
+                                    contentDescription = destination.contentDescription) },
                             label = { Text(destination.label) }
                         )
                     }
                 }
             }
-
         }
     ){ contentPadding ->
         AppNavHost(navController, Destination.MAPA, Modifier.padding(contentPadding))

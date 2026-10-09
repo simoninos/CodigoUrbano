@@ -1,10 +1,14 @@
-package com.cookingplastic.triskeledu.ui.components
+package com.cookingplastic.triskeledu.navigation
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Castle
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.Castle
+import androidx.compose.material.icons.outlined.Map
+import androidx.compose.material.icons.outlined.QrCode
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -24,12 +28,13 @@ enum class Destination(
     val route: String,
     val label: String,
     val icon: ImageVector,
+    val iconSelected: ImageVector,
     val contentDescription: String
 ) {
-    MAPA("mapa", "Inicio", Icons.Default.Map, "Inicio"),
-    QR("qr", "Buscar", Icons.Default.QrCode, "Qr"),
-    MONUMENTOS("monumentos", "Monumentos", Icons.Default.Castle, "Monumentos"),
-    CONFIGURACION("configuracion", "Configuracion", Icons.Default.Settings, "Configuracion")
+    MAPA("mapa", "Inicio", Icons.Outlined.Map, Icons.Filled.Map,"Inicio"),
+    QR("qr", "Buscar", Icons.Outlined.QrCode, Icons.Filled.QrCode, "Qr"),
+    MONUMENTOS("monumentos", "Monumentos", Icons.Outlined.Castle, Icons.Filled.Castle, "Monumentos"),
+    CONFIGURACION("configuracion", "Configuracion", Icons.Outlined.Settings, Icons.Filled.Settings, "Configuracion")
 }
 
 @Composable
@@ -49,3 +54,6 @@ fun AppNavHost(
         composable("detalle") { Text("Pantalla de Detalle")}
     }
 }
+
+
+
