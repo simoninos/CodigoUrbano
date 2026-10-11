@@ -1,4 +1,4 @@
-package com.cookingplastic.triskeledu.ui.components
+package com.cookingplastic.triskeledu.navigation
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
@@ -11,8 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.cookingplastic.triskeledu.navigation.AppNavHost
-import com.cookingplastic.triskeledu.navigation.Destination
+import com.cookingplastic.triskeledu.ui.components.SimpleTopBar
 
 // El objetivo de esta clase es tener un AppScaffold que se dibuje como debe ser en todos los apartados
 
@@ -30,7 +29,7 @@ fun AppScaffold(modifier: Modifier = Modifier){
     Scaffold(
         modifier = modifier,
         topBar = {
-            if (currentDestination != null) {
+            if (currentDestination!=null) {
                 SimpleTopBar(currentDestination)
             }
         },
