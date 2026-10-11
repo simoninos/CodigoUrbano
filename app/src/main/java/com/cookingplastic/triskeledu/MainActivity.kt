@@ -4,7 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import com.cookingplastic.triskeledu.ui.components.AppScaffold
+import com.cookingplastic.triskeledu.navigation.AppScaffold
 import com.cookingplastic.triskeledu.ui.theme.TriskeleduTheme
 import org.osmdroid.config.Configuration
 
@@ -15,7 +15,7 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
         setContent {
-            TriskeleduTheme {
+            TriskeleduTheme (darkTheme = true) {
                 AppScaffold()
             }
         }

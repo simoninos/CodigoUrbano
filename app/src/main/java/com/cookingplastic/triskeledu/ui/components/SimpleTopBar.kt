@@ -5,9 +5,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -18,21 +20,26 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.cookingplastic.triskeledu.navigation.Destination
-import com.cookingplastic.triskeledu.ui.screens.mapa.MapOverlay
 
 @Preview
 @Composable
 fun SimpleTopBarPreview(){
-    SimpleTopBar(Destination.MAPA)
+    Column(modifier = Modifier
+        .safeContentPadding()
+    ){
+        SimpleTopBar(Destination.MAPA)
+        SimpleTopBar(Destination.QR)
+        SimpleTopBar(Destination.MONUMENTOS)
+    }
 }
 
 @Composable
-fun SimpleTopBar (destination: Destination){
+fun SimpleTopBar (destination: Destination?){
     val colorFondo = when (destination) {
         Destination.MAPA -> MaterialTheme.colorScheme.primary
         Destination.QR -> Color.Transparent
         Destination.MONUMENTOS -> Color.Transparent
-        Destination.CONFIGURACION -> Color.Transparent
+        else -> Color.Transparent
     }
 
     Surface(color = colorFondo){
@@ -42,28 +49,28 @@ fun SimpleTopBar (destination: Destination){
                 .statusBarsPadding()
                 .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement
+                .SpaceBetween
         ) {
             when (destination) {
                 Destination.MAPA -> {
-                    MapOverlay(true)
-                    BotonOpciones("Screen Opciones")
+                    MapOverlay(true, "simoninos", puntos = 100)
+                    Boton(onClicked = {}, icon = Icons.Default.Settings)
                 }
+
                 Destination.QR -> {
                     Spacer(Modifier.weight(1f))
-                    BotonOpciones("Screen Opciones")
+                    Boton(onClicked = {}, icon = Icons.Default.Settings)
                 }
+
                 Destination.MONUMENTOS -> {
                         Text("Mis puntos: 5")
-                        Column(){
+                        Column{
                             Text("Lugares Escaneados")
                             Text("5 de 15")
                         }
                 }
-                Destination.CONFIGURACION -> {
-                    Spacer(Modifier.weight(1f))
-                    SwitchModoOscuro()
-                }
+                else -> {}
             }
         }
     }

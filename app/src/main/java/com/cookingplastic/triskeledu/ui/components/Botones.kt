@@ -1,18 +1,17 @@
 package com.cookingplastic.triskeledu.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Brightness3
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LightMode
-import androidx.compose.material.icons.filled.ModeNight
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.TurnLeft
-import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -24,91 +23,33 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
-@Preview
-@Composable
-fun BotonVolverPreview(){
-    BotonVolver("Hola")
-}
-
-@Preview
-@Composable
-fun BotonOpcionesPreview(){
-    BotonOpciones("Hola")
-}
-
-@Preview
-@Composable
-fun SwitchModoOscuroPreview(){
-    SwitchModoOscuro()
-}
-
-@Preview
-@Composable
-fun BotonPreview(){
-    Boton()
-}
 
 @Composable
-fun Boton(route: String = "mapa", shape: Shape = CircleShape, icon: ImageVector = Icons.Default.Home){
-    IconButton( onClick = { route },
-        modifier = Modifier
-            .background(color = MaterialTheme.colorScheme.secondary, shape = shape)
-    ){
-        Icon(
-            modifier = Modifier
-                .padding(10.dp),
-            imageVector = icon,
-            tint = Color.Black,
-            contentDescription = "Opciones",
-        )
-    }
-}
-
-
-
-@Composable
-fun BotonVolver(route: String){
-    IconButton( onClick = { route }
-    ){
-        Icon(
-            imageVector = Icons.Default.TurnLeft,
-            tint = Color.Black,
-            contentDescription = "Volver"
-        )
-    }
-}
-
-@Composable
-fun BotonOpciones(route: String){
-    IconButton( onClick = { route },
+fun Boton(onClicked: () -> Unit, icon: ImageVector = Icons.Default.Home){
+    IconButton(
+        onClick = onClicked,
         modifier = Modifier
             .background(color = MaterialTheme.colorScheme.secondary, shape = CircleShape)
     ){
         Icon(
             modifier = Modifier
                 .padding(10.dp),
-            imageVector = Icons.Default.Settings,
-            tint = Color.Black,
+            imageVector = icon,
+            tint = MaterialTheme.colorScheme.inversePrimary,
             contentDescription = "Opciones",
         )
     }
 }
 
-@Composable
-fun SwitchModoOscuro() {
-    var checked by remember { mutableStateOf(true) }
 
+@Composable
+fun SwitchModoOscuro(checked: Boolean, onChecked: (Boolean)-> Unit) {
     Switch(
-        checked = checked,
-        onCheckedChange = {
-            checked = it
-        },
+        checked = checked, onCheckedChange = onChecked,
         thumbContent = if (checked) {
             {
                 Icon(
@@ -127,4 +68,27 @@ fun SwitchModoOscuro() {
             }
         }
     )
+}
+
+@Preview
+@Composable
+fun SwitchModoOscuroPreview(){
+    var isChecked by remember { mutableStateOf(false) }
+
+    SwitchModoOscuro(false, onChecked = {isChecked = it})
+}
+
+@Preview
+@Composable
+fun BotonesPreview(){
+    Column(modifier = Modifier
+        .padding(10.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ){
+        // Botón de opción
+        Boton(onClicked = {}, icon = Icons.Default.Settings)
+
+        // Botón de Return
+        Boton(onClicked = {}, icon = Icons.Default.TurnLeft)
+    }
 }
