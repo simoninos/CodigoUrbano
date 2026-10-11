@@ -14,8 +14,8 @@ fun MapaScreenPreview(){
 fun MapaScreen(){
 
     OpenStreetMap(
-        latitud = -70.0,
-        longitud = -30.0,
+        latitud = -33.44,
+        longitud = -70.66,
         zoomLevel = 16.0
     )
 }

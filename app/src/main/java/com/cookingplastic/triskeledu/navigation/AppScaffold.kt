@@ -29,7 +29,7 @@ fun AppScaffold(modifier: Modifier = Modifier){
     Scaffold(
         modifier = modifier,
         topBar = {
-            if (isTab) {
+            if (currentDestination!=null) {
                 SimpleTopBar(currentDestination)
             }
         },

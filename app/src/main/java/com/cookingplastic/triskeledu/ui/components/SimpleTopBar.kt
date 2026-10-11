@@ -34,7 +34,7 @@ fun SimpleTopBarPreview(){
 }
 
 @Composable
-fun SimpleTopBar (destination: Destination?){
+fun SimpleTopBar (destination: Destination){
     val colorFondo = when (destination) {
         Destination.MAPA -> MaterialTheme.colorScheme.primary
         Destination.QR -> Color.Transparent
@@ -70,7 +70,6 @@ fun SimpleTopBar (destination: Destination?){
                             Text("5 de 15")
                         }
                 }
-                else -> {}
             }
         }
     }
