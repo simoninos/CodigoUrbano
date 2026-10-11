@@ -30,7 +30,7 @@ fun AppScaffold(modifier: Modifier = Modifier){
         modifier = modifier,
         topBar = {
             if (currentDestination!=null) {
-                SimpleTopBar(currentDestination)
+                SimpleTopBar(destination = currentDestination)
             }
         },
         bottomBar = {
