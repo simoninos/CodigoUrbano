@@ -39,7 +39,7 @@ fun SimpleTopBarPreview(){
     monumentos.add(monumento3)
 
     val mockUsuarioUiState = UsuarioUiState(
-        usuario = Usuario("Simoninos", 5, 5)
+        usuario = Usuario("Simoninos", 30, 5)
     )
 
     val mockMonumentoUiState = MonumentoUiState(
