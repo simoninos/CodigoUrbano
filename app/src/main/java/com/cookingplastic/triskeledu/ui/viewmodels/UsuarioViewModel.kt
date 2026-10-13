@@ -31,7 +31,7 @@ class UsuarioViewModel(
                 }
             }
 
-            is UsuarioUiEvent.OnMonumentosEscaneadosChange -> {
+            is UsuarioUiEvent.OnMonumentoEscaneado -> {
                 _estado.update {
                     it.copy(
                         usuario = it.usuario.copy(monumentosEscaneados = event.valor)
