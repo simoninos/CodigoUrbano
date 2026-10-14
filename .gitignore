@@ -1,15 +1,19 @@
 *.iml
 .gradle
 /local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
 .DS_Store
 /build
 /captures
 .externalNativeBuild
 .cxx
 local.properties
+
+# Configuración personal del IDE (JDK, dispositivo, cachés): no se comparte entre máquinas
+/.idea
+
+# Caché de sesión del compilador de Kotlin
+.kotlin/
+
+# Llaves de firma del APK: nunca al repositorio
+*.jks
+*.keystore
