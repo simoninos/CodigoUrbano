@@ -19,22 +19,49 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.cookingplastic.triskeledu.data.model.Monumento
+import com.cookingplastic.triskeledu.data.model.TipoMonumento
+import com.cookingplastic.triskeledu.data.model.Usuario
 import com.cookingplastic.triskeledu.navigation.Destination
+import com.cookingplastic.triskeledu.ui.state.MonumentoUiState
+import com.cookingplastic.triskeledu.ui.state.UsuarioUiState
 
 @Preview
 @Composable
 fun SimpleTopBarPreview(){
+    val monumentos = mutableListOf<Monumento>()
+    val monumento1 = Monumento(1, "La moneda", Pair(-33.4429, -70.6540), TipoMonumento.MONUMENTO)
+    val monumento2 = Monumento(2, "Museo de Arte Precolombino", Pair(-33.4382, -70.6519), TipoMonumento.MONUMENTO)
+    val monumento3 = Monumento(3, "Museo Bellas Artes", Pair(-33.4360, -70.6436), TipoMonumento.MONUMENTO)
+
+    monumentos.add(monumento1)
+    monumentos.add(monumento2)
+    monumentos.add(monumento3)
+
+    val mockUsuarioUiState = UsuarioUiState(
+        usuario = Usuario("Simoninos", 30, 5)
+    )
+
+    val mockMonumentoUiState = MonumentoUiState(
+        monumentos = monumentos
+    )
+
+
     Column(modifier = Modifier
         .safeContentPadding()
     ){
-        SimpleTopBar(Destination.MAPA)
-        SimpleTopBar(Destination.QR)
-        SimpleTopBar(Destination.MONUMENTOS)
+        SimpleTopBar(Destination.MAPA, mockUsuarioUiState, mockMonumentoUiState)
+        SimpleTopBar(Destination.QR,mockUsuarioUiState, mockMonumentoUiState)
+        SimpleTopBar(Destination.MONUMENTOS,mockUsuarioUiState, mockMonumentoUiState)
     }
 }
 
 @Composable
-fun SimpleTopBar (destination: Destination){
+fun SimpleTopBar (
+    destination: Destination,
+    estadoUsuario: UsuarioUiState,
+    estadoMonumento: MonumentoUiState
+){
     val colorFondo = when (destination) {
         Destination.MAPA -> MaterialTheme.colorScheme.primary
         Destination.QR -> Color.Transparent
@@ -54,7 +81,7 @@ fun SimpleTopBar (destination: Destination){
         ) {
             when (destination) {
                 Destination.MAPA -> {
-                    MapOverlay(true, "simoninos", puntos = 100)
+                    MapOverlay(true, estadoUsuario.usuario.username, estadoUsuario.usuario.puntos)
                     Boton(onClicked = {}, icon = Icons.Default.Settings)
                 }
 
@@ -64,11 +91,11 @@ fun SimpleTopBar (destination: Destination){
                 }
 
                 Destination.MONUMENTOS -> {
-                        Text("Mis puntos: 5")
-                        Column{
-                            Text("Lugares Escaneados")
-                            Text("5 de 15")
-                        }
+                    Text("Mis puntos: ${estadoUsuario.usuario.puntos}")
+                    Column{
+                        Text("Lugares Escaneados")
+                        Text("${estadoUsuario.usuario.monumentosEscaneados} de ${estadoMonumento.totalMonumentos}")
+                    }
                 }
             }
         }
