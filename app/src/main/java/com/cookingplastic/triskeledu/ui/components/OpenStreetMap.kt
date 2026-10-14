@@ -3,11 +3,23 @@ package com.cookingplastic.triskeledu.ui.components
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.viewinterop.AndroidView
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
+
+
+@Preview
+@Composable
+fun OepnStreetMapPreview(){
+    OpenStreetMap(
+        latitud = -33.44,
+        longitud = -70.66,
+        zoomLevel = 16.0
+    )
+}
 
 @Composable
 fun OpenStreetMap(
@@ -43,6 +55,9 @@ fun OpenStreetMap(
             // Actualizar la vista si cambian las coordenadas desde Compose
             val point = GeoPoint(latitud, longitud)
             mapView.controller.setCenter(point)
+        },
+        onRelease = { mapView->
+            mapView.onDetach()
         }
     )
 }

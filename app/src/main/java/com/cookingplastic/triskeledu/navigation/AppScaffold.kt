@@ -9,13 +9,16 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.cookingplastic.triskeledu.ui.components.SimpleTopBar
+import com.cookingplastic.triskeledu.ui.viewmodels.MonumentoViewModel
+import com.cookingplastic.triskeledu.ui.viewmodels.UsuarioViewModel
+
 
 // El objetivo de esta clase es tener un AppScaffold que se dibuje como debe ser en todos los apartados
-
-
 @Composable
 fun AppScaffold(modifier: Modifier = Modifier){
     val navController = rememberNavController()
@@ -30,7 +33,7 @@ fun AppScaffold(modifier: Modifier = Modifier){
         modifier = modifier,
         topBar = {
             if (currentDestination!=null) {
-                SimpleTopBar(currentDestination)
+                SimpleTopBar(destination = currentDestination)
             }
         },
         bottomBar = {

@@ -1,7 +1,7 @@
 package com.cookingplastic.triskeledu.data.model
 
 
-enum class TipoMonumento(val descripcion: String) {
+enum class TipoPuntoInteres(val descripcion: String) {
     MONUMENTO("Monumento"),
     ICH("Inmueble de Conservación Historica"),
     ZCH("Zona de Conservación Historica"),
