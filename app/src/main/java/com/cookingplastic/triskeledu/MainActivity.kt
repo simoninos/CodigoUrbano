@@ -14,8 +14,9 @@ class MainActivity : ComponentActivity() {
         Configuration.getInstance().userAgentValue = packageName
 
         enableEdgeToEdge()
+
         setContent {
-            TriskeleduTheme (darkTheme = true) {
+            TriskeleduTheme{
                 AppScaffold()
             }
         }
