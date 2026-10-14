@@ -1,7 +1,9 @@
+// aquí está activo para su uso, ya que hay código
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -58,4 +60,25 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.osmdroid.android)
+
+    // la diferencia clave contra ksp es que implementation se aplica mientras se ejecuta en el teléfono. El otro es en compilación
+    // ViewModel y estado en Compose
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.lifecycle.runtime.compose)
+
+    // Room: el compiler lo procesa KSP
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
+
+    // GPS, cámara y lectura de QR
+    implementation(libs.play.services.location)
+    implementation(libs.androidx.camera.camera2)
+    implementation(libs.androidx.camera.lifecycle)
+    implementation(libs.androidx.camera.view)
+    implementation(libs.mlkit.barcode.scanning)
+
+    // Generar QR y mostrar imágenes
+    implementation(libs.zxing.core)
+    implementation(libs.coil.compose)
 }
