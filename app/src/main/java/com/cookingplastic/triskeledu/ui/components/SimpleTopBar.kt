@@ -22,8 +22,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.cookingplastic.triskeledu.data.model.Monumento
-import com.cookingplastic.triskeledu.data.model.TipoMonumento
+import com.cookingplastic.triskeledu.data.model.PuntoInteres
+import com.cookingplastic.triskeledu.data.model.TipoPuntoInteres
+import com.cookingplastic.triskeledu.data.model.Ubicacion
 import com.cookingplastic.triskeledu.data.model.Usuario
 import com.cookingplastic.triskeledu.navigation.Destination
 import com.cookingplastic.triskeledu.ui.state.MonumentoUiState
@@ -34,14 +35,49 @@ import com.cookingplastic.triskeledu.ui.viewmodels.UsuarioViewModel
 @Preview
 @Composable
 fun SimpleTopBarPreview(){
-    val monumentos = mutableListOf<Monumento>()
-    val monumento1 = Monumento(1, "La moneda", -33.4429, -70.6540, TipoMonumento.MONUMENTO)
-    val monumento2 = Monumento(2, "Museo de Arte Precolombino", -33.4382, -70.6519, TipoMonumento.MONUMENTO)
-    val monumento3 = Monumento(3, "Museo Bellas Artes", -33.4360, -70.6436, TipoMonumento.MONUMENTO)
+    val monumentos = mutableListOf<PuntoInteres>()
 
-    monumentos.add(monumento1)
-    monumentos.add(monumento2)
-    monumentos.add(monumento3)
+    val puntoInteres1 = PuntoInteres(
+        nombre = "La Moneda",
+        descripcion = null,
+        tipo = TipoPuntoInteres.MONUMENTO,
+        ubicacion = Ubicacion(-33.4429, -70.6540, 567.0),
+        imagenUri = null,
+        descubreMasUrl = null,
+        codigoQr = null,
+        capsulaId = null,
+        activo = true,
+        actualizadoEn = System.currentTimeMillis()
+    )
+
+    val puntoInteres2 = PuntoInteres(
+        nombre = "Museo de Arte Precolombino",
+        descripcion = null,
+        tipo = TipoPuntoInteres.MONUMENTO,
+        ubicacion = Ubicacion(-33.4382, -70.6519, 567.0),
+        imagenUri = null,
+        descubreMasUrl = null,
+        codigoQr = null,
+        capsulaId = null,
+        activo = true,
+        actualizadoEn = System.currentTimeMillis()
+    )
+
+    val puntoInteres3 = PuntoInteres(
+        nombre = "Museo Bellas Artes",
+        descripcion = null,
+        tipo = TipoPuntoInteres.MONUMENTO,
+        ubicacion = Ubicacion(-33.4360, -70.6436, 560.0),
+        imagenUri = null,
+        descubreMasUrl = null,
+        codigoQr = null,
+        capsulaId = null,
+        activo = true,
+        actualizadoEn = System.currentTimeMillis()
+    )
+    monumentos.add(puntoInteres1)
+    monumentos.add(puntoInteres2)
+    monumentos.add(puntoInteres3)
 
     val mockUsuarioUiState = UsuarioUiState(
         usuario = Usuario("Simoninos", 30, 5)
@@ -83,7 +119,6 @@ fun SimpleTopBarContent (
         Destination.MAPA -> MaterialTheme.colorScheme.primary
         Destination.QR -> Color.Transparent
         Destination.MONUMENTOS -> Color.Transparent
-        else -> Color.Transparent
     }
 
     Surface(color = colorFondo){

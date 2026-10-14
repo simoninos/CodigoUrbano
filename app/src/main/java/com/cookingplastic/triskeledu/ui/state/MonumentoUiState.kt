@@ -1,9 +1,9 @@
 package com.cookingplastic.triskeledu.ui.state
 
-import com.cookingplastic.triskeledu.data.model.Monumento
+import com.cookingplastic.triskeledu.data.model.PuntoInteres
 
 data class MonumentoUiState(
-    val monumentos: List<Monumento> = emptyList(),
+    val monumentos: List<PuntoInteres> = emptyList(),
     val cargando: Boolean = false,
     val mensajeError: String? = null
 ) {
