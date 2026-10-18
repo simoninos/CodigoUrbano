@@ -1,10 +1,5 @@
 package com.cookingplastic.triskeledu.ui.screens.login
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -34,6 +29,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.cookingplastic.triskeledu.ui.components.MensajeError
 import com.cookingplastic.triskeledu.ui.event.SesionUiEvent
 import com.cookingplastic.triskeledu.ui.state.SesionUiState
 import com.cookingplastic.triskeledu.ui.theme.TriskeleduTheme
@@ -136,24 +132,6 @@ fun LoginContent(
         TextButton(onClick = alCrearCuenta) {
             Text(text = "Crear cuenta")
         }
-    }
-}
-
-@Composable
-private fun MensajeError(mensaje: String?) {
-    AnimatedVisibility(
-        visible = mensaje != null,
-        enter = expandVertically() + fadeIn(),
-        exit = shrinkVertically() + fadeOut()
-    ) {
-        Text(
-            text = mensaje ?: "",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.error,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 16.dp, top = 4.dp)
-        )
     }
 }
 
