@@ -89,7 +89,12 @@ fun AppNavHost(
         }
 
         // ---------- Pestañas ----------
-        composable(Destination.MAPA.route) { MapaScreen() }
+        composable(Destination.MAPA.route) {
+            MapaScreen(
+                alVerDetalle = { puntoId -> navController.navigate(Rutas.detalle(puntoId)) },
+                alAbrirConfiguracion = { navController.navigate(Rutas.CONFIGURACION) }
+            )
+        }
         composable(Destination.ESCANEAR.route) { PantallaVacia("Escanear QR") }
         composable(Destination.MIS_LUGARES.route) { PantallaVacia("Mis lugares") }
 
