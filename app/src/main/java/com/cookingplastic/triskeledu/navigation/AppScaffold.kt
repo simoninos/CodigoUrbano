@@ -3,13 +3,7 @@ package com.cookingplastic.triskeledu.navigation
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -18,13 +12,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.cookingplastic.triskeledu.ui.components.Boton
 
-// Scaffold central de la app: en las tres pestañas dibuja el engranaje de configuración
-// y la barra de navegación inferior. Las demás pantallas se muestran sin ellas.
+// Scaffold central de la app: dibuja la barra de navegación inferior solo en las tres pestañas.
+// Cada pantalla dibuja su propia cabecera, como en el mockup.
 @Composable
 fun AppScaffold(modifier: Modifier = Modifier) {
     val navController = rememberNavController()
@@ -34,22 +26,6 @@ fun AppScaffold(modifier: Modifier = Modifier) {
 
     Scaffold(
         modifier = modifier,
-        topBar = {
-            if (esPestana) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .statusBarsPadding()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    Boton(
-                        onClicked = { navController.navigate(Rutas.CONFIGURACION) },
-                        icon = Icons.Default.Settings
-                    )
-                }
-            }
-        },
         bottomBar = {
             // La barra entra deslizándose desde abajo al llegar a una pestaña
             AnimatedVisibility(
