@@ -1,6 +1,15 @@
 package com.cookingplastic.triskeledu.navigation
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -9,60 +18,72 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.cookingplastic.triskeledu.ui.components.SimpleTopBar
-import com.cookingplastic.triskeledu.ui.viewmodels.MonumentoViewModel
-import com.cookingplastic.triskeledu.ui.viewmodels.UsuarioViewModel
+import com.cookingplastic.triskeledu.ui.components.Boton
 
-
-// El objetivo de esta clase es tener un AppScaffold que se dibuje como debe ser en todos los apartados
+// Scaffold central de la app: en las tres pestañas dibuja el engranaje de configuración
+// y la barra de navegación inferior. Las demás pantallas se muestran sin ellas.
 @Composable
-fun AppScaffold(modifier: Modifier = Modifier){
+fun AppScaffold(modifier: Modifier = Modifier) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route
-
-    // ¿La pantalla actual es una pestaña?
-    val currentDestination = Destination.entries.find { it.route == currentRoute }
-    val isTab = Destination.entries.any { it.route == currentRoute }
+    val rutaActual = navBackStackEntry?.destination?.route
+    val esPestana = Destination.esPestana(rutaActual)
 
     Scaffold(
         modifier = modifier,
         topBar = {
-            if (currentDestination!=null) {
-                SimpleTopBar(destination = currentDestination)
+            if (esPestana) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .statusBarsPadding()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    Boton(
+                        onClicked = { navController.navigate(Rutas.CONFIGURACION) },
+                        icon = Icons.Default.Settings
+                    )
+                }
             }
         },
         bottomBar = {
-            if (isTab){
-                NavigationBar{
-                    Destination.entries.forEach { destination ->
-                        val selected = currentRoute == destination.route
-
+            // La barra entra deslizándose desde abajo al llegar a una pestaña
+            AnimatedVisibility(
+                visible = esPestana,
+                enter = slideInVertically { it },
+                exit = slideOutVertically { it }
+            ) {
+                NavigationBar {
+                    Destination.entries.forEach { destino ->
+                        val seleccionada = rutaActual == destino.route
                         NavigationBarItem(
-                            selected = currentRoute == destination.route,
+                            selected = seleccionada,
                             onClick = {
-                                navController.navigate(destination.route) {
-                                    popUpTo(navController.graph.startDestinationId) { saveState = true }
+                                navController.navigate(destino.route) {
+                                    // Vuelve al Mapa, base del historial después del login, guardando
+                                    // el estado de cada pestaña para no apilar pantallas al cambiar
+                                    popUpTo(Destination.MAPA.route) { saveState = true }
                                     launchSingleTop = true
                                     restoreState = true
                                 }
                             },
                             icon = {
                                 Icon(
-                                    imageVector = if (selected) destination.iconSelected else destination.icon
-                                    ,
-                                    contentDescription = destination.contentDescription) },
-                            label = { Text(destination.label) }
+                                    imageVector = if (seleccionada) destino.iconSelected else destino.icon,
+                                    contentDescription = destino.contentDescription
+                                )
+                            },
+                            label = { Text(destino.label) }
                         )
                     }
                 }
             }
         }
-    ){ contentPadding ->
-        AppNavHost(navController, Destination.MAPA, Modifier.padding(contentPadding))
+    ) { contentPadding ->
+        AppNavHost(navController, Modifier.padding(contentPadding))
     }
 }
