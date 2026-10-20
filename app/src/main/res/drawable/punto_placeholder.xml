@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Imagen de los puntos de interés de prueba (DatosPrueba.IMAGEN_PRUEBA):
+     un paisaje simple sobre fondo verde claro. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="320dp"
+    android:height="180dp"
+    android:viewportWidth="320"
+    android:viewportHeight="180">
+    <path
+        android:fillColor="#FFD5EFEB"
+        android:pathData="M0,0h320v180h-320z" />
+    <path
+        android:fillColor="#FFFFC233"
+        android:pathData="M240,50m-18,0a18,18 0,1 1,36 0a18,18 0,1 1,-36 0" />
+    <path
+        android:fillColor="#FF2BB3A3"
+        android:pathData="M0,180L0,130L70,80L130,125L180,95L250,140L320,105L320,180Z" />
+    <path
+        android:fillColor="#FF00796B"
+        android:pathData="M0,180L0,155L90,120L160,150L230,128L320,160L320,180Z" />
+</vector>
