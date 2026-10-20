@@ -52,3 +52,11 @@ fun PuntoInteres.puedeActivarse(): Boolean =
         !imagenUri.isNullOrBlank() &&
         !capsulaId.isNullOrBlank() &&
         !codigoQr.isNullOrBlank()
+
+// Lo que le falta a un punto para poder activarse, en el orden en que se muestra (RF-A09)
+fun PuntoInteres.datosFaltantes(): List<String> = buildList {
+    if (nombre.isBlank()) add("nombre")
+    if (imagenUri.isNullOrBlank()) add("imagen")
+    if (capsulaId.isNullOrBlank()) add("video")
+    if (codigoQr.isNullOrBlank()) add("QR")
+}
