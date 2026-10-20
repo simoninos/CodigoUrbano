@@ -1,6 +1,10 @@
 package com.cookingplastic.triskeledu.ui.screens.mapa
 
+import android.Manifest
+import android.content.pm.PackageManager
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -35,9 +39,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cookingplastic.triskeledu.data.local.DatosPrueba
@@ -62,6 +68,32 @@ fun MapaScreen(
     viewModel: MapaViewModel = viewModel(factory = MapaViewModel.Factory)
 ) {
     val estado by viewModel.estado.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+
+    // U-03: diálogo del sistema que pide la ubicación; la respuesta se avisa al ViewModel
+    val pedirPermiso = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { respuestas ->
+        val concedido = respuestas[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+            respuestas[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+        viewModel.onEvent(MapaUiEvent.OnPermisoUbicacion(concedido))
+    }
+
+    // Al abrir el mapa: si el permiso ya está concedido se usa; si no, se pide
+    LaunchedEffect(Unit) {
+        val concedido = listOf(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        ).any { ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED }
+        if (concedido) {
+            viewModel.onEvent(MapaUiEvent.OnPermisoUbicacion(true))
+        } else {
+            pedirPermiso.launch(
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
+            )
+        }
+    }
+
     MapaContent(
         estado = estado,
         onEvent = viewModel::onEvent,

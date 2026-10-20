@@ -6,4 +6,6 @@ sealed interface MapaUiEvent {
     data object OnCerrarTarjeta : MapaUiEvent
     data object OnCentrar : MapaUiEvent
     data object OnErrorMostrado : MapaUiEvent
+    // Respuesta del usuario al diálogo de permiso de ubicación
+    data class OnPermisoUbicacion(val concedido: Boolean) : MapaUiEvent
 }

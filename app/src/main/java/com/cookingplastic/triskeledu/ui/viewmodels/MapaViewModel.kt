@@ -6,23 +6,25 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.cookingplastic.triskeledu.TriskeleduApp
-import com.cookingplastic.triskeledu.data.location.FakeUbicacionRepository
+import com.cookingplastic.triskeledu.data.RepositoriosCompartidos
 import com.cookingplastic.triskeledu.data.location.UbicacionRepository
 import com.cookingplastic.triskeledu.data.model.EstadoPunto
 import com.cookingplastic.triskeledu.data.model.Ubicacion
-import com.cookingplastic.triskeledu.data.repository.FakePuntoInteresRepository
 import com.cookingplastic.triskeledu.data.repository.PreferenciasRepository
 import com.cookingplastic.triskeledu.data.repository.PuntoInteresRepository
 import com.cookingplastic.triskeledu.data.repository.UsuarioRepository
 import com.cookingplastic.triskeledu.ui.event.MapaUiEvent
 import com.cookingplastic.triskeledu.ui.state.MapaUiState
 import com.cookingplastic.triskeledu.ui.state.PuntoMapa
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
@@ -30,6 +32,7 @@ import kotlinx.coroutines.launch
 
 // ViewModel de la pantalla 3 (Mapa).
 // Junta cuatro fuentes en un solo estado: puntos activos, ubicación, usuario conectado y preferencias.
+@OptIn(ExperimentalCoroutinesApi::class)
 class MapaViewModel(
     private val puntoInteresRepository: PuntoInteresRepository,
     private val ubicacionRepository: UbicacionRepository,
@@ -41,14 +44,24 @@ class MapaViewModel(
     private val _estado = MutableStateFlow(MapaUiState())
     val estado: StateFlow<MapaUiState> = _estado.asStateFlow()
 
-    // Ubicación del usuario. Si falla, se sigue sin ubicación y se avisa con un mensaje (M-18)
-    private val ubicacion: Flow<Ubicacion?> = ubicacionRepository.ubicaciones()
-        .map<Ubicacion, Ubicacion?> { it }
-        .onStart { emit(ubicacionRepository.ultimaUbicacion()) }
-        .catch {
-            _estado.update { it.copy(mensajeError = "No se pudo obtener tu ubicación") }
-            emit(null)
+    // U-04: la ubicación se escucha solo con permiso. Cuando el permiso cambia,
+    // flatMapLatest deja el Flow anterior y empieza uno nuevo.
+    private val permisoConcedido = MutableStateFlow(false)
+
+    private val ubicacion: Flow<Ubicacion?> = permisoConcedido.flatMapLatest { concedido ->
+        if (!concedido) {
+            flowOf(null)
+        } else {
+            ubicacionRepository.ubicaciones()
+                .map<Ubicacion, Ubicacion?> { it }
+                .onStart { emit(ubicacionRepository.ultimaUbicacion()) }
+                .catch {
+                    // U-06 y M-18: sin ubicación, el mapa sigue funcionando y avisa con un mensaje
+                    _estado.update { it.copy(mensajeError = "No se pudo obtener tu ubicación. Revisa que el GPS esté activo") }
+                    emit(null)
+                }
         }
+    }
 
     init {
         viewModelScope.launch {
@@ -99,6 +112,15 @@ class MapaViewModel(
                 }
             }
             MapaUiEvent.OnErrorMostrado -> _estado.update { it.copy(mensajeError = null) }
+            is MapaUiEvent.OnPermisoUbicacion -> {
+                permisoConcedido.value = evento.concedido
+                if (!evento.concedido) {
+                    // U-05
+                    _estado.update {
+                        it.copy(mensajeError = "Sin permiso de ubicación no podemos mostrar dónde estás ni la distancia a los lugares")
+                    }
+                }
+            }
         }
     }
 
@@ -107,9 +129,8 @@ class MapaViewModel(
             initializer {
                 val app = this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as TriskeleduApp
                 MapaViewModel(
-                    // AppContainer todavía no registra estos dos repositorios: se usan sus versiones Fake
-                    puntoInteresRepository = FakePuntoInteresRepository(),
-                    ubicacionRepository = FakeUbicacionRepository(),
+                    puntoInteresRepository = RepositoriosCompartidos.puntoInteres,
+                    ubicacionRepository = RepositoriosCompartidos.ubicacion(app),
                     usuarioRepository = app.container.usuarioRepository,
                     preferenciasRepository = app.container.preferenciasRepository
                 )
