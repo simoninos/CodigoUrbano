@@ -5,6 +5,8 @@ sealed interface MapaUiEvent {
     data class OnClickPunto(val puntoId: String) : MapaUiEvent
     data object OnCerrarTarjeta : MapaUiEvent
     data object OnCentrar : MapaUiEvent
+    // Botón que activa o desactiva el seguimiento de la ubicación (M-20)
+    data object OnAlternarSeguimiento : MapaUiEvent
     data object OnErrorMostrado : MapaUiEvent
     // Respuesta del usuario al diálogo de permiso de ubicación
     data class OnPermisoUbicacion(val concedido: Boolean) : MapaUiEvent

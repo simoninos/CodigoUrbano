@@ -23,6 +23,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MyLocation
+import androidx.compose.material.icons.filled.Navigation
+import androidx.compose.material.icons.outlined.Navigation
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -186,6 +188,14 @@ fun MapaContent(
             horizontalAlignment = Alignment.End,
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            // M-20: seguimiento activo = flecha llena azul; inactivo = flecha de contorno gris
+            BotonMapa(
+                icono = if (estado.seguirUbicacion) Icons.Filled.Navigation else Icons.Outlined.Navigation,
+                descripcion = if (estado.seguirUbicacion) "Desactivar seguimiento" else "Activar seguimiento",
+                alPresionar = { onEvent(MapaUiEvent.OnAlternarSeguimiento) },
+                colorIcono = if (estado.seguirUbicacion) colorUbicacionUsuario()
+                else MaterialTheme.colorScheme.onSurfaceVariant
+            )
             BotonMapa(
                 icono = Icons.Filled.MyLocation,
                 descripcion = "Centrar en mi ubicación",

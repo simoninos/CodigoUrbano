@@ -9,6 +9,7 @@ import com.cookingplastic.triskeledu.TriskeleduApp
 import com.cookingplastic.triskeledu.data.RepositoriosCompartidos
 import com.cookingplastic.triskeledu.data.location.UbicacionRepository
 import com.cookingplastic.triskeledu.data.model.EstadoPunto
+import com.cookingplastic.triskeledu.data.model.Preferencias
 import com.cookingplastic.triskeledu.data.model.Ubicacion
 import com.cookingplastic.triskeledu.data.repository.PreferenciasRepository
 import com.cookingplastic.triskeledu.data.repository.PuntoInteresRepository
@@ -63,6 +64,9 @@ class MapaViewModel(
         }
     }
 
+    // Últimas preferencias recibidas; el botón de seguimiento guarda una copia con el valor cambiado
+    private var preferenciasActuales: Preferencias? = null
+
     init {
         viewModelScope.launch {
             // combine emite un estado nuevo cada vez que cualquiera de las cuatro fuentes cambia
@@ -72,6 +76,7 @@ class MapaViewModel(
                 usuarioRepository.usuarioActual(),
                 preferenciasRepository.preferencias()
             ) { puntos, ubicacionActual, usuario, preferencias ->
+                preferenciasActuales = preferencias
                 val puntosMapa = puntos.map { punto ->
                     PuntoMapa(
                         punto = punto,
@@ -111,6 +116,7 @@ class MapaViewModel(
                     _estado.update { it.copy(solicitudCentrar = it.solicitudCentrar + 1) }
                 }
             }
+            MapaUiEvent.OnAlternarSeguimiento -> alternarSeguimiento()
             MapaUiEvent.OnErrorMostrado -> _estado.update { it.copy(mensajeError = null) }
             is MapaUiEvent.OnPermisoUbicacion -> {
                 permisoConcedido.value = evento.concedido
@@ -120,6 +126,27 @@ class MapaViewModel(
                         it.copy(mensajeError = "Sin permiso de ubicación no podemos mostrar dónde estás ni la distancia a los lugares")
                     }
                 }
+            }
+        }
+    }
+
+    // M-20 y M-21: cambia la preferencia seguirUbicacion, la misma del interruptor de Configuración
+    private fun alternarSeguimiento() {
+        val actuales = preferenciasActuales ?: return
+        val seguir = !actuales.seguirUbicacion
+        viewModelScope.launch {
+            try {
+                // El Flow de preferencias trae el cambio de vuelta y actualiza el estado
+                preferenciasRepository.guardar(actuales.copy(seguirUbicacion = seguir))
+                _estado.update {
+                    it.copy(
+                        // M-22: al activarlo, el mapa vuelve al usuario de inmediato
+                        solicitudCentrar = if (seguir && it.ubicacionUsuario != null) it.solicitudCentrar + 1 else it.solicitudCentrar,
+                        mensajeError = if (seguir) "Seguimiento activado" else "Seguimiento desactivado"
+                    )
+                }
+            } catch (e: Exception) {
+                _estado.update { it.copy(mensajeError = "No se pudo cambiar el seguimiento") }
             }
         }
     }
