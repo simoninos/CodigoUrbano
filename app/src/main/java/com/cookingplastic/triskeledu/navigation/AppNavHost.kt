@@ -121,7 +121,7 @@ fun AppNavHost(
             route = Rutas.CONFIGURACION,
             // Configuración tiene su propia animación de entrada (el engranaje que se expande)
             enterTransition = { EnterTransition.None },
-            popExitTransition = { fadeOut(tween(DURACION_MS)) }
+            popExitTransition = { fadeOut(tween(DURACION_MS)) },
         ) {
             ConfiguracionScreen(
                 alCerrarSesion = {
@@ -131,7 +131,8 @@ fun AppNavHost(
                         launchSingleTop = true
                     }
                 },
-                alAbrirAdmin = { navController.navigate(Rutas.ADMIN_LISTA) }
+                alAbrirAdmin = { navController.navigate(Rutas.ADMIN_LISTA) },
+                alVolver = { navController.popBackStack() }
             )
         }
 

@@ -4,7 +4,9 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.scaleIn
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,6 +14,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -29,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cookingplastic.triskeledu.data.model.Preferencias
+import com.cookingplastic.triskeledu.ui.components.BotonMapa
 import com.cookingplastic.triskeledu.ui.components.Interruptor
 import com.cookingplastic.triskeledu.ui.components.MensajeError
 import com.cookingplastic.triskeledu.ui.event.ConfiguracionUiEvent
@@ -41,6 +47,7 @@ import com.cookingplastic.triskeledu.ui.viewmodels.ConfiguracionViewModel
 fun ConfiguracionScreen(
     alCerrarSesion: () -> Unit,
     alAbrirAdmin: () -> Unit,
+    alVolver: () -> Unit,
     viewModel: ConfiguracionViewModel = viewModel(factory = ConfiguracionViewModel.Factory)
 ) {
     val estado by viewModel.estado.collectAsStateWithLifecycle()
@@ -60,7 +67,8 @@ fun ConfiguracionScreen(
         ConfiguracionContent(
             estado = estado,
             onEvent = viewModel::onEvent,
-            alAbrirAdmin = alAbrirAdmin
+            alAbrirAdmin = alAbrirAdmin,
+            alVolver = alVolver,
         )
     }
 }
@@ -71,6 +79,7 @@ fun ConfiguracionContent(
     estado: ConfiguracionUiState,
     onEvent: (ConfiguracionUiEvent) -> Unit,
     alAbrirAdmin: () -> Unit,
+    alVolver: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -79,11 +88,18 @@ fun ConfiguracionContent(
             .verticalScroll(rememberScrollState())
             .padding(24.dp)
     ) {
-        Text(
-            text = "Configuración",
-            style = MaterialTheme.typography.headlineMedium,
-            color = MaterialTheme.colorScheme.primary
-        )
+        Row(
+            modifier = modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = "Configuración",
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.primary
+            )
+
+            BotonMapa(icono = Icons.Default.Close, descripcion = "Cerrar Configuración", alPresionar = alVolver)
+        }
         if (estado.nombreUsuario.isNotEmpty()) {
             Text(
                 text = "Sesión iniciada como ${estado.nombreUsuario}",
@@ -184,7 +200,8 @@ private fun ConfiguracionClientePreview() {
                     nombreUsuario = "cliente_prueba"
                 ),
                 onEvent = {},
-                alAbrirAdmin = {}
+                alAbrirAdmin = {},
+                alVolver = {},
             )
         }
     }
@@ -204,7 +221,8 @@ private fun ConfiguracionAdminNochePreview() {
                     esAdministrador = true
                 ),
                 onEvent = {},
-                alAbrirAdmin = {}
+                alAbrirAdmin = {},
+                alVolver = {},
             )
         }
     }
