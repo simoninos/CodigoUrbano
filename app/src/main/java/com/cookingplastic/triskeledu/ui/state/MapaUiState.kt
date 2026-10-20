@@ -1,8 +1,43 @@
 package com.cookingplastic.triskeledu.ui.state
 
+import com.cookingplastic.triskeledu.data.model.EstadoPunto
+import com.cookingplastic.triskeledu.data.model.PuntoInteres
+import com.cookingplastic.triskeledu.data.model.Ubicacion
+
+// Un punto tal como lo dibuja el mapa: el punto, su estado para el usuario
+// y la distancia hasta él (null mientras no hay ubicación)
+data class PuntoMapa(
+    val punto: PuntoInteres,
+    val estado: EstadoPunto,
+    val distanciaMetros: Double?
+)
+
 data class MapaUiState(
-    // Aqui van los valores correspondiente al MapaUiState
-    val ubicacionUsuario: Pair<Double, Double> = Pair(0.0, 0.0),
+    val puntos: List<PuntoMapa> = emptyList(),
+    val seleccionadoId: String? = null,
+    val ubicacionUsuario: Ubicacion? = null,
+    val nombreUsuario: String = "",
+    val totalPuntos: Int = 0,
+    // Opciones del mapa guardadas en Preferencias (RF-C16)
+    val seguirUbicacion: Boolean = true,
+    val mostrarBloqueados: Boolean = true,
+    // Sube en 1 cada vez que se toca "Centrar"; el mapa reacciona al cambio
+    val solicitudCentrar: Int = 0,
     val cargando: Boolean = true,
     val mensajeError: String? = null
-)
+) {
+    // Los get() se calculan en cada lectura, así nunca quedan desactualizados
+    val seleccionado: PuntoMapa?
+        get() = puntos.find { it.punto.id == seleccionadoId }
+
+    // M-08: sin "mostrar bloqueados", los puntos bloqueados no se dibujan
+    val puntosVisibles: List<PuntoMapa>
+        get() = if (mostrarBloqueados) puntos else puntos.filter { it.estado != EstadoPunto.BLOQUEADO }
+
+    // M-13: "N de M lugares", con M = puntos activos
+    val lugaresEscaneados: Int
+        get() = puntos.count { it.estado != EstadoPunto.BLOQUEADO }
+
+    val totalLugares: Int
+        get() = puntos.size
+}
