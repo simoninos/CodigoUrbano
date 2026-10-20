@@ -21,7 +21,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.cookingplastic.triskeledu.ui.screens.admin.AdminEditarScreen
+import com.cookingplastic.triskeledu.ui.screens.admin.AdminListaScreen
 import com.cookingplastic.triskeledu.ui.screens.configuracion.ConfiguracionScreen
+import com.cookingplastic.triskeledu.ui.screens.detalle.DetalleScreen
 import com.cookingplastic.triskeledu.ui.screens.login.LoginScreen
 import com.cookingplastic.triskeledu.ui.screens.login.RecuperarScreen
 import com.cookingplastic.triskeledu.ui.screens.login.RegistroScreen
@@ -102,7 +104,13 @@ fun AppNavHost(
         composable(
             route = Rutas.DETALLE,
             arguments = listOf(navArgument(Rutas.ARG_PUNTO_ID) { type = NavType.StringType })
-        ) { PantallaVacia("Detalle del punto") }
+        ) {
+            // DetalleViewModel lee el puntoId de la ruta
+            DetalleScreen(
+                alVolver = { navController.popBackStack() },
+                alAbrirConfiguracion = { navController.navigate(Rutas.CONFIGURACION) }
+            )
+        }
 
         composable(
             route = Rutas.ENCONTRADO,
@@ -128,7 +136,14 @@ fun AppNavHost(
         }
 
         // ---------- Modo administrador ----------
-        composable(Rutas.ADMIN_LISTA) { PantallaVacia("Admin: puntos de interés") }
+        composable(Rutas.ADMIN_LISTA) {
+            AdminListaScreen(
+                // "Salir" vuelve a Configuración, desde donde se entró
+                alSalir = { navController.popBackStack() },
+                alCrear = { navController.navigate(Rutas.adminEditar()) },
+                alEditar = { puntoId -> navController.navigate(Rutas.adminEditar(puntoId)) }
+            )
+        }
 
         composable(
             route = Rutas.ADMIN_EDITAR,

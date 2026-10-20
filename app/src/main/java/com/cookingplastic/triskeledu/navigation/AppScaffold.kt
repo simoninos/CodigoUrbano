@@ -15,27 +15,30 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 
-// Scaffold central de la app: dibuja la barra de navegación inferior solo en las tres pestañas.
+// Scaffold central de la app: dibuja la barra de navegación inferior en las tres pestañas y en el Detalle.
 // Cada pantalla dibuja su propia cabecera, como en el mockup.
 @Composable
 fun AppScaffold(modifier: Modifier = Modifier) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val rutaActual = navBackStackEntry?.destination?.route
-    val esPestana = Destination.esPestana(rutaActual)
+    // El Detalle mantiene la barra inferior con la pestaña Mapa seleccionada (mockup)
+    val enDetalle = rutaActual == Rutas.DETALLE
+    val mostrarBarra = Destination.esPestana(rutaActual) || enDetalle
 
     Scaffold(
         modifier = modifier,
         bottomBar = {
             // La barra entra deslizándose desde abajo al llegar a una pestaña
             AnimatedVisibility(
-                visible = esPestana,
+                visible = mostrarBarra,
                 enter = slideInVertically { it },
                 exit = slideOutVertically { it }
             ) {
                 NavigationBar {
                     Destination.entries.forEach { destino ->
-                        val seleccionada = rutaActual == destino.route
+                        val seleccionada = rutaActual == destino.route ||
+                            (enDetalle && destino == Destination.MAPA)
                         NavigationBarItem(
                             selected = seleccionada,
                             onClick = {
