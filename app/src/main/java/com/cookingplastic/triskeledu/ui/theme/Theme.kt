@@ -8,7 +8,9 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
@@ -66,4 +68,26 @@ fun TriskeleduTheme(
         typography = Typography,
         content = content
     )
+}
+
+// Colores marcados "(propio)" en el plan: no existen en Material 3, así que cada uno
+// devuelve su versión Día o Noche según el fondo del tema activo
+object ColoresApp {
+    val esNoche: Boolean
+        @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.background.luminance() < 0.5f
+
+    val ubicacion: Color
+        @Composable @ReadOnlyComposable get() = if (esNoche) UbicacionNoche else Ubicacion
+
+    val bloqueado: Color
+        @Composable @ReadOnlyComposable get() = if (esNoche) BloqueadoNoche else Bloqueado
+
+    val barraAdmin: Color
+        @Composable @ReadOnlyComposable get() = if (esNoche) BarraAdminNoche else PrimarioOscuro
+
+    val sobreBarraAdmin: Color
+        @Composable @ReadOnlyComposable get() = if (esNoche) TintaNoche else Fondo
+
+    val interruptorEncendido: Color
+        @Composable @ReadOnlyComposable get() = if (esNoche) InterruptorNoche else Primario
 }
