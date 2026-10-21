@@ -45,6 +45,7 @@ fun EncontradoContent(
     nombreLugar: String,
     tipoLugar: String,
     distanciaMetros: Int?,
+    yaDescubierto: Boolean,
     alAbrirLugar: () -> Unit,
     alSeguirEscaneando: () -> Unit,
     modifier: Modifier = Modifier
@@ -120,22 +121,31 @@ fun EncontradoContent(
                     }
                 }
 
-                //la celebración "+5 puntos": crece desde chica y aparece de a poco
-                AnimatedVisibility(
-                    visibleState = celebracion,
-                    enter = scaleIn(
-                        initialScale = 0.3f,
-                        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)
-                    ) + fadeIn()
-                ) {
+                if (yaDescubierto) {
+                    //si ya lo había escaneado, no hay celebración: los puntos no cambian
                     Text(
-                        text = "+$PUNTOS_ESCANEO puntos",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onSecondary,
-                        modifier = Modifier
-                            .background(MaterialTheme.colorScheme.secondary, RoundedCornerShape(12.dp))
-                            .padding(horizontal = 20.dp, vertical = 6.dp)
+                        text = "Ya habías descubierto este lugar",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                } else {
+                    //la celebración "+5 puntos": crece desde chica y aparece de a poco
+                    AnimatedVisibility(
+                        visibleState = celebracion,
+                        enter = scaleIn(
+                            initialScale = 0.3f,
+                            animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)
+                        ) + fadeIn()
+                    ) {
+                        Text(
+                            text = "+$PUNTOS_ESCANEO puntos",
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.onSecondary,
+                            modifier = Modifier
+                                .background(MaterialTheme.colorScheme.secondary, RoundedCornerShape(12.dp))
+                                .padding(horizontal = 20.dp, vertical = 6.dp)
+                        )
+                    }
                 }
 
                 Text(
@@ -204,6 +214,7 @@ fun EncontradoPreview() {
             nombreLugar = "La Moneda",
             tipoLugar = "Monumento",
             distanciaMetros = 34,
+            yaDescubierto = false,
             alAbrirLugar = {},
             alSeguirEscaneando = {}
         )

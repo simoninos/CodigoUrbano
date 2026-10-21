@@ -1,6 +1,7 @@
 package com.cookingplastic.triskeledu.ui.screens.escanear
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -20,11 +21,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -52,6 +55,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cookingplastic.triskeledu.ui.event.EscanearUiEvent
 import com.cookingplastic.triskeledu.ui.state.EscanearUiState
+import com.cookingplastic.triskeledu.ui.state.EstadoGps
 import com.cookingplastic.triskeledu.ui.theme.TriskeleduTheme
 import com.cookingplastic.triskeledu.ui.viewmodels.EscanearViewModel
 import com.google.mlkit.vision.barcode.BarcodeScanner
@@ -63,35 +67,70 @@ import java.util.concurrent.Executors
 //Preview de CameraX se llama igual que la anotación @Preview de Compose: le damos otro nombre
 import androidx.camera.core.Preview as CamaraPreview
 
-//Pantalla 5: se conecta al ViewModel y pide el permiso de cámara
+//Permisos que necesita Escanear: la cámara para leer el QR y la ubicación para la regla de 60 m
+private val PERMISOS = arrayOf(
+    Manifest.permission.CAMERA,
+    Manifest.permission.ACCESS_FINE_LOCATION,
+    Manifest.permission.ACCESS_COARSE_LOCATION
+)
+
+private fun tienePermiso(context: Context, permiso: String): Boolean =
+    ContextCompat.checkSelfPermission(context, permiso) == PackageManager.PERMISSION_GRANTED
+
+private fun tieneUbicacion(context: Context): Boolean =
+    tienePermiso(context, Manifest.permission.ACCESS_FINE_LOCATION) ||
+            tienePermiso(context, Manifest.permission.ACCESS_COARSE_LOCATION)
+
+//Pantalla 5: se conecta al ViewModel y pide los permisos.
+//Cuando el escaneo es válido muestra la pantalla 6 (Lugar encontrado) en el mismo lugar
 @Composable
 fun EscanearScreen(
-    viewModel: EscanearViewModel = viewModel()
+    alAbrirLugar: (String) -> Unit,
+    viewModel: EscanearViewModel = viewModel(factory = EscanearViewModel.Factory)
 ) {
     val estado by viewModel.estado.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
-    //abre el diálogo del sistema "¿Permitir que la app tome fotos?" y entrega la respuesta
-    val pedirPermiso = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { concedido ->
-        viewModel.onEvent(EscanearUiEvent.OnPermisoCamara(concedido))
+    //abre los diálogos del sistema y, al responder, se revisa cómo quedó cada permiso
+    val pedirPermisos = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) {
+        viewModel.onEvent(EscanearUiEvent.OnPermisoCamara(tienePermiso(context, Manifest.permission.CAMERA)))
+        viewModel.onEvent(EscanearUiEvent.OnPermisoUbicacion(tieneUbicacion(context)))
     }
 
-    //al entrar: si ya hay permiso se avisa; si no, se pide
+    //al entrar: si ya están los permisos se avisa; si falta alguno, se pide
     LaunchedEffect(Unit) {
-        val yaConcedido = ContextCompat.checkSelfPermission(
-            context, Manifest.permission.CAMERA
-        ) == PackageManager.PERMISSION_GRANTED
-        if (yaConcedido) viewModel.onEvent(EscanearUiEvent.OnPermisoCamara(true))
-        else pedirPermiso.launch(Manifest.permission.CAMERA)
+        val camara = tienePermiso(context, Manifest.permission.CAMERA)
+        val ubicacion = tieneUbicacion(context)
+        if (camara && ubicacion) {
+            viewModel.onEvent(EscanearUiEvent.OnPermisoCamara(true))
+            viewModel.onEvent(EscanearUiEvent.OnPermisoUbicacion(true))
+        } else {
+            pedirPermisos.launch(PERMISOS)
+        }
     }
 
-    EscanearContent(
-        estado = estado,
-        onEvent = viewModel::onEvent,
-        onPedirPermiso = { pedirPermiso.launch(Manifest.permission.CAMERA) }
-    )
+    val encontrado = estado.encontrado
+    if (encontrado != null) {
+        EncontradoContent(
+            nombreLugar = encontrado.nombre,
+            tipoLugar = encontrado.tipo,
+            distanciaMetros = encontrado.distanciaMetros,
+            yaDescubierto = encontrado.yaDescubierto,
+            alAbrirLugar = {
+                viewModel.onEvent(EscanearUiEvent.OnEscanearOtro)
+                alAbrirLugar(encontrado.puntoId)
+            },
+            alSeguirEscaneando = { viewModel.onEvent(EscanearUiEvent.OnEscanearOtro) }
+        )
+    } else {
+        EscanearContent(
+            estado = estado,
+            onEvent = viewModel::onEvent,
+            onPedirPermiso = { pedirPermisos.launch(PERMISOS) }
+        )
+    }
 }
 
 //Solo dibuja: así el Preview funciona sin ViewModel ni cámara
@@ -122,18 +161,22 @@ fun EscanearContent(
                 .size(240.dp)
         )
 
-        //capa 3: el título, arriba
-        Surface(
-            shape = RoundedCornerShape(16.dp),
+        //capa 3: el título y el estado del GPS, arriba
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .padding(16.dp)
         ) {
-            Text(
-                text = "Escanea el QR del lugar",
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-            )
+            Surface(shape = RoundedCornerShape(16.dp)) {
+                Text(
+                    text = "Escanea el QR del lugar",
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                )
+            }
+            EtiquetaGps(gps = estado.gps)
         }
 
         //capa 4: la tarjeta de abajo cambia según el estado
@@ -159,18 +202,22 @@ fun EscanearContent(
                         }
                     }
 
-                    estado.codigoLeido != null -> {
+                    estado.procesando -> {
+                        Text(text = "Revisando el QR…", style = MaterialTheme.typography.bodyLarge)
+                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                    }
+
+                    estado.mensajeRechazo != null -> {
                         Text(
-                            text = "QR leído",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.primary
+                            text = estado.mensajeRechazo,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.error
                         )
-                        Text(text = estado.codigoLeido, style = MaterialTheme.typography.titleMedium)
                         OutlinedButton(
                             onClick = { onEvent(EscanearUiEvent.OnEscanearOtro) },
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text("Escanear otro")
+                            Text("Intentar de nuevo")
                         }
                     }
 
@@ -178,6 +225,35 @@ fun EscanearContent(
                 }
             }
         }
+    }
+}
+
+//"GPS activo", con un punto verde si hay señal
+@Composable
+private fun EtiquetaGps(gps: EstadoGps) {
+    val activo = gps == EstadoGps.ACTIVO
+    val fondo = if (activo) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
+    val texto = if (activo) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .background(fondo, RoundedCornerShape(50))
+            .padding(horizontal = 12.dp, vertical = 4.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(8.dp)
+                .background(
+                    if (activo) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
+                    CircleShape
+                )
+        )
+        Text(
+            text = gps.texto,
+            style = MaterialTheme.typography.labelSmall,
+            color = texto,
+            modifier = Modifier.padding(start = 6.dp)
+        )
     }
 }
 
@@ -329,16 +405,25 @@ private fun analizarCuadro(
 @Composable
 fun EscanearBuscandoPreview() {
     TriskeleduTheme {
-        EscanearContent(estado = EscanearUiState(permisoCamara = true), onEvent = {}, onPedirPermiso = {})
+        EscanearContent(
+            estado = EscanearUiState(permisoCamara = true, gps = EstadoGps.ACTIVO),
+            onEvent = {},
+            onPedirPermiso = {}
+        )
     }
 }
 
 @Preview(showBackground = true)
 @Composable
-fun EscanearLeidoPreview() {
+fun EscanearLejosPreview() {
     TriskeleduTheme {
         EscanearContent(
-            estado = EscanearUiState(permisoCamara = true, codigoLeido = "TRISKELEDU-LA-MONEDA"),
+            estado = EscanearUiState(
+                permisoCamara = true,
+                gps = EstadoGps.ACTIVO,
+                codigoLeido = "TRISKEL-PI-003",
+                mensajeRechazo = "Estás a 120 m. Acércate a 60 m o menos para desbloquearlo"
+            ),
             onEvent = {},
             onPedirPermiso = {}
         )
