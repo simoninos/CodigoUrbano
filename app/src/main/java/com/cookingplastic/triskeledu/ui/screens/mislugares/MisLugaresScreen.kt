@@ -20,6 +20,7 @@ import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -39,6 +40,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.cookingplastic.triskeledu.ui.components.BotonMapa
 import com.cookingplastic.triskeledu.ui.components.EsferaAgua
 import com.cookingplastic.triskeledu.ui.components.MensajeError
 import com.cookingplastic.triskeledu.ui.event.MisLugaresUiEvent
@@ -50,12 +53,20 @@ import com.cookingplastic.triskeledu.ui.state.OrdenLugares
 import com.cookingplastic.triskeledu.ui.theme.TriskeleduTheme
 import com.cookingplastic.triskeledu.ui.viewmodels.MisLugaresViewModel
 
-//Pantalla 7: se conecta al ViewModel. La fábrica del ViewModel se agrega cuando
-//Gabriel ponga progresoRepository en AppContainer
+//Pantalla 7: se conecta al ViewModel y avisa cuando hay que navegar
 @Composable
-fun MisLugaresScreen(viewModel: MisLugaresViewModel) {
+fun MisLugaresScreen(
+    alVerDetalle: (String) -> Unit,
+    alAbrirConfiguracion: () -> Unit,
+    viewModel: MisLugaresViewModel = viewModel(factory = MisLugaresViewModel.Factory)
+) {
     val estado by viewModel.estado.collectAsStateWithLifecycle()
-    MisLugaresContent(estado = estado, onEvent = viewModel::onEvent)
+    MisLugaresContent(
+        estado = estado,
+        onEvent = viewModel::onEvent,
+        alVerDetalle = alVerDetalle,
+        alAbrirConfiguracion = alAbrirConfiguracion
+    )
 }
 
 //Solo dibuja; los Preview la muestran con datos de ejemplo
@@ -63,6 +74,8 @@ fun MisLugaresScreen(viewModel: MisLugaresViewModel) {
 fun MisLugaresContent(
     estado: MisLugaresUiState,
     onEvent: (MisLugaresUiEvent) -> Unit,
+    alVerDetalle: (String) -> Unit,
+    alAbrirConfiguracion: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     //LazyColumn solo dibuja las filas que caben en pantalla: sirve aunque haya muchos lugares
@@ -71,8 +84,20 @@ fun MisLugaresContent(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        //título con el engranaje de configuración, como en el mockup
         item {
-            Text(text = "Mis lugares", style = MaterialTheme.typography.headlineMedium)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "Mis lugares",
+                    style = MaterialTheme.typography.headlineMedium,
+                    modifier = Modifier.weight(1f)
+                )
+                BotonMapa(
+                    icono = Icons.Filled.Settings,
+                    descripcion = "Abrir configuración",
+                    alPresionar = alAbrirConfiguracion
+                )
+            }
         }
 
         //las dos tarjetas de totales, una al lado de la otra
@@ -139,7 +164,7 @@ fun MisLugaresContent(
 
         //key ayuda a Compose a saber qué fila es cuál cuando la lista se reordena
         items(estado.desbloqueados, key = { it.puntoId }) { lugar ->
-            TarjetaLugar(lugar = lugar)
+            TarjetaLugar(lugar = lugar, alPresionar = { alVerDetalle(lugar.puntoId) })
         }
 
         if (estado.bloqueados > 0) {
@@ -191,12 +216,13 @@ private fun TarjetaTotal(
     }
 }
 
-//Un lugar desbloqueado: nombre, tipo, estado y su esfera de agua.
+//Un lugar desbloqueado: nombre, tipo, estado y su esfera de agua. Al tocarlo se abre su detalle.
 //Los completados se destacan con fondo verde claro y borde verde
 @Composable
-private fun TarjetaLugar(lugar: LugarDesbloqueado) {
+private fun TarjetaLugar(lugar: LugarDesbloqueado, alPresionar: () -> Unit) {
     val completado = lugar.estado == EstadoLugar.COMPLETADO
     Surface(
+        onClick = alPresionar,
         shape = RoundedCornerShape(16.dp),
         color = if (completado) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
         border = BorderStroke(
@@ -323,7 +349,9 @@ fun MisLugaresPreview() {
                 bloqueados = 2,
                 cargando = false
             ),
-            onEvent = {}
+            onEvent = {},
+            alVerDetalle = {},
+            alAbrirConfiguracion = {}
         )
     }
 }
@@ -334,7 +362,9 @@ fun MisLugaresVacioPreview() {
     TriskeleduTheme {
         MisLugaresContent(
             estado = MisLugaresUiState(totalLugares = 5, bloqueados = 5, cargando = false),
-            onEvent = {}
+            onEvent = {},
+            alVerDetalle = {},
+            alAbrirConfiguracion = {}
         )
     }
 }

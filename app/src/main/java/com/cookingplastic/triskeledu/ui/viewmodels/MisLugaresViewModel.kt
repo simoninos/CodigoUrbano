@@ -1,7 +1,13 @@
 package com.cookingplastic.triskeledu.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.cookingplastic.triskeledu.TriskeleduApp
+import com.cookingplastic.triskeledu.data.RepositoriosCompartidos
+import com.cookingplastic.triskeledu.data.RepositoriosProgreso
 import com.cookingplastic.triskeledu.data.model.PUNTOS_MAXIMOS_LUGAR
 import com.cookingplastic.triskeledu.data.model.ProgresoPunto
 import com.cookingplastic.triskeledu.data.model.PuntoInteres
@@ -31,8 +37,7 @@ import kotlinx.coroutines.launch
 private const val UN_DIA_MS = 24 * 60 * 60 * 1000L
 
 //Recibe tres fuentes de datos: el progreso (Catalina), el usuario conectado (Gabriel)
-//y la lista de lugares activos. Hoy la lista sale de MonumentoRepository; cuando Simon tenga
-//PuntoInteresRepository, se le pasa obtenerActivos() sin cambiar nada más de este archivo
+//y la lista de lugares activos (obtenerActivos() de PuntoInteresRepository, de Simon)
 class MisLugaresViewModel(
     private val progresoRepository: ProgresoRepository,
     private val usuarioRepository: UsuarioRepository,
@@ -70,6 +75,19 @@ class MisLugaresViewModel(
         when (evento) {
             is MisLugaresUiEvent.OnFiltroChange -> filtro.value = evento.filtro
             is MisLugaresUiEvent.OnOrdenChange -> orden.value = evento.orden
+        }
+    }
+
+    companion object {
+        val Factory: ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                val app = this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as TriskeleduApp
+                MisLugaresViewModel(
+                    progresoRepository = RepositoriosProgreso.progreso(app),
+                    usuarioRepository = app.container.usuarioRepository,
+                    puntosActivos = RepositoriosCompartidos.puntoInteres.obtenerActivos()
+                )
+            }
         }
     }
 }
