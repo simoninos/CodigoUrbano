@@ -24,10 +24,12 @@ import com.cookingplastic.triskeledu.ui.screens.admin.AdminEditarScreen
 import com.cookingplastic.triskeledu.ui.screens.admin.AdminListaScreen
 import com.cookingplastic.triskeledu.ui.screens.configuracion.ConfiguracionScreen
 import com.cookingplastic.triskeledu.ui.screens.detalle.DetalleScreen
+import com.cookingplastic.triskeledu.ui.screens.escanear.EscanearScreen
 import com.cookingplastic.triskeledu.ui.screens.login.LoginScreen
 import com.cookingplastic.triskeledu.ui.screens.login.RecuperarScreen
 import com.cookingplastic.triskeledu.ui.screens.login.RegistroScreen
 import com.cookingplastic.triskeledu.ui.screens.mapa.MapaScreen
+import com.cookingplastic.triskeledu.ui.screens.mislugares.MisLugaresScreen
 
 private const val DURACION_MS = 300
 
@@ -97,8 +99,18 @@ fun AppNavHost(
                 alAbrirConfiguracion = { navController.navigate(Rutas.CONFIGURACION) }
             )
         }
-        composable(Destination.ESCANEAR.route) { PantallaVacia("Escanear QR") }
-        composable(Destination.MIS_LUGARES.route) { PantallaVacia("Mis lugares") }
+
+        composable(Destination.ESCANEAR.route) {
+            EscanearScreen(
+                alAbrirLugar = { puntoId -> navController.navigate(Rutas.detalle(puntoId)) }
+            )
+        }
+
+        composable(Destination.MIS_LUGARES.route){
+            MisLugaresScreen(
+                alVerDetalle = { puntoId -> navController.navigate(Rutas.detalle(puntoId)) },
+                alAbrirConfiguracion = { navController.navigate(Rutas.CONFIGURACION) })
+        }
 
         // ---------- Pantallas internas ----------
         composable(
@@ -111,11 +123,6 @@ fun AppNavHost(
                 alAbrirConfiguracion = { navController.navigate(Rutas.CONFIGURACION) }
             )
         }
-
-        composable(
-            route = Rutas.ENCONTRADO,
-            arguments = listOf(navArgument(Rutas.ARG_PUNTO_ID) { type = NavType.StringType })
-        ) { PantallaVacia("Lugar encontrado") }
 
         composable(
             route = Rutas.CONFIGURACION,
@@ -158,6 +165,8 @@ fun AppNavHost(
         ) {
             AdminEditarScreen(alVolver = { navController.popBackStack() })
         }
+
+
     }
 }
 

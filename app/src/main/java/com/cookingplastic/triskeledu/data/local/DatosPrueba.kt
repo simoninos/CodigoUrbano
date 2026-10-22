@@ -264,6 +264,19 @@ object DatosPrueba {
         activo = false,
         actualizadoEn = FECHA_BASE,
     )
+    val PUNTO_DUOC_UC = PuntoInteres(
+        id = "f7be64ee-14f8-5e9a-b1e9-3ba3f8426d41",
+        nombre = "Padre Alonso de Ovalle",
+        descripcion = null,
+        tipo = TipoPuntoInteres.ARYP,
+        ubicacion = Ubicacion(latitud = -33.44699124944042, longitud = -70.65788550858184, altitud = 544.0),
+        imagenUri = null,
+        descubreMasUrl = null,
+        codigoQr = "TRISKEL-PI-014",
+        capsulaId = CAPSULA_IA_02.id,
+        activo = true,
+        actualizadoEn = FECHA_BASE,
+    )
     val puntos: List<PuntoInteres> = listOf(
         PUNTO_LA_MONEDA,
         PUNTO_PRECOLOMBINO,
@@ -280,6 +293,7 @@ object DatosPrueba {
         PUNTO_MUSEO_MERCED,
         PUNTO_PARQUE_ALMAGRO,
         PUNTO_PALACIO_MATTE,
+        PUNTO_DUOC_UC,
     )
 
     // ---------- Usuarios ----------
