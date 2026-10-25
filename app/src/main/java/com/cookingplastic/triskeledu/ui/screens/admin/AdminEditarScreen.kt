@@ -1,5 +1,10 @@
 package com.cookingplastic.triskeledu.ui.screens.admin
 
+import android.Manifest
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -32,15 +37,19 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
@@ -53,8 +62,9 @@ import com.cookingplastic.triskeledu.ui.event.AdminEditarUiEvent
 import com.cookingplastic.triskeledu.ui.state.AdminEditarUiState
 import com.cookingplastic.triskeledu.ui.theme.TriskeleduTheme
 import com.cookingplastic.triskeledu.ui.viewmodels.AdminEditarViewModel
+import java.io.File
 
-//se conecta al ViewModel, abre el Photo Picker y avisa cuando hay que volver
+//se conecta al ViewModel, abre galería, cámara y permisos, y avisa cuando hay que volver
 @Composable
 fun AdminEditarScreen(
     alVolver: () -> Unit,
@@ -67,9 +77,38 @@ fun AdminEditarScreen(
         if (estado.guardado) alVolver()
     }
 
+    val contexto = LocalContext.current
+
     //Photo Picker: abre la galería del sistema y devuelve la foto elegida, o null si cancela
     val elegirFoto = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-        if (uri != null) viewModel.onEvent(AdminEditarUiEvent.OnImagenElegida(uri.toString()))
+        if (uri != null) {
+            //sin esto, el acceso a la foto se pierde al cerrar la app o reiniciar el teléfono
+            runCatching {
+                contexto.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            viewModel.onEvent(AdminEditarUiEvent.OnImagenElegida(uri.toString()))
+        }
+    }
+
+    //rememberSaveable: si Android cierra la pantalla mientras la cámara está abierta, no se pierde a dónde va la foto
+    var fotoPendiente by rememberSaveable { mutableStateOf<Uri?>(null) }
+    val tomarFoto = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { guardada ->
+        val uri = fotoPendiente
+        if (guardada && uri != null) viewModel.onEvent(AdminEditarUiEvent.OnImagenElegida(uri.toString()))
+    }
+    val abrirCamara: () -> Unit = {
+        val uri = crearArchivoFoto(contexto)
+        fotoPendiente = uri
+        tomarFoto.launch(uri)
+    }
+    //como el manifest declara CAMERA, Android exige pedir el permiso antes de abrir la cámara
+    val pedirCamara = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { concedido ->
+        if (concedido) abrirCamara() else viewModel.onEvent(AdminEditarUiEvent.OnPermisoCamaraDenegado)
+    }
+
+    val pedirUbicacion = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { respuestas ->
+        if (respuestas.values.any { it }) viewModel.onEvent(AdminEditarUiEvent.OnUsarMiUbicacion)
+        else viewModel.onEvent(AdminEditarUiEvent.OnPermisoUbicacionDenegado)
     }
 
     AdminEditarContent(
@@ -77,16 +116,41 @@ fun AdminEditarScreen(
         onEvent = viewModel::onEvent,
         //ImageOnly: solo muestra fotos, no videos
         alElegirFoto = { elegirFoto.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
+        alTomarFoto = {
+            if (tienePermiso(contexto, Manifest.permission.CAMERA)) abrirCamara()
+            else pedirCamara.launch(Manifest.permission.CAMERA)
+        },
+        alUsarUbicacion = {
+            if (tienePermiso(contexto, Manifest.permission.ACCESS_FINE_LOCATION) ||
+                tienePermiso(contexto, Manifest.permission.ACCESS_COARSE_LOCATION)
+            ) {
+                viewModel.onEvent(AdminEditarUiEvent.OnUsarMiUbicacion)
+            } else {
+                pedirUbicacion.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
+            }
+        },
         alVolver = alVolver
     )
 }
 
-//solo dibuja; el Photo Picker queda afuera para que las previews funcionen
+private fun tienePermiso(contexto: Context, permiso: String): Boolean =
+    ContextCompat.checkSelfPermission(contexto, permiso) == PackageManager.PERMISSION_GRANTED
+
+//la cámara necesita un archivo donde dejar la foto; FileProvider le da acceso solo a ese archivo
+private fun crearArchivoFoto(contexto: Context): Uri {
+    val carpeta = File(contexto.filesDir, "fotos").apply { mkdirs() }
+    val archivo = File(carpeta, "punto_${System.currentTimeMillis()}.jpg")
+    return FileProvider.getUriForFile(contexto, "${contexto.packageName}.fileprovider", archivo)
+}
+
+//solo dibuja; galería, cámara y permisos quedan en la Screen porque necesitan la Activity
 @Composable
 fun AdminEditarContent(
     estado: AdminEditarUiState,
     onEvent: (AdminEditarUiEvent) -> Unit,
     alElegirFoto: () -> Unit,
+    alTomarFoto: () -> Unit,
+    alUsarUbicacion: () -> Unit,
     alVolver: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -97,7 +161,7 @@ fun AdminEditarContent(
             .padding(24.dp)
     ) {
         Text(
-            text = "Editar punto",
+            text = if (estado.esEdicion) "Editar punto" else "Nuevo punto",
             style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.primary
         )
@@ -136,25 +200,34 @@ fun AdminEditarContent(
                     .height(180.dp)
                     .clip(MaterialTheme.shapes.medium)
             )
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = alElegirFoto) {
-                    Text(text = "Cambiar foto")
-                }
-                TextButton(onClick = { onEvent(AdminEditarUiEvent.OnQuitarImagen) }) {
-                    Text(text = "Quitar")
-                }
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedButton(onClick = alElegirFoto, modifier = Modifier.weight(1f)) {
+                Text(text = "Galería")
             }
-        } else {
-            OutlinedButton(
-                onClick = alElegirFoto,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(text = "Elegir foto de la galería")
+            OutlinedButton(onClick = alTomarFoto, modifier = Modifier.weight(1f)) {
+                Text(text = "Cámara")
             }
         }
+        if (estado.imagenUri != null) {
+            TextButton(onClick = { onEvent(AdminEditarUiEvent.OnQuitarImagen) }) {
+                Text(text = "Quitar foto")
+            }
+        }
+        MensajeError(mensaje = estado.avisoImagen)
 
         Spacer(modifier = Modifier.height(16.dp))
         TituloSeccion(texto = "Ubicación")
+        OutlinedButton(
+            onClick = alUsarUbicacion,
+            enabled = !estado.buscandoUbicacion,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(text = if (estado.buscandoUbicacion) "Buscando ubicación..." else "Usar mi ubicación actual")
+        }
+        MensajeError(mensaje = estado.avisoUbicacion)
+        Spacer(modifier = Modifier.height(8.dp))
         //Text y no Decimal: algunos teclados numéricos no traen el signo menos, y en Santiago latitud y longitud son negativas
         CampoConError(
             valor = estado.latitud,
@@ -332,6 +405,8 @@ private fun AdminEditarVacioPreview() {
                 estado = AdminEditarUiState(),
                 onEvent = {},
                 alElegirFoto = {},
+                alTomarFoto = {},
+                alUsarUbicacion = {},
                 alVolver = {}
             )
         }
@@ -357,6 +432,8 @@ private fun AdminEditarErroresPreview() {
                 ),
                 onEvent = {},
                 alElegirFoto = {},
+                alTomarFoto = {},
+                alUsarUbicacion = {},
                 alVolver = {}
             )
         }
@@ -371,6 +448,7 @@ private fun AdminEditarCompletoNochePreview() {
             AdminEditarContent(
                 estado = AdminEditarUiState(
                     id = "punto-la-moneda",
+                    esEdicion = true,
                     nombre = "La Moneda",
                     tipo = TipoPuntoInteres.MONUMENTO,
                     latitud = "-33.4429",
@@ -383,6 +461,8 @@ private fun AdminEditarCompletoNochePreview() {
                 ),
                 onEvent = {},
                 alElegirFoto = {},
+                alTomarFoto = {},
+                alUsarUbicacion = {},
                 alVolver = {}
             )
         }

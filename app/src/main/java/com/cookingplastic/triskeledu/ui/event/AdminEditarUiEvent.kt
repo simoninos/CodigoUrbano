@@ -18,5 +18,9 @@ sealed interface AdminEditarUiEvent {
     data class OnCapsulaChange(val capsulaId: String?) : AdminEditarUiEvent
     data class OnActivoChange(val valor: Boolean) : AdminEditarUiEvent
     data object OnGenerarQr : AdminEditarUiEvent
+    data object OnUsarMiUbicacion : AdminEditarUiEvent
+    //la pantalla avisa si el usuario negó un permiso, y el ViewModel decide el mensaje
+    data object OnPermisoCamaraDenegado : AdminEditarUiEvent
+    data object OnPermisoUbicacionDenegado : AdminEditarUiEvent
     data object OnGuardar : AdminEditarUiEvent
 }
