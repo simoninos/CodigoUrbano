@@ -7,11 +7,16 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.cookingplastic.triskeledu.TriskeleduApp
 import com.cookingplastic.triskeledu.data.RepositoriosCompartidos
+import com.cookingplastic.triskeledu.data.RepositoriosProgreso
 import com.cookingplastic.triskeledu.data.location.UbicacionRepository
 import com.cookingplastic.triskeledu.data.model.EstadoPunto
 import com.cookingplastic.triskeledu.data.model.Preferencias
+import com.cookingplastic.triskeledu.data.model.ProgresoPunto
 import com.cookingplastic.triskeledu.data.model.Ubicacion
+import com.cookingplastic.triskeledu.data.model.Usuario
+import com.cookingplastic.triskeledu.data.model.puntosTotales
 import com.cookingplastic.triskeledu.data.repository.PreferenciasRepository
+import com.cookingplastic.triskeledu.data.repository.ProgresoRepository
 import com.cookingplastic.triskeledu.data.repository.PuntoInteresRepository
 import com.cookingplastic.triskeledu.data.repository.UsuarioRepository
 import com.cookingplastic.triskeledu.ui.event.MapaUiEvent
@@ -32,13 +37,15 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 // ViewModel de la pantalla 3 (Mapa).
-// Junta cuatro fuentes en un solo estado: puntos activos, ubicación, usuario conectado y preferencias.
+// Junta cuatro fuentes en un solo estado: puntos activos, ubicación, usuario conectado con su
+// progreso, y preferencias.
 @OptIn(ExperimentalCoroutinesApi::class)
 class MapaViewModel(
     private val puntoInteresRepository: PuntoInteresRepository,
     private val ubicacionRepository: UbicacionRepository,
     private val usuarioRepository: UsuarioRepository,
-    private val preferenciasRepository: PreferenciasRepository
+    private val preferenciasRepository: PreferenciasRepository,
+    private val progresoRepository: ProgresoRepository
 ) : ViewModel() {
 
     // Privado y mutable: solo el ViewModel escribe. Público y de solo lectura: la pantalla observa.
@@ -64,6 +71,17 @@ class MapaViewModel(
         }
     }
 
+    // El progreso depende del usuario conectado: al cambiar de usuario, flatMapLatest deja de
+    // escuchar el progreso anterior y empieza con el del nuevo. Sin sesión no hay progreso.
+    private val usuarioConProgreso: Flow<Pair<Usuario?, List<ProgresoPunto>>> =
+        usuarioRepository.usuarioActual().flatMapLatest { usuario ->
+            if (usuario == null) {
+                flowOf(null to emptyList())
+            } else {
+                progresoRepository.progresoDe(usuario.id).map { filas -> usuario to filas }
+            }
+        }
+
     // Últimas preferencias recibidas; el botón de seguimiento guarda una copia con el valor cambiado
     private var preferenciasActuales: Preferencias? = null
 
@@ -73,15 +91,17 @@ class MapaViewModel(
             combine(
                 puntoInteresRepository.obtenerActivos(),
                 ubicacion,
-                usuarioRepository.usuarioActual(),
+                usuarioConProgreso,
                 preferenciasRepository.preferencias()
-            ) { puntos, ubicacionActual, usuario, preferencias ->
+            ) { puntos, ubicacionActual, (usuario, progreso), preferencias ->
                 preferenciasActuales = preferencias
+                // Para buscar rápido la fila de cada punto: puntoId -> fila
+                val progresoPorPunto = progreso.associateBy { it.puntoId }
                 val puntosMapa = puntos.map { punto ->
                     PuntoMapa(
                         punto = punto,
-                        // M-04: sin ProgresoRepository todos los puntos están bloqueados
-                        estado = EstadoPunto.BLOQUEADO,
+                        // M-04: el estado sale del progreso del usuario en ese punto
+                        estado = EstadoPunto.desde(progresoPorPunto[punto.id]),
                         distanciaMetros = ubicacionActual?.let {
                             ubicacionRepository.distanciaMetros(it, punto.ubicacion)
                         }
@@ -92,6 +112,8 @@ class MapaViewModel(
                         puntos = puntosMapa,
                         ubicacionUsuario = ubicacionActual ?: it.ubicacionUsuario,
                         nombreUsuario = usuario?.username ?: "",
+                        // M-13: suma todo lo ganado, igual que Mis lugares (también en puntos ya desactivados, RN-15)
+                        totalPuntos = progreso.sumOf { it.puntosTotales() },
                         seguirUbicacion = preferencias.seguirUbicacion,
                         mostrarBloqueados = preferencias.mostrarBloqueados,
                         cargando = false
@@ -117,6 +139,7 @@ class MapaViewModel(
                 }
             }
             MapaUiEvent.OnAlternarSeguimiento -> alternarSeguimiento()
+            is MapaUiEvent.OnCamaraGuardada -> _estado.update { it.copy(camara = evento.camara) }
             MapaUiEvent.OnErrorMostrado -> _estado.update { it.copy(mensajeError = null) }
             is MapaUiEvent.OnPermisoUbicacion -> {
                 permisoConcedido.value = evento.concedido
@@ -159,7 +182,8 @@ class MapaViewModel(
                     puntoInteresRepository = RepositoriosCompartidos.puntoInteres,
                     ubicacionRepository = RepositoriosCompartidos.ubicacion(app),
                     usuarioRepository = app.container.usuarioRepository,
-                    preferenciasRepository = app.container.preferenciasRepository
+                    preferenciasRepository = app.container.preferenciasRepository,
+                    progresoRepository = RepositoriosProgreso.progreso(app)
                 )
             }
         }
