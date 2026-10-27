@@ -3,15 +3,10 @@ package com.cookingplastic.triskeledu.data
 import android.content.Context
 import com.cookingplastic.triskeledu.data.location.GpsUbicacionRepository
 import com.cookingplastic.triskeledu.data.location.UbicacionRepository
-import com.cookingplastic.triskeledu.data.repository.FakePuntoInteresRepository
-import com.cookingplastic.triskeledu.data.repository.PuntoInteresRepository
 
-// Una sola instancia de los repositorios de puntos de interés y de ubicación, compartida por
-// todas las pantallas: lo que cambia el administrador se ve en el Mapa y todas usan el mismo GPS.
-// Cumple el papel de AppContainer para estos dos repositorios mientras el contenedor no los registre.
+// Una sola instancia del GPS para todas las pantallas: así Mapa, Detalle, Escanear y Admin editar
+// comparten la última ubicación conocida. Los puntos de interés ya vienen de AppContainer (Room).
 object RepositoriosCompartidos {
-
-    val puntoInteres: PuntoInteresRepository by lazy { FakePuntoInteresRepository() }
 
     @Volatile
     private var gps: UbicacionRepository? = null

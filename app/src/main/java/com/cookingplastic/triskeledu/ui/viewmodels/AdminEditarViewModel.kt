@@ -205,7 +205,7 @@ class AdminEditarViewModel(
                 AdminEditarViewModel(
                     capsulaRepository = app.container.capsulaRepository,
                     //la misma instancia que usan la lista del admin y el mapa: lo que se guarda aquí se ve allá
-                    puntoRepository = RepositoriosCompartidos.puntoInteres,
+                    puntoRepository = app.container.puntoInteresRepository,
                     ubicacionRepository = RepositoriosCompartidos.ubicacion(app),
                     //la ruta admin/editar?puntoId=... deja el id en el SavedStateHandle; sin él, es un punto nuevo
                     puntoId = createSavedStateHandle().get<String>(Rutas.ARG_PUNTO_ID)
