@@ -9,8 +9,8 @@ Proyecto de la asignatura **DSY1105 Desarrollo de Aplicaciones Móviles** (Duoc 
 | Integrante | Responsabilidades principales |
 | --- | --- |
 | Simón Inostroza | Mapa, detalle del punto, lista del modo administrador, aviso sin conexión, navegación, tema visual, ubicación GPS y modelo de puntos de interés |
-| Gabriel _(apellido)_ | Inicio de sesión, registro, recuperar contraseña, configuración, edición de puntos (administrador), contenedor de dependencias y base de datos Room |
-| Catalina _(apellido)_ | Escaneo de QR, lugar encontrado, mis lugares, progreso del usuario y comentarios |
+| Gabriel Sandoval | Inicio de sesión, registro, recuperar contraseña, configuración, edición de puntos (administrador), contenedor de dependencias y base de datos Room |
+| Catalina Lobos | Escaneo de QR, lugar encontrado, mis lugares, progreso del usuario y comentarios |
 
 ## Funcionalidades
 
