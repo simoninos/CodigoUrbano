@@ -38,6 +38,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -81,7 +82,11 @@ fun MapaScreen(
         viewModel.onEvent(MapaUiEvent.OnPermisoUbicacion(concedido))
     }
 
-    // Al abrir el mapa: si el permiso ya está concedido se usa; si no, se pide
+    // U-05: el diálogo del sistema se muestra una sola vez. rememberSaveable sobrevive al giro
+    // y al cambio de pestaña, así el mapa no vuelve a pedirlo si el usuario ya respondió
+    var permisoPreguntado by rememberSaveable { mutableStateOf(false) }
+
+    // Al abrir el mapa: si el permiso ya está concedido se usa; si no, se pide la primera vez
     LaunchedEffect(Unit) {
         val concedido = listOf(
             Manifest.permission.ACCESS_FINE_LOCATION,
@@ -89,7 +94,8 @@ fun MapaScreen(
         ).any { ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED }
         if (concedido) {
             viewModel.onEvent(MapaUiEvent.OnPermisoUbicacion(true))
-        } else {
+        } else if (!permisoPreguntado) {
+            permisoPreguntado = true
             pedirPermiso.launch(
                 arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
             )

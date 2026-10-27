@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import com.cookingplastic.triskeledu.data.RepositoriosCompartidos
+import com.cookingplastic.triskeledu.TriskeleduApp
 import com.cookingplastic.triskeledu.data.model.datosFaltantes
 import com.cookingplastic.triskeledu.data.model.puedeActivarse
 import com.cookingplastic.triskeledu.data.repository.PuntoInteresRepository
@@ -83,7 +83,8 @@ class AdminListaViewModel(
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
-                AdminListaViewModel(RepositoriosCompartidos.puntoInteres)
+                val app = this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as TriskeleduApp
+                AdminListaViewModel(app.container.puntoInteresRepository)
             }
         }
     }

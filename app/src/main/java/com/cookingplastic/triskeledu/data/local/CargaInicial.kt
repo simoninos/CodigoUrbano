@@ -8,7 +8,18 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 //Aquí no se pueden usar los DAO (la base se está creando), por eso va SQL directo
 object CargaInicial : RoomDatabase.Callback() {
 
-    override fun onCreate(db: SupportSQLiteDatabase) {
+    override fun onCreate(db: SupportSQLiteDatabase) = cargar(db)
+
+    //Cuando sube la versión, fallbackToDestructiveMigration borra y recrea las tablas sin llamar a
+    //onCreate, así que quedan vacías. Si al abrir no hay usuarios, se vuelven a cargar los datos de prueba
+    override fun onOpen(db: SupportSQLiteDatabase) {
+        db.query("SELECT COUNT(*) FROM usuarios").use { cursor ->
+            if (cursor.moveToFirst() && cursor.getInt(0) == 0) cargar(db)
+        }
+    }
+
+    //El orden importa por las claves foráneas: cápsulas antes que puntos, usuarios antes que preferencias
+    private fun cargar(db: SupportSQLiteDatabase) {
         DatosPrueba.capsulas.forEach { c ->
             db.execSQL(
                 "INSERT INTO capsulas (id, titulo, urlStream, categoria, duracionSegundos) VALUES (?, ?, ?, ?, ?)",
@@ -31,6 +42,32 @@ object CargaInicial : RoomDatabase.Callback() {
                         "VALUES (?, ?, ?, ?, ?, ?)",
                 arrayOf<Any?>(p.usuarioId, p.temaNoche.aNumero(), p.notifLugaresCercanos.aNumero(), p.notifNuevosVideos.aNumero(),
                     p.seguirUbicacion.aNumero(), p.mostrarBloqueados.aNumero())
+            )
+        }
+        //la ubicación del punto es @Embedded sin prefijo: columnas latitud, longitud y altitud
+        DatosPrueba.puntos.forEach { p ->
+            db.execSQL(
+                "INSERT INTO puntos_interes (id, nombre, descripcion, tipo, latitud, longitud, altitud, imagenUri, " +
+                        "descubreMasUrl, codigoQr, capsulaId, activo, actualizadoEn) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                arrayOf<Any?>(p.id, p.nombre, p.descripcion, p.tipo.name, p.ubicacion.latitud, p.ubicacion.longitud,
+                    p.ubicacion.altitud, p.imagenUri, p.descubreMasUrl, p.codigoQr, p.capsulaId, p.activo.aNumero(), p.actualizadoEn)
+            )
+        }
+        //la ubicación del escaneo usa @Embedded(prefix = "escaneo_")
+        DatosPrueba.progreso.forEach { g ->
+            db.execSQL(
+                "INSERT INTO progreso_puntos (id, usuarioId, puntoId, escaneadoEn, escaneo_latitud, escaneo_longitud, escaneo_altitud, " +
+                        "puntosEscaneo, videoVistoEn, puntosVideo, selfieUri, selfieEn, puntosSelfie, sincronizado) " +
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                arrayOf<Any?>(g.id, g.usuarioId, g.puntoId, g.escaneadoEn, g.escaneoUbicacion.latitud, g.escaneoUbicacion.longitud,
+                    g.escaneoUbicacion.altitud, g.puntosEscaneo, g.videoVistoEn, g.puntosVideo, g.selfieUri, g.selfieEn,
+                    g.puntosSelfie, g.sincronizado.aNumero())
+            )
+        }
+        DatosPrueba.comentarios.forEach { k ->
+            db.execSQL(
+                "INSERT INTO comentarios (id, usuarioId, puntoId, texto, creadoEn, sincronizado) VALUES (?, ?, ?, ?, ?, ?)",
+                arrayOf<Any?>(k.id, k.usuarioId, k.puntoId, k.texto, k.creadoEn, k.sincronizado.aNumero())
             )
         }
     }

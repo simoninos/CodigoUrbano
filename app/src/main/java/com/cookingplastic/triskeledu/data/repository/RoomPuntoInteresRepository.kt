@@ -1,8 +1,6 @@
 package com.cookingplastic.triskeledu.data.repository
 
-import com.cookingplastic.triskeledu.data.local.DatosPrueba
 import com.cookingplastic.triskeledu.data.local.dao.PuntoInteresDao
-import com.cookingplastic.triskeledu.data.model.Capsula
 import com.cookingplastic.triskeledu.data.model.PuntoInteres
 import com.cookingplastic.triskeledu.data.model.puedeActivarse
 import kotlinx.coroutines.flow.Flow
@@ -35,14 +33,5 @@ class RoomPuntoInteresRepository(
         if (activo && !punto.puedeActivarse()) return false
         dao.cambiarActivo(id, activo, System.currentTimeMillis())
         return true
-    }
-
-    // Llena la tabla con DatosPrueba la primera vez que se abre la app (tabla vacía).
-    // capsulasExtra: otras cápsulas que los puntos creados en la app puedan referenciar.
-    suspend fun cargarDatosIniciales(capsulasExtra: List<Capsula> = emptyList()) {
-        dao.insertarCapsulasDePrueba(DatosPrueba.capsulas + capsulasExtra)
-        if (dao.contar() == 0) {
-            dao.insertarTodos(DatosPrueba.puntos)
-        }
     }
 }

@@ -179,7 +179,7 @@ class MapaViewModel(
             initializer {
                 val app = this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as TriskeleduApp
                 MapaViewModel(
-                    puntoInteresRepository = RepositoriosCompartidos.puntoInteres,
+                    puntoInteresRepository = app.container.puntoInteresRepository,
                     ubicacionRepository = RepositoriosCompartidos.ubicacion(app),
                     usuarioRepository = app.container.usuarioRepository,
                     preferenciasRepository = app.container.preferenciasRepository,

@@ -1,11 +1,8 @@
 package com.cookingplastic.triskeledu.data.local.dao
 
 import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Upsert
-import com.cookingplastic.triskeledu.data.model.Capsula
 import com.cookingplastic.triskeledu.data.model.PuntoInteres
 import kotlinx.coroutines.flow.Flow
 
@@ -39,16 +36,4 @@ interface PuntoInteresDao {
 
     @Query("UPDATE puntos_interes SET activo = :activo, actualizadoEn = :fecha WHERE id = :id")
     suspend fun cambiarActivo(id: String, activo: Boolean, fecha: Long)
-
-    @Query("SELECT COUNT(*) FROM puntos_interes")
-    suspend fun contar(): Int
-
-    // Carga inicial de DatosPrueba. IGNORE deja intactas las filas que ya existen.
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insertarTodos(puntos: List<PuntoInteres>)
-
-    // Las cápsulas de prueba se insertan antes que los puntos, porque cada punto
-    // las referencia con su clave foránea capsulaId
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insertarCapsulasDePrueba(capsulas: List<Capsula>)
 }

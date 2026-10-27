@@ -160,7 +160,7 @@ class EscanearViewModel(
                 val ubicacion = RepositoriosCompartidos.ubicacion(app)
                 EscanearViewModel(
                     procesador = ProcesadorEscaneo(
-                        puntoInteresRepository = RepositoriosCompartidos.puntoInteres,
+                        puntoInteresRepository = app.container.puntoInteresRepository,
                         ubicacionRepository = ubicacion,
                         progresoRepository = RepositoriosProgreso.progreso(app)
                     ),

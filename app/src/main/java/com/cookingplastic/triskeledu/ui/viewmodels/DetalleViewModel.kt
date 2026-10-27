@@ -203,7 +203,7 @@ class DetalleViewModel(
                 val app = this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as TriskeleduApp
                 DetalleViewModel(
                     savedStateHandle = createSavedStateHandle(),
-                    puntoInteresRepository = RepositoriosCompartidos.puntoInteres,
+                    puntoInteresRepository = app.container.puntoInteresRepository,
                     ubicacionRepository = RepositoriosCompartidos.ubicacion(app),
                     redRepository = AndroidRedRepository(app),
                     usuarioRepository = app.container.usuarioRepository,

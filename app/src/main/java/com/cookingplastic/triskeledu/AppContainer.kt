@@ -5,9 +5,15 @@ import androidx.room.Room
 import com.cookingplastic.triskeledu.data.local.AppDatabase
 import com.cookingplastic.triskeledu.data.local.CargaInicial
 import com.cookingplastic.triskeledu.data.repository.CapsulaRepository
+import com.cookingplastic.triskeledu.data.repository.ComentarioRepository
 import com.cookingplastic.triskeledu.data.repository.PreferenciasRepository
+import com.cookingplastic.triskeledu.data.repository.ProgresoRepository
+import com.cookingplastic.triskeledu.data.repository.PuntoInteresRepository
 import com.cookingplastic.triskeledu.data.repository.RoomCapsulaRepository
+import com.cookingplastic.triskeledu.data.repository.RoomComentarioRepository
 import com.cookingplastic.triskeledu.data.repository.RoomPreferenciasRepository
+import com.cookingplastic.triskeledu.data.repository.RoomProgresoRepository
+import com.cookingplastic.triskeledu.data.repository.RoomPuntoInteresRepository
 import com.cookingplastic.triskeledu.data.repository.RoomUsuarioRepository
 import com.cookingplastic.triskeledu.data.repository.UsuarioRepository
 
@@ -19,8 +25,8 @@ class AppContainer(context: Context) {
         Room.databaseBuilder(context, AppDatabase::class.java, "triskeledu.db")
             //la primera vez que se crea la base, se llena con DatosPrueba
             .addCallback(CargaInicial)
-            //mientras desarrollamos: si sube la versión (por ejemplo, cuando Simon y Catalina agreguen
-            //sus tablas), la base se borra y se crea de nuevo en vez de cerrar la app
+            //mientras desarrollamos: si sube la versión, la base se borra y se crea de nuevo en vez de
+            //cerrar la app. CargaInicial vuelve a llenarla con los datos de prueba
             .fallbackToDestructiveMigration(dropAllTables = true)
             .build()
     }
@@ -32,4 +38,7 @@ class AppContainer(context: Context) {
         RoomPreferenciasRepository(database.preferenciasDao(), database.usuarioDao())
     }
     val capsulaRepository: CapsulaRepository by lazy { RoomCapsulaRepository(database.capsulaDao()) }
+    val puntoInteresRepository: PuntoInteresRepository by lazy { RoomPuntoInteresRepository(database.puntoInteresDao()) }
+    val progresoRepository: ProgresoRepository by lazy { RoomProgresoRepository(database.progresoDao()) }
+    val comentarioRepository: ComentarioRepository by lazy { RoomComentarioRepository(database.comentarioDao()) }
 }

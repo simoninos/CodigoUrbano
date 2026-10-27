@@ -1,22 +1,18 @@
 package com.cookingplastic.triskeledu.data
 
 import android.content.Context
-import com.cookingplastic.triskeledu.data.local.DatosPrueba
+import com.cookingplastic.triskeledu.TriskeleduApp
 import com.cookingplastic.triskeledu.data.repository.ComentarioRepository
-import com.cookingplastic.triskeledu.data.repository.FakeComentarioRepository
-import com.cookingplastic.triskeledu.data.repository.FakeProgresoRepository
 import com.cookingplastic.triskeledu.data.repository.ProgresoRepository
 
-//Una sola instancia del progreso y de los comentarios para toda la app: lo que se escanea en
-//Escanear se ve al tiro en Mis lugares, el Mapa y el Detalle.
-//Mismo patrón que RepositoriosCompartidos de Simon, mientras AppContainer no los registre.
-//Reciben context porque la versión Room lo va a necesitar; así las pantallas no cambian después
+//Entrega el progreso y los comentarios guardados en Room, que crea AppContainer.
+//Es una sola instancia para toda la app: lo que se escanea en Escanear se ve al tiro en
+//Mis lugares, el Mapa y el Detalle, y sigue ahí al cerrar y abrir la app
 object RepositoriosProgreso {
 
-    private val progresoFake: ProgresoRepository by lazy { FakeProgresoRepository(DatosPrueba.progreso) }
-    private val comentariosFake: ComentarioRepository by lazy { FakeComentarioRepository(DatosPrueba.comentarios) }
+    private fun contenedor(context: Context) = (context.applicationContext as TriskeleduApp).container
 
-    fun progreso(context: Context): ProgresoRepository = progresoFake
+    fun progreso(context: Context): ProgresoRepository = contenedor(context).progresoRepository
 
-    fun comentarios(context: Context): ComentarioRepository = comentariosFake
+    fun comentarios(context: Context): ComentarioRepository = contenedor(context).comentarioRepository
 }

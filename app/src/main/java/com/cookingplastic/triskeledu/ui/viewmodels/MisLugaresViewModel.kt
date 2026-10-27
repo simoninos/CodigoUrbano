@@ -6,7 +6,6 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.cookingplastic.triskeledu.TriskeleduApp
-import com.cookingplastic.triskeledu.data.RepositoriosCompartidos
 import com.cookingplastic.triskeledu.data.RepositoriosProgreso
 import com.cookingplastic.triskeledu.data.model.PUNTOS_MAXIMOS_LUGAR
 import com.cookingplastic.triskeledu.data.model.ProgresoPunto
@@ -85,7 +84,7 @@ class MisLugaresViewModel(
                 MisLugaresViewModel(
                     progresoRepository = RepositoriosProgreso.progreso(app),
                     usuarioRepository = app.container.usuarioRepository,
-                    puntosActivos = RepositoriosCompartidos.puntoInteres.obtenerActivos()
+                    puntosActivos = app.container.puntoInteresRepository.obtenerActivos()
                 )
             }
         }
