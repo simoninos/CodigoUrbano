@@ -10,14 +10,11 @@ object Rutas {
     const val REGISTRO = "registro"
     const val RECUPERAR = "recuperar"
 
-    // Nombre del argumento que llevan Detalle, Lugar encontrado y Admin editar
+    // Nombre del argumento que llevan Detalle y Admin editar
     const val ARG_PUNTO_ID = "puntoId"
 
     const val DETALLE = "detalle/{$ARG_PUNTO_ID}"
     fun detalle(puntoId: String) = "detalle/$puntoId"
-
-    const val ENCONTRADO = "encontrado/{$ARG_PUNTO_ID}"
-    fun encontrado(puntoId: String) = "encontrado/$puntoId"
 
     const val CONFIGURACION = "configuracion"
 

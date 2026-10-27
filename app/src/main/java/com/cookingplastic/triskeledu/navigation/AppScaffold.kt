@@ -22,8 +22,15 @@ fun AppScaffold(modifier: Modifier = Modifier) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val rutaActual = navBackStackEntry?.destination?.route
-    // El Detalle mantiene la barra inferior con la pestaña Mapa seleccionada (mockup)
+    // El Detalle mantiene la barra inferior con la pestaña desde donde se abrió seleccionada
+    // (Mapa, Escanear o Mis lugares); la pestaña es la pantalla anterior en el historial
     val enDetalle = rutaActual == Rutas.DETALLE
+    val pestanaDelDetalle = if (enDetalle) {
+        Destination.entries.find { it.route == navController.previousBackStackEntry?.destination?.route }
+            ?: Destination.MAPA
+    } else {
+        null
+    }
     val mostrarBarra = Destination.esPestana(rutaActual) || enDetalle
 
     Scaffold(
@@ -37,8 +44,7 @@ fun AppScaffold(modifier: Modifier = Modifier) {
             ) {
                 NavigationBar {
                     Destination.entries.forEach { destino ->
-                        val seleccionada = rutaActual == destino.route ||
-                            (enDetalle && destino == Destination.MAPA)
+                        val seleccionada = rutaActual == destino.route || destino == pestanaDelDetalle
                         NavigationBarItem(
                             selected = seleccionada,
                             onClick = {
