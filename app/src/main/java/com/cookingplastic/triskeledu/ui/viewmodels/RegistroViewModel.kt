@@ -73,7 +73,8 @@ class RegistroViewModel(private val usuarioRepository: UsuarioRepository) : View
 
         //se recortan una vez y se usan iguales en todo el registro
         val username = actual.username.trim()
-        val correo = actual.correo.trim()
+        //el correo se guarda en minúsculas: así Camila@... y camila@... son la misma cuenta
+        val correo = actual.correo.trim().lowercase()
 
         viewModelScope.launch {
             _estado.update { it.copy(cargando = true, mensajeError = null) }

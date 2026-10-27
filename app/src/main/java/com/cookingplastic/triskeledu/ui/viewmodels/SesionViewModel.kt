@@ -64,7 +64,7 @@ class SesionViewModel(private val usuarioRepository: UsuarioRepository) : ViewMo
         viewModelScope.launch {
             _estado.update { it.copy(cargando = true, mensajeError = null) }
             try {
-                val usuario = usuarioRepository.iniciarSesion(actual.correo.trim(), actual.clave)
+                val usuario = usuarioRepository.iniciarSesion(actual.correo.trim().lowercase(), actual.clave)
                 _estado.update {
                     it.copy(
                         cargando = false,
