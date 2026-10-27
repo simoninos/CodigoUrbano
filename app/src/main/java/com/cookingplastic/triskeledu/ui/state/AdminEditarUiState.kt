@@ -8,6 +8,8 @@ import java.util.UUID
 data class AdminEditarUiState(
     //el id se crea al abrir el formulario y el QR lo usa como contenido
     val id: String = UUID.randomUUID().toString(),
+    //true cuando se abrió un punto que ya existe (la ruta trae su id)
+    val esEdicion: Boolean = false,
     val nombre: String = "",
     //null hasta que se elige uno del menú
     val tipo: TipoPuntoInteres? = null,
@@ -35,6 +37,10 @@ data class AdminEditarUiState(
     val errorAltitud: String? = null,
     val errorDescubreMas: String? = null,
     val mensajeError: String? = null,
+    //avisos bajo la imagen y bajo "Usar mi ubicación" (permiso negado o GPS sin respuesta)
+    val avisoImagen: String? = null,
+    val avisoUbicacion: String? = null,
+    val buscandoUbicacion: Boolean = false,
     val guardando: Boolean = false,
     val guardado: Boolean = false
 ) {
