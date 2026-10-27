@@ -7,9 +7,9 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 
 //Versión de prueba: guarda los comentarios en memoria hasta tener Room
-class FakeComentarioRepository : ComentarioRepository {
+class FakeComentarioRepository(comentariosIniciales: List<Comentario> = emptyList()) : ComentarioRepository {
 
-    private val comentarios = MutableStateFlow<List<Comentario>>(emptyList())
+    private val comentarios = MutableStateFlow(comentariosIniciales)
 
     override fun comentariosDe(puntoId: String): Flow<List<Comentario>> =
         comentarios.map { lista ->

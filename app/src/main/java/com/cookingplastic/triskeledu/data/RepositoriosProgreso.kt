@@ -1,6 +1,7 @@
 package com.cookingplastic.triskeledu.data
 
 import android.content.Context
+import com.cookingplastic.triskeledu.data.local.DatosPrueba
 import com.cookingplastic.triskeledu.data.repository.ComentarioRepository
 import com.cookingplastic.triskeledu.data.repository.FakeComentarioRepository
 import com.cookingplastic.triskeledu.data.repository.FakeProgresoRepository
@@ -12,8 +13,8 @@ import com.cookingplastic.triskeledu.data.repository.ProgresoRepository
 //Reciben context porque la versión Room lo va a necesitar; así las pantallas no cambian después
 object RepositoriosProgreso {
 
-    private val progresoFake: ProgresoRepository by lazy { FakeProgresoRepository() }
-    private val comentariosFake: ComentarioRepository by lazy { FakeComentarioRepository() }
+    private val progresoFake: ProgresoRepository by lazy { FakeProgresoRepository(DatosPrueba.progreso) }
+    private val comentariosFake: ComentarioRepository by lazy { FakeComentarioRepository(DatosPrueba.comentarios) }
 
     fun progreso(context: Context): ProgresoRepository = progresoFake
 

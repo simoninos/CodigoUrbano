@@ -9,10 +9,10 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 
 //Versión de prueba: guarda el progreso en memoria hasta tener Room. Se pierde al cerrar la app
-class FakeProgresoRepository : ProgresoRepository {
+class FakeProgresoRepository(filasIniciales: List<ProgresoPunto> = emptyList()) : ProgresoRepository {
 
     //todas las filas de todos los usuarios; al cambiar, avisa a quien esté escuchando
-    private val filas = MutableStateFlow<List<ProgresoPunto>>(emptyList())
+    private val filas = MutableStateFlow(filasIniciales)
 
     //map transforma cada lista nueva: aquí deja solo las del usuario
     override fun progresoDe(usuarioId: String): Flow<List<ProgresoPunto>> =
