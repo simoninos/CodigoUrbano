@@ -1,7 +1,10 @@
 package com.cookingplastic.triskeledu.data.local
 
 import com.cookingplastic.triskeledu.data.model.Capsula
+import com.cookingplastic.triskeledu.data.model.Comentario
+import com.cookingplastic.triskeledu.data.model.PUNTOS_VIDEO
 import com.cookingplastic.triskeledu.data.model.Preferencias
+import com.cookingplastic.triskeledu.data.model.ProgresoPunto
 import com.cookingplastic.triskeledu.data.model.PuntoInteres
 import com.cookingplastic.triskeledu.data.model.RolUsuario
 import com.cookingplastic.triskeledu.data.model.TipoPuntoInteres
@@ -14,7 +17,7 @@ import com.cookingplastic.triskeledu.data.model.Usuario
  * - Puntos de interés: 15 lugares reales de Santiago Centro. Las coordenadas vienen de Mapcarta
  *   (datos de OpenStreetMap); cada punto indica su fuente. Las altitudes marcadas "aprox."
  *   son estimaciones. El tipo de cada punto es de prueba y no corresponde a su declaratoria oficial.
- * - Usuarios y preferencias: ficticios.
+ * - Usuarios, preferencias, progreso y comentarios: ficticios.
  * - Contraseña de todos los usuarios: "Demo1234". Hash PBKDF2WithHmacSHA256 con
  *   120000 iteraciones, clave de 32 bytes y sal de 16 bytes, en Base64 sin saltos de línea.
  * - Los identificadores son UUID fijos, para poder referirse a cada registro desde el código.
@@ -359,4 +362,75 @@ object DatosPrueba {
     val UBICACION_BORDE_FUERA = Ubicacion(latitud = -33.442392, longitud = -70.65388, altitud = 537.0)
     /** En la Plaza de Armas, a 712 m de La Moneda: lejos para escanear La Moneda. */
     val UBICACION_PLAZA_DE_ARMAS = Ubicacion(latitud = -33.43728, longitud = -70.65029, altitud = 574.0)
+
+    // ---------- Progreso y comentarios ----------
+    // Van al final porque usan los puntos, los usuarios y las ubicaciones de arriba: en un object,
+    // las propiedades se crean en orden, y una que aún no se crea vale null.
+    // Las fechas son relativas al momento en que se abre la app, para que "recién descubierto"
+    // (menos de un día) se vea siempre.
+    private const val UNA_HORA_MS = 60L * 60L * 1000L
+    private val AHORA = System.currentTimeMillis()
+
+    // camila_explora tiene un punto de cada estado; tomas_ruta, uno completado
+    val progreso: List<ProgresoPunto> = listOf(
+        // Desbloqueado hace 2 horas, sin video: 5/20, "recién descubierto" en Mis lugares
+        ProgresoPunto(
+            id = "13f69bdf-7d25-5822-8434-5546bde7784a",
+            usuarioId = USUARIO_CAMILA.id,
+            puntoId = PUNTO_LA_MONEDA.id,
+            escaneadoEn = AHORA - 2 * UNA_HORA_MS,
+            escaneoUbicacion = UBICACION_CERCA_LA_MONEDA,
+        ),
+        // Desbloqueado hace 3 días, sin video: 5/20, "falta el video" en Mis lugares
+        ProgresoPunto(
+            id = "3a933908-1a05-5928-989a-b4d2d677070d",
+            usuarioId = USUARIO_CAMILA.id,
+            puntoId = PUNTO_CATEDRAL.id,
+            escaneadoEn = AHORA - 72 * UNA_HORA_MS,
+            escaneoUbicacion = PUNTO_CATEDRAL.ubicacion,
+        ),
+        // Completado: escaneo y video, 20/20
+        ProgresoPunto(
+            id = "d829bc4e-2691-5751-b95d-9531b295291d",
+            usuarioId = USUARIO_CAMILA.id,
+            puntoId = PUNTO_PRECOLOMBINO.id,
+            escaneadoEn = AHORA - 120 * UNA_HORA_MS,
+            escaneoUbicacion = PUNTO_PRECOLOMBINO.ubicacion,
+            videoVistoEn = AHORA - 119 * UNA_HORA_MS,
+            puntosVideo = PUNTOS_VIDEO,
+        ),
+        ProgresoPunto(
+            id = "514157e8-5cf0-54fe-b846-3fdbd2976b4a",
+            usuarioId = USUARIO_TOMAS.id,
+            puntoId = PUNTO_PLAZA_ARMAS.id,
+            escaneadoEn = AHORA - 48 * UNA_HORA_MS,
+            escaneoUbicacion = UBICACION_PLAZA_DE_ARMAS,
+            videoVistoEn = AHORA - 47 * UNA_HORA_MS,
+            puntosVideo = PUNTOS_VIDEO,
+        ),
+    )
+
+    val comentarios: List<Comentario> = listOf(
+        Comentario(
+            id = "dfbc2f95-b730-5414-97a5-b986de8307c7",
+            usuarioId = USUARIO_CAMILA.id,
+            puntoId = PUNTO_PRECOLOMBINO.id,
+            texto = "El video explica muy bien cómo aprende una máquina. Lo vería de nuevo.",
+            creadoEn = AHORA - 118 * UNA_HORA_MS,
+        ),
+        Comentario(
+            id = "f6fcc412-cc6c-56fd-ad0c-160c1bce4ff5",
+            usuarioId = USUARIO_TOMAS.id,
+            puntoId = PUNTO_PRECOLOMBINO.id,
+            texto = "Vine con mi curso y la cerámica nos encantó.",
+            creadoEn = AHORA - 30 * UNA_HORA_MS,
+        ),
+        Comentario(
+            id = "fc7bcb4f-226f-5ff6-9a11-1d4cd134f4c5",
+            usuarioId = USUARIO_TOMAS.id,
+            puntoId = PUNTO_LA_MONEDA.id,
+            texto = "Recomiendo llegar temprano para ver el cambio de guardia.",
+            creadoEn = AHORA - 50 * UNA_HORA_MS,
+        ),
+    )
 }

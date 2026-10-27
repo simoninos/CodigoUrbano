@@ -31,6 +31,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.cookingplastic.triskeledu.data.model.EstadoPunto
 import com.cookingplastic.triskeledu.data.model.Ubicacion
+import com.cookingplastic.triskeledu.ui.state.CamaraMapa
 import com.cookingplastic.triskeledu.ui.state.PuntoMapa
 import com.cookingplastic.triskeledu.ui.theme.Bloqueado
 import com.cookingplastic.triskeledu.ui.theme.BloqueadoNoche
@@ -78,8 +79,10 @@ fun MapaOsm(
     seleccionadoId: String?,
     seguirUbicacion: Boolean,
     solicitudCentrar: Int,
+    camaraInicial: CamaraMapa?,
     alTocarPunto: (String) -> Unit,
     alTocarMapa: () -> Unit,
+    alGuardarCamara: (CamaraMapa) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -100,6 +103,7 @@ fun MapaOsm(
     // llamen a la versión más reciente de estas funciones
     val alTocarPuntoActual by rememberUpdatedState(alTocarPunto)
     val alTocarMapaActual by rememberUpdatedState(alTocarMapa)
+    val alGuardarCamaraActual by rememberUpdatedState(alGuardarCamara)
 
     // Los íconos se dibujan una sola vez por combinación de estado, tamaño y tema
     val iconos = remember { mutableMapOf<String, Drawable>() }
@@ -109,8 +113,12 @@ fun MapaOsm(
             setTileSource(TileSourceFactory.MAPNIK)
             setMultiTouchControls(true)
             zoomController.setVisibility(CustomZoomButtonsController.Visibility.NEVER)
-            controller.setZoom(ZOOM_INICIAL)
-            controller.setCenter(CENTRO_INICIAL)
+            // osmdroid destruye las capas (y borra el ícono de cada marcador) cuando la vista sale
+            // de la ventana. Se desactiva para que la destrucción ocurra solo en onDispose.
+            setDestroyMode(false)
+            // M-23: se abre donde quedó la última vez; la primera vez, en La Moneda
+            controller.setZoom(camaraInicial?.zoom ?: ZOOM_INICIAL)
+            controller.setCenter(camaraInicial?.let { GeoPoint(it.latitud, it.longitud) } ?: CENTRO_INICIAL)
         }
     }
 
@@ -161,27 +169,46 @@ fun MapaOsm(
         lifecycleOwner.lifecycle.addObserver(observador)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observador) }
     }
+    // Al salir de la pantalla se entrega la cámara antes de liberar el mapa (M-23)
     DisposableEffect(Unit) {
-        onDispose { mapView.onDetach() }
+        onDispose {
+            alGuardarCamaraActual(
+                CamaraMapa(
+                    latitud = mapView.mapCenter.latitude,
+                    longitud = mapView.mapCenter.longitude,
+                    zoom = mapView.zoomLevelDouble
+                )
+            )
+            mapView.onDetach()
+        }
     }
 
+    // Los LaunchedEffect se ejecutan cada vez que el mapa entra en pantalla, no solo cuando su
+    // clave cambia. Se guardan los valores con que entró para reaccionar solo a cambios nuevos.
+    val camaraRestaurada = camaraInicial != null
+    val ubicacionAlEntrar = remember { ubicacionUsuario }
+    val centrarAlEntrar = remember { solicitudCentrar }
+    val seleccionAlEntrar = remember { seleccionadoId }
+
     // M-06 y M-07: la primera ubicación centra el mapa; después lo sigue solo si seguirUbicacion
-    var yaCentrado by remember { mutableStateOf(false) }
+    var yaCentrado by remember { mutableStateOf(camaraRestaurada) }
     LaunchedEffect(ubicacionUsuario) {
         val u = ubicacionUsuario ?: return@LaunchedEffect
+        if (camaraRestaurada && u == ubicacionAlEntrar) return@LaunchedEffect
         if (!yaCentrado || seguirUbicacion) {
             mapView.controller.animateTo(GeoPoint(u.latitud, u.longitud))
             yaCentrado = true
         }
     }
-    // Botón "Centrar"
+    // Botón "Centrar": solo cuando se presiona estando en el mapa
     LaunchedEffect(solicitudCentrar) {
-        if (solicitudCentrar > 0) {
+        if (solicitudCentrar != centrarAlEntrar) {
             ubicacionUsuario?.let { mapView.controller.animateTo(GeoPoint(it.latitud, it.longitud)) }
         }
     }
     // Al elegir un punto, el mapa se mueve hacia él
     LaunchedEffect(seleccionadoId) {
+        if (seleccionadoId == seleccionAlEntrar) return@LaunchedEffect
         puntos.find { it.punto.id == seleccionadoId }?.let {
             mapView.controller.animateTo(GeoPoint(it.punto.ubicacion.latitud, it.punto.ubicacion.longitud))
         }

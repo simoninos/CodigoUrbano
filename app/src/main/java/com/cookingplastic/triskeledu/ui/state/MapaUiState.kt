@@ -12,6 +12,13 @@ data class PuntoMapa(
     val distanciaMetros: Double?
 )
 
+// Posición de la cámara del mapa: centro y nivel de zoom
+data class CamaraMapa(
+    val latitud: Double,
+    val longitud: Double,
+    val zoom: Double
+)
+
 data class MapaUiState(
     val puntos: List<PuntoMapa> = emptyList(),
     val seleccionadoId: String? = null,
@@ -23,6 +30,8 @@ data class MapaUiState(
     val mostrarBloqueados: Boolean = true,
     // Sube en 1 cada vez que se toca "Centrar"; el mapa reacciona al cambio
     val solicitudCentrar: Int = 0,
+    // M-23: cámara al salir del mapa; al volver se abre en el mismo lugar (null = primera vez)
+    val camara: CamaraMapa? = null,
     val cargando: Boolean = true,
     val mensajeError: String? = null
 ) {

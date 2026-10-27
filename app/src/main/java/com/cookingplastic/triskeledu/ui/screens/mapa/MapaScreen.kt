@@ -144,8 +144,10 @@ fun MapaContent(
                 seleccionadoId = estado.seleccionadoId,
                 seguirUbicacion = estado.seguirUbicacion,
                 solicitudCentrar = estado.solicitudCentrar,
+                camaraInicial = estado.camara,
                 alTocarPunto = { onEvent(MapaUiEvent.OnClickPunto(it)) },
                 alTocarMapa = { onEvent(MapaUiEvent.OnCerrarTarjeta) },
+                alGuardarCamara = { onEvent(MapaUiEvent.OnCamaraGuardada(it)) },
                 modifier = Modifier.fillMaxSize()
             )
         }

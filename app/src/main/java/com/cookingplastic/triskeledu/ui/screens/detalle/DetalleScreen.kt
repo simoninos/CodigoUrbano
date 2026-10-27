@@ -1,5 +1,10 @@
 package com.cookingplastic.triskeledu.ui.screens.detalle
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -16,13 +21,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.ChatBubbleOutline
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.QrCodeScanner
@@ -33,6 +41,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
@@ -50,6 +59,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -57,11 +67,17 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import com.cookingplastic.triskeledu.R
 import com.cookingplastic.triskeledu.data.local.DatosPrueba
+import com.cookingplastic.triskeledu.data.model.Comentario
+import com.cookingplastic.triskeledu.data.model.EstadoPunto
 import com.cookingplastic.triskeledu.ui.components.DialogoSinConexion
+import com.cookingplastic.triskeledu.ui.components.EsferaAgua
 import com.cookingplastic.triskeledu.ui.event.DetalleUiEvent
 import com.cookingplastic.triskeledu.ui.state.DetalleUiState
 import com.cookingplastic.triskeledu.ui.theme.TriskeleduTheme
+import com.cookingplastic.triskeledu.ui.validation.ValidacionComentario
 import com.cookingplastic.triskeledu.ui.viewmodels.DetalleViewModel
+import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
 import kotlin.math.roundToInt
 
@@ -158,35 +174,48 @@ fun DetalleContent(
                         )
                     }
 
-                    // D-05: nombre, tipo y distancia en vivo
+                    // D-05: nombre, tipo y distancia en vivo; D-15: esfera de avance a la derecha
                     item {
-                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Text(
-                                text = punto.nombre,
-                                style = MaterialTheme.typography.headlineMedium,
-                                color = MaterialTheme.colorScheme.onBackground
-                            )
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                verticalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
                                 Text(
-                                    text = punto.tipo.descripcion,
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    maxLines = 1,
-                                    modifier = Modifier
-                                        .weight(1f, fill = false)
-                                        .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
-                                        .padding(horizontal = 10.dp, vertical = 2.dp)
+                                    text = punto.nombre,
+                                    style = MaterialTheme.typography.headlineMedium,
+                                    color = MaterialTheme.colorScheme.onBackground
                                 )
-                                Text(
-                                    text = textoDistancia(estado.distanciaMetros),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    maxLines = 1
-                                )
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Text(
+                                        text = punto.tipo.descripcion,
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        maxLines = 1,
+                                        modifier = Modifier
+                                            .weight(1f, fill = false)
+                                            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
+                                            .padding(horizontal = 10.dp, vertical = 2.dp)
+                                    )
+                                    Text(
+                                        text = textoDistancia(estado.distanciaMetros),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        maxLines = 1
+                                    )
+                                }
                             }
+                            EsferaAgua(
+                                puntos = estado.puntosLugar,
+                                maximo = estado.puntosMaximos,
+                                modifier = Modifier.size(64.dp)
+                            )
                         }
                     }
 
@@ -248,15 +277,32 @@ fun DetalleContent(
                                     detalle = "+5 pts · Pendiente"
                                 )
                             }
-                            Actividad(
-                                icono = Icons.Filled.PlayArrow,
-                                fondoIcono = MaterialTheme.colorScheme.secondary,
-                                colorIcono = MaterialTheme.colorScheme.onSecondary,
-                                titulo = "Mira el video sobre IA",
-                                detalle = "+15 pts · Hay que verlo completo",
-                                borde = MaterialTheme.colorScheme.primary,
-                                alPresionar = { onEvent(DetalleUiEvent.OnVerVideo) }
-                            )
+                            if (estado.videoVisto) {
+                                Actividad(
+                                    icono = Icons.Filled.Check,
+                                    fondoIcono = MaterialTheme.colorScheme.primary,
+                                    colorIcono = MaterialTheme.colorScheme.onPrimary,
+                                    titulo = "Video visto",
+                                    detalle = listOfNotNull(estado.capsula?.titulo, "+15 pts · Completado").joinToString(" · "),
+                                    fondo = MaterialTheme.colorScheme.primaryContainer,
+                                    borde = null
+                                )
+                            } else {
+                                Actividad(
+                                    icono = Icons.Filled.PlayArrow,
+                                    fondoIcono = MaterialTheme.colorScheme.secondary,
+                                    colorIcono = MaterialTheme.colorScheme.onSecondary,
+                                    // D-21: título y duración de la cápsula del punto
+                                    titulo = estado.capsula?.titulo ?: "Mira el video sobre IA",
+                                    detalle = listOfNotNull(
+                                        "+15 pts",
+                                        estado.capsula?.duracionSegundos?.let { textoDuracion(it) },
+                                        "Hay que verlo completo"
+                                    ).joinToString(" · "),
+                                    borde = MaterialTheme.colorScheme.primary,
+                                    alPresionar = { onEvent(DetalleUiEvent.OnVerVideo) }
+                                )
+                            }
                             Actividad(
                                 icono = Icons.Filled.PhotoCamera,
                                 titulo = "Sube tu selfie",
@@ -268,6 +314,32 @@ fun DetalleContent(
                                 titulo = "Comenta algo interesante",
                                 detalle = "Se guarda en tu teléfono",
                                 alPresionar = { onEvent(DetalleUiEvent.OnComentar) }
+                            )
+                            // D-16: el formulario se despliega bajo la actividad
+                            AnimatedVisibility(
+                                visible = estado.formularioComentarioAbierto,
+                                enter = expandVertically() + fadeIn(),
+                                exit = shrinkVertically() + fadeOut()
+                            ) {
+                                FormularioComentario(estado = estado, onEvent = onEvent)
+                            }
+                        }
+                    }
+
+                    // D-20: comentarios del lugar, del más nuevo al más antiguo
+                    if (estado.comentarios.isNotEmpty()) {
+                        item {
+                            Text(
+                                text = "Comentarios (${estado.comentarios.size})",
+                                style = MaterialTheme.typography.titleSmall
+                            )
+                        }
+                        // key permite que cada comentario nuevo entre con animación y no redibuje los demás
+                        items(estado.comentarios, key = { it.id }) { comentario ->
+                            TarjetaComentario(
+                                comentario = comentario,
+                                esMio = comentario.usuarioId == estado.usuarioId,
+                                modifier = Modifier.animateItem()
                             )
                         }
                     }
@@ -374,6 +446,112 @@ private fun Actividad(
     }
 }
 
+// Formulario de comentario (D-17 y D-18): error con ícono bajo el campo, contador de caracteres
+// y "Publicar" deshabilitado mientras el texto no sea válido
+@Composable
+private fun FormularioComentario(estado: DetalleUiState, onEvent: (DetalleUiEvent) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        OutlinedTextField(
+            value = estado.textoComentario,
+            onValueChange = { onEvent(DetalleUiEvent.OnTextoComentarioChange(it)) },
+            label = { Text("Tu comentario") },
+            minLines = 3,
+            maxLines = 6,
+            isError = estado.errorComentario != null,
+            trailingIcon = {
+                if (estado.errorComentario != null) {
+                    Icon(Icons.Filled.Error, contentDescription = "Error", tint = MaterialTheme.colorScheme.error)
+                }
+            },
+            supportingText = {
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = estado.errorComentario ?: "",
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text("${estado.textoComentario.trim().length}/${ValidacionComentario.MAXIMO_CARACTERES}")
+                }
+            },
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+            shape = RoundedCornerShape(14.dp),
+            modifier = Modifier.fillMaxWidth()
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            TextButton(onClick = { onEvent(DetalleUiEvent.OnComentar) }) { Text("Cancelar") }
+            Button(
+                onClick = { onEvent(DetalleUiEvent.OnPublicarComentario) },
+                enabled = estado.puedePublicarComentario,
+                shape = RoundedCornerShape(14.dp),
+                modifier = Modifier.height(48.dp)
+            ) {
+                if (estado.guardandoComentario) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                } else {
+                    Text("Publicar", style = MaterialTheme.typography.labelLarge)
+                }
+            }
+        }
+    }
+}
+
+// Un comentario guardado: autor, fecha y texto
+@Composable
+private fun TarjetaComentario(comentario: Comentario, esMio: Boolean, modifier: Modifier = Modifier) {
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        modifier = modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = if (esMio) "Tú" else "Otro explorador",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.weight(1f)
+                )
+                Text(
+                    text = textoFecha(comentario.creadoEn),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Text(
+                text = comentario.texto,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+    }
+}
+
+// Duración de la cápsula: "58 s" bajo un minuto, "1 min" o "1 min 30 s" desde un minuto
+private fun textoDuracion(segundos: Int): String {
+    val minutos = segundos / 60
+    val resto = segundos % 60
+    return when {
+        minutos == 0 -> "$resto s"
+        resto == 0 -> "$minutos min"
+        else -> "$minutos min $resto s"
+    }
+}
+
+// Fecha del comentario, por ejemplo "26-10-2026 18:40"
+private fun textoFecha(milisegundos: Long): String =
+    SimpleDateFormat("dd-MM-yyyy HH:mm", Locale("es", "CL")).format(Date(milisegundos))
+
 // "a 35 m" bajo 1 km, "a 1,2 km" desde 1 km, "Calculando distancia…" sin ubicación
 private fun textoDistancia(metros: Double?): String = when {
     metros == null -> "Calculando distancia…"
@@ -399,7 +577,20 @@ private fun DetallePreview() {
 private fun DetalleNochePreview() {
     TriskeleduTheme(darkTheme = true) {
         DetalleContent(
-            estado = DetalleUiState(punto = DatosPrueba.PUNTO_LA_MONEDA, distanciaMetros = 35.0, cargando = false),
+            estado = DetalleUiState(
+                punto = DatosPrueba.PUNTO_LA_MONEDA,
+                capsula = DatosPrueba.CAPSULA_IA_01,
+                estadoPunto = EstadoPunto.DESBLOQUEADO,
+                puntosLugar = 5,
+                distanciaMetros = 35.0,
+                cargando = false,
+                formularioComentarioAbierto = true,
+                textoComentario = "Me gustó el cambio de guardia",
+                comentarios = listOf(
+                    Comentario(usuarioId = "u1", puntoId = DatosPrueba.PUNTO_LA_MONEDA.id, texto = "Muy buena la explicación del video")
+                ),
+                usuarioId = "u1"
+            ),
             onEvent = {},
             alVolver = {},
             alAbrirConfiguracion = {}

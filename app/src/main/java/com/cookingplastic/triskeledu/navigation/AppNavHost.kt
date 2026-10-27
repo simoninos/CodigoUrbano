@@ -7,12 +7,7 @@ import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
@@ -24,10 +19,12 @@ import com.cookingplastic.triskeledu.ui.screens.admin.AdminEditarScreen
 import com.cookingplastic.triskeledu.ui.screens.admin.AdminListaScreen
 import com.cookingplastic.triskeledu.ui.screens.configuracion.ConfiguracionScreen
 import com.cookingplastic.triskeledu.ui.screens.detalle.DetalleScreen
+import com.cookingplastic.triskeledu.ui.screens.escanear.EscanearScreen
 import com.cookingplastic.triskeledu.ui.screens.login.LoginScreen
 import com.cookingplastic.triskeledu.ui.screens.login.RecuperarScreen
 import com.cookingplastic.triskeledu.ui.screens.login.RegistroScreen
 import com.cookingplastic.triskeledu.ui.screens.mapa.MapaScreen
+import com.cookingplastic.triskeledu.ui.screens.mislugares.MisLugaresScreen
 
 private const val DURACION_MS = 300
 
@@ -97,8 +94,18 @@ fun AppNavHost(
                 alAbrirConfiguracion = { navController.navigate(Rutas.CONFIGURACION) }
             )
         }
-        composable(Destination.ESCANEAR.route) { PantallaVacia("Escanear QR") }
-        composable(Destination.MIS_LUGARES.route) { PantallaVacia("Mis lugares") }
+        composable(Destination.ESCANEAR.route) {
+            // Lugar encontrado (pantalla 6) se muestra dentro de Escanear; desde ahí se abre el detalle
+            EscanearScreen(
+                alAbrirLugar = { puntoId -> navController.navigate(Rutas.detalle(puntoId)) }
+            )
+        }
+        composable(Destination.MIS_LUGARES.route) {
+            MisLugaresScreen(
+                alVerDetalle = { puntoId -> navController.navigate(Rutas.detalle(puntoId)) },
+                alAbrirConfiguracion = { navController.navigate(Rutas.CONFIGURACION) }
+            )
+        }
 
         // ---------- Pantallas internas ----------
         composable(
@@ -111,11 +118,6 @@ fun AppNavHost(
                 alAbrirConfiguracion = { navController.navigate(Rutas.CONFIGURACION) }
             )
         }
-
-        composable(
-            route = Rutas.ENCONTRADO,
-            arguments = listOf(navArgument(Rutas.ARG_PUNTO_ID) { type = NavType.StringType })
-        ) { PantallaVacia("Lugar encontrado") }
 
         composable(
             route = Rutas.CONFIGURACION,
@@ -158,13 +160,5 @@ fun AppNavHost(
         ) {
             AdminEditarScreen(alVolver = { navController.popBackStack() })
         }
-    }
-}
-
-// Contenido provisorio de una ruta cuya pantalla todavía no está implementada
-@Composable
-private fun PantallaVacia(nombre: String) {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text(text = nombre, style = MaterialTheme.typography.headlineSmall)
     }
 }
