@@ -2,7 +2,11 @@ package com.cookingplastic.triskeledu.ui.screens.escanear
 
 import android.Manifest
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 import android.content.pm.PackageManager
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
@@ -39,6 +43,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,7 +54,10 @@ import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -90,23 +98,51 @@ fun EscanearScreen(
 ) {
     val estado by viewModel.estado.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val actividad = LocalActivity.current
+    val lifecycleOwner = LocalLifecycleOwner.current
 
-    //abre los diálogos del sistema y, al responder, se revisa cómo quedó cada permiso
-    val pedirPermisos = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
-    ) {
+    //avisa al ViewModel cómo están los permisos en este momento
+    fun informarPermisos() {
         viewModel.onEvent(EscanearUiEvent.OnPermisoCamara(tienePermiso(context, Manifest.permission.CAMERA)))
         viewModel.onEvent(EscanearUiEvent.OnPermisoUbicacion(tieneUbicacion(context)))
     }
 
-    //al entrar: si ya están los permisos se avisa; si falta alguno, se pide
+    //abre los diálogos del sistema y, al responder, se revisa cómo quedó cada permiso
+    val pedirPermisos = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { informarPermisos() }
+
+    //el diálogo automático sale una sola vez; rememberSaveable lo recuerda al girar y al cambiar de pestaña
+    var permisosPreguntados by rememberSaveable { mutableStateOf(false) }
+
+    //cada vez que la pantalla vuelve al frente (por ejemplo, desde Ajustes) se revisan los permisos
+    DisposableEffect(lifecycleOwner) {
+        val observador = LifecycleEventObserver { _, evento ->
+            if (evento == Lifecycle.Event.ON_RESUME) informarPermisos()
+        }
+        lifecycleOwner.lifecycle.addObserver(observador)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observador) }
+    }
+
+    //al entrar por primera vez: si falta algún permiso, se pide
     LaunchedEffect(Unit) {
-        val camara = tienePermiso(context, Manifest.permission.CAMERA)
-        val ubicacion = tieneUbicacion(context)
-        if (camara && ubicacion) {
-            viewModel.onEvent(EscanearUiEvent.OnPermisoCamara(true))
-            viewModel.onEvent(EscanearUiEvent.OnPermisoUbicacion(true))
+        val faltaAlguno = !tienePermiso(context, Manifest.permission.CAMERA) || !tieneUbicacion(context)
+        if (faltaAlguno && !permisosPreguntados) {
+            permisosPreguntados = true
+            pedirPermisos.launch(PERMISOS)
+        }
+    }
+
+    //"Dar permiso": después de dos rechazos Android ya no muestra el diálogo, así que se abren
+    //los Ajustes de la app para activarlo a mano
+    val pedirDeNuevo = {
+        val bloqueado = permisosPreguntados && actividad != null &&
+            !ActivityCompat.shouldShowRequestPermissionRationale(actividad, Manifest.permission.CAMERA)
+        if (bloqueado) {
+            val ajustes = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null))
+            context.startActivity(ajustes)
         } else {
+            permisosPreguntados = true
             pedirPermisos.launch(PERMISOS)
         }
     }
@@ -128,7 +164,7 @@ fun EscanearScreen(
         EscanearContent(
             estado = estado,
             onEvent = viewModel::onEvent,
-            onPedirPermiso = { pedirPermisos.launch(PERMISOS) }
+            onPedirPermiso = pedirDeNuevo
         )
     }
 }
@@ -146,10 +182,14 @@ fun EscanearContent(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.scrim)
     ) {
+        //si el teléfono o el emulador no tiene cámara trasera, se avisa en vez de cerrar la app
+        var camaraNoDisponible by remember { mutableStateOf(false) }
+
         //capa 1: la cámara (en el Preview de Android Studio no hay cámara, así que se salta)
         if (estado.permisoCamara == true && !LocalInspectionMode.current) {
             VistaCamara(
                 onCodigoLeido = { onEvent(EscanearUiEvent.OnCodigoLeido(it)) },
+                alFallar = { camaraNoDisponible = true },
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -192,6 +232,14 @@ fun EscanearContent(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 when {
+                    camaraNoDisponible -> {
+                        Text(
+                            text = "No se pudo abrir la cámara de este dispositivo.",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+
                     estado.permisoCamara == false -> {
                         Text(
                             text = "Necesitamos la cámara para leer el código QR del lugar.",
@@ -315,6 +363,7 @@ private fun MarcoVisor(modifier: Modifier = Modifier) {
 @Composable
 private fun VistaCamara(
     onCodigoLeido: (String) -> Unit,
+    alFallar: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -351,29 +400,34 @@ private fun VistaCamara(
             }
             val futuro = ProcessCameraProvider.getInstance(ctx)
             futuro.addListener({
-                val proveedor = futuro.get()
-                proveedorCamara = proveedor
+                //si no hay cámara trasera o está ocupada, CameraX lanza una excepción: se avisa sin cerrar la app
+                try {
+                    val proveedor = futuro.get()
+                    proveedorCamara = proveedor
 
-                //caso de uso 1: mostrar la imagen en pantalla
-                val preview = CamaraPreview.Builder().build().also {
-                    it.setSurfaceProvider(vistaPrevia.surfaceProvider)
-                }
-                //caso de uso 2: analizar cada cuadro. Si ML Kit va lento, se salta cuadros viejos
-                val analisis = ImageAnalysis.Builder()
-                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                    .build()
-                analisis.setAnalyzer(ejecutor) { imagen ->
-                    analizarCuadro(imagen, lector) { codigo -> alLeer(codigo) }
-                }
+                    //caso de uso 1: mostrar la imagen en pantalla
+                    val preview = CamaraPreview.Builder().build().also {
+                        it.setSurfaceProvider(vistaPrevia.surfaceProvider)
+                    }
+                    //caso de uso 2: analizar cada cuadro. Si ML Kit va lento, se salta cuadros viejos
+                    val analisis = ImageAnalysis.Builder()
+                        .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                        .build()
+                    analisis.setAnalyzer(ejecutor) { imagen ->
+                        analizarCuadro(imagen, lector) { codigo -> alLeer(codigo) }
+                    }
 
-                //la cámara trasera se prende y se apaga sola junto con la pantalla
-                proveedor.unbindAll()
-                proveedor.bindToLifecycle(
-                    lifecycleOwner,
-                    CameraSelector.DEFAULT_BACK_CAMERA,
-                    preview,
-                    analisis
-                )
+                    //la cámara trasera se prende y se apaga sola junto con la pantalla
+                    proveedor.unbindAll()
+                    proveedor.bindToLifecycle(
+                        lifecycleOwner,
+                        CameraSelector.DEFAULT_BACK_CAMERA,
+                        preview,
+                        analisis
+                    )
+                } catch (e: Exception) {
+                    alFallar()
+                }
             }, ContextCompat.getMainExecutor(ctx))
             vistaPrevia
         }
