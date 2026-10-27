@@ -237,26 +237,24 @@ private fun TarjetaLugar(lugar: LugarDesbloqueado, alPresionar: () -> Unit) {
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = lugar.nombre, style = MaterialTheme.typography.titleMedium)
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = lugar.tipo,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        modifier = Modifier
-                            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(6.dp))
-                            .padding(horizontal = 8.dp, vertical = 2.dp)
-                    )
-                    Text(
-                        text = lugar.estado.texto,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = if (completado) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                Text(
+                    text = lugar.tipo,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    modifier = Modifier
+                        .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(6.dp))
+                        .padding(horizontal = 8.dp, vertical = 2.dp)
+                )
+                Text(
+                    text = lugar.estado.texto,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (completado) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier
+                        .padding(horizontal = 8.dp, vertical = 2.dp)
+                )
+
             }
             Spacer(modifier = Modifier.size(12.dp))
             EsferaAgua(puntos = lugar.puntos, maximo = lugar.maximo)
