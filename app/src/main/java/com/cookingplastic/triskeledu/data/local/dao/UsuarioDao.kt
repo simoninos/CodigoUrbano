@@ -5,6 +5,8 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Upsert
+import com.cookingplastic.triskeledu.data.model.EstadoSolicitud
+import com.cookingplastic.triskeledu.data.model.RolUsuario
 import com.cookingplastic.triskeledu.data.model.Sesion
 import com.cookingplastic.triskeledu.data.model.Usuario
 import kotlinx.coroutines.flow.Flow
@@ -25,6 +27,32 @@ interface UsuarioDao {
 
     @Query("SELECT EXISTS(SELECT 1 FROM usuarios WHERE correo = :correo)")
     suspend fun existeCorreo(correo: String): Boolean
+
+    //SIM-01: contraseña nueva, también con hash y sal
+    @Query("UPDATE usuarios SET claveHash = :hash, claveSal = :sal WHERE id = :id")
+    suspend fun cambiarClave(id: String, hash: String, sal: String)
+
+    @Query("SELECT * FROM usuarios WHERE id = :id")
+    suspend fun buscarPorId(id: String): Usuario?
+
+    //RN-24: para dejar una notificación a cada usuario que corresponde (por ejemplo, a los administradores)
+    @Query("SELECT * FROM usuarios")
+    suspend fun todos(): List<Usuario>
+
+    //PER-02: el índice único de username lanza error si ya existe
+    @Query("UPDATE usuarios SET username = :username WHERE id = :id")
+    suspend fun cambiarUsername(id: String, username: String)
+
+    //ADM-10: las cuentas que esperan respuesta, de la más antigua a la más nueva
+    @Query("SELECT * FROM usuarios WHERE solicitudCreador = 'PENDIENTE' ORDER BY solicitadoEn")
+    fun solicitudesPendientes(): Flow<List<Usuario>>
+
+    //RN-29: solo cambia si la solicitud sigue PENDIENTE. Devuelve 0 si otro administrador ya la respondió (EXC-09)
+    @Query(
+        "UPDATE usuarios SET rol = :rol, solicitudCreador = :estado, solicitudResueltaEn = :fecha, solicitudResueltaPor = :adminId " +
+            "WHERE id = :id AND solicitudCreador = 'PENDIENTE'"
+    )
+    suspend fun resolverSolicitud(id: String, rol: RolUsuario, estado: EstadoSolicitud, fecha: Long, adminId: String): Int
 
     //Upsert: la primera vez crea la fila 1 de sesiones; después la reemplaza
     @Upsert

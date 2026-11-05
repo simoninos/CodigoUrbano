@@ -19,5 +19,11 @@ data class Usuario(
     val terminosVersion: String,
         //Terminos aceptados queda sin valor predeterminado evitando así un falso positivo
     val terminosAceptadosEn: Long,
-    val creadoEn: Long = System.currentTimeMillis()
+    val creadoEn: Long = System.currentTimeMillis(),
+        //Solicitud de creador (ACC-07): null si nunca la pidió; PENDIENTE bloquea el inicio de sesión (RN-29)
+    val solicitudCreador: EstadoSolicitud? = null,
+    val solicitadoEn: Long? = null,
+        //quién y cuándo la respondió, para avisar si ya fue respondida (EXC-09)
+    val solicitudResueltaEn: Long? = null,
+    val solicitudResueltaPor: String? = null
 )

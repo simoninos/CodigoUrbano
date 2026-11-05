@@ -14,4 +14,14 @@ class RoomComentarioRepository(
     override suspend fun agregar(comentario: Comentario) {
         dao.insertar(comentario)
     }
+
+    override suspend fun pendientesDe(usuarioId: String): List<Comentario> = dao.pendientesDe(usuarioId)
+
+    override suspend fun marcarSincronizados(ids: List<String>) {
+        if (ids.isNotEmpty()) dao.marcarSincronizados(ids)
+    }
+
+    override suspend fun quitar(id: String) {
+        dao.quitar(id)
+    }
 }

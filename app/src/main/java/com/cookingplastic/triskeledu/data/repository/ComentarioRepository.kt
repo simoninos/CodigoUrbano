@@ -9,4 +9,12 @@ interface ComentarioRepository {
     fun comentariosDe(puntoId: String): Flow<List<Comentario>>
 
     suspend fun agregar(comentario: Comentario)
+
+    //SIM-03: comentarios del usuario que el servidor todavía no confirma
+    suspend fun pendientesDe(usuarioId: String): List<Comentario>
+
+    suspend fun marcarSincronizados(ids: List<String>)
+
+    //el servidor rechazó el comentario: se quita del teléfono
+    suspend fun quitar(id: String)
 }

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -14,7 +15,6 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -24,8 +24,17 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.cookingplastic.triskeledu.ui.state.CampoRegistro
+import com.cookingplastic.triskeledu.ui.components.EnfocarPrimerError
+import com.cookingplastic.triskeledu.ui.components.BotonEnviar
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -44,6 +53,8 @@ import com.cookingplastic.triskeledu.ui.viewmodels.RegistroViewModel
 @Composable
 fun RegistroScreen(
     alRegistrarse: () -> Unit,
+    //ACC-07: pidió ser creador; la cuenta queda en revisión (P23)
+    alSolicitarCreador: () -> Unit,
     alVolver: () -> Unit,
     viewModel: RegistroViewModel = viewModel(factory = RegistroViewModel.Factory)
 ) {
@@ -51,7 +62,9 @@ fun RegistroScreen(
 
     //cuando se crea la cuenta, navega una sola vez
     LaunchedEffect(estado.registrado) {
-        if (estado.registrado) alRegistrarse()
+        if (estado.registrado) {
+            if (estado.quiereSerCreador) alSolicitarCreador() else alRegistrarse()
+        }
     }
 
     RegistroContent(
@@ -69,6 +82,10 @@ fun RegistroContent(
     alVolver: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    //RN-18: el foco va al primer campo con error cada vez que se toca "Crear cuenta"
+    val focos = remember { CampoRegistro.entries.associateWith { FocusRequester() } }
+    EnfocarPrimerError(intento = estado.intentoEnvio, campo = estado.campoConError, focos = focos)
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -82,7 +99,24 @@ fun RegistroContent(
             style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.primary
         )
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(16.dp))
+
+        //aviso de arriba, como en el mockup, cuando se tocó "Crear cuenta" con errores
+        if (estado.intentoEnvio > 0 && estado.camposConError > 0) {
+            Surface(
+                shape = MaterialTheme.shapes.medium,
+                color = MaterialTheme.colorScheme.errorContainer,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = if (estado.camposConError == 1) "Revisa el campo marcado" else "Revisa los ${estado.camposConError} campos marcados",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                    modifier = Modifier.padding(12.dp)
+                )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+        }
 
         OutlinedTextField(
             value = estado.username,
@@ -92,7 +126,7 @@ fun RegistroContent(
             isError = estado.errorUsername != null,
             //teclado normal; "Siguiente" salta al correo
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth().focusRequester(focos.getValue(CampoRegistro.USERNAME))
         )
         MensajeError(mensaje = estado.errorUsername)
 
@@ -108,7 +142,7 @@ fun RegistroContent(
                 keyboardType = KeyboardType.Email,
                 imeAction = ImeAction.Next
             ),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth().focusRequester(focos.getValue(CampoRegistro.CORREO))
         )
         MensajeError(mensaje = estado.errorCorreo)
 
@@ -126,7 +160,7 @@ fun RegistroContent(
                 //Next y no Done: todavía falta repetirla
                 imeAction = ImeAction.Next
             ),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth().focusRequester(focos.getValue(CampoRegistro.CLAVE))
         )
         MensajeError(mensaje = estado.errorClave)
 
@@ -145,16 +179,45 @@ fun RegistroContent(
             ),
             //"Listo" intenta crear la cuenta; el ViewModel decide si se puede
             keyboardActions = KeyboardActions(onDone = { onEvent(RegistroUiEvent.OnRegistrar) }),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth().focusRequester(focos.getValue(CampoRegistro.REPETIR_CLAVE))
         )
         MensajeError(mensaje = estado.errorRepetirClave)
 
         Spacer(modifier = Modifier.height(8.dp))
 
+        //ACC-07: casilla opcional; la cuenta queda en revisión hasta que un administrador responda
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .toggleable(
+                    value = estado.quiereSerCreador,
+                    role = Role.Checkbox,
+                    onValueChange = { onEvent(RegistroUiEvent.OnQuiereSerCreadorChange(it)) }
+                )
+                .padding(vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Checkbox(checked = estado.quiereSerCreador, onCheckedChange = null)
+            Spacer(modifier = Modifier.width(8.dp))
+            Column {
+                Text(
+                    text = "Quiero ser creador de contenido",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = "Opcional. Un administrador revisará tu solicitud",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
         //mismo truco del Interruptor: toda la fila marca la casilla
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .focusRequester(focos.getValue(CampoRegistro.TERMINOS))
                 .toggleable(
                     value = estado.aceptaTerminos,
                     //TalkBack lo lee como casilla, marcada o no
@@ -176,19 +239,26 @@ fun RegistroContent(
                 color = MaterialTheme.colorScheme.onSurface
             )
         }
+        //RNF-03: los términos explican el uso de la ubicación, también en segundo plano
+        var verTerminos by rememberSaveable { mutableStateOf(false) }
+        TextButton(onClick = { verTerminos = true }, modifier = Modifier.heightIn(min = 48.dp)) {
+            Text("Leer los términos")
+        }
+        if (verTerminos) DialogoTerminos(alCerrar = { verTerminos = false })
         MensajeError(mensaje = estado.errorTerminos)
 
         MensajeError(mensaje = estado.mensajeError)
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Button(
-            onClick = { onEvent(RegistroUiEvent.OnRegistrar) },
-            enabled = estado.puedeRegistrar,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(text = if (estado.cargando) "Creando cuenta..." else "Crear cuenta")
-        }
+        //RN-18 (ACC-03): siempre responde; atenuado si falta algo y, al tocarlo, muestra todos los errores
+        BotonEnviar(
+            texto = "Crear cuenta",
+            alPresionar = { onEvent(RegistroUiEvent.OnRegistrar) },
+            atenuado = !estado.puedeRegistrar,
+            cargando = estado.cargando,
+            textoCargando = "Creando cuenta..."
+        )
 
         TextButton(onClick = alVolver) {
             Text(text = "Ya tengo cuenta")
@@ -217,8 +287,8 @@ private fun RegistroErroresPreview() {
         Surface {
             RegistroContent(
                 estado = RegistroUiState(
-                    //"cliente_prueba" ya existe en el Fake, por eso el error de nombre
-                    username = "cliente_prueba",
+                    //"camila_explora" ya existe en los datos de prueba, por eso el error de nombre
+                    username = "camila_explora",
                     correo = "nuevo@triskeledu.cl",
                     clave = "Clave1234",
                     repetirClave = "Clave123",

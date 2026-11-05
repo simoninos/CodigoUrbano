@@ -12,14 +12,26 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.cookingplastic.triskeledu.ui.components.DialogoSubisteNivel
+import com.cookingplastic.triskeledu.ui.viewmodels.RolViewModel
+import com.cookingplastic.triskeledu.ui.viewmodels.SubidaNivelViewModel
 
 // Scaffold central de la app: dibuja la barra de navegación inferior en las tres pestañas y en el Detalle.
 // Cada pantalla dibuja su propia cabecera, como en el mockup.
 @Composable
-fun AppScaffold(modifier: Modifier = Modifier) {
+fun AppScaffold(
+    modifier: Modifier = Modifier,
+    subidaNivelViewModel: SubidaNivelViewModel = viewModel(factory = SubidaNivelViewModel.Factory),
+    rolViewModel: RolViewModel = viewModel(factory = RolViewModel.Factory)
+) {
     val navController = rememberNavController()
+    val rol by rolViewModel.rol.collectAsStateWithLifecycle()
+    val solicitudesPendientes by rolViewModel.solicitudesPendientes.collectAsStateWithLifecycle()
+    val notificacionesSinLeer by rolViewModel.notificacionesSinLeer.collectAsStateWithLifecycle()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val rutaActual = navBackStackEntry?.destination?.route
     // El Detalle mantiene la barra inferior con la pestaña desde donde se abrió seleccionada
@@ -43,7 +55,8 @@ fun AppScaffold(modifier: Modifier = Modifier) {
                 exit = slideOutVertically { it }
             ) {
                 NavigationBar {
-                    Destination.entries.forEach { destino ->
+                    // MAP-01: el administrador no tiene la pestaña Escanear
+                    Destination.pestanasPara(rol).forEach { destino ->
                         val seleccionada = rutaActual == destino.route || destino == pestanaDelDetalle
                         NavigationBarItem(
                             selected = seleccionada,
@@ -59,16 +72,27 @@ fun AppScaffold(modifier: Modifier = Modifier) {
                             icon = {
                                 Icon(
                                     imageVector = if (seleccionada) destino.iconSelected else destino.icon,
-                                    contentDescription = destino.contentDescription
+                                    contentDescription = if (destino == Destination.MIS_LUGARES) Destination.etiquetaPara(destino, rol)
+                                    else destino.contentDescription
                                 )
                             },
-                            label = { Text(destino.label) }
+                            label = { Text(Destination.etiquetaPara(destino, rol)) }
                         )
                     }
                 }
             }
         }
     ) { contentPadding ->
-        AppNavHost(navController, Modifier.padding(contentPadding))
+        AppNavHost(
+            navController,
+            Modifier.padding(contentPadding),
+            rol = rol,
+            solicitudesPendientes = solicitudesPendientes,
+            notificacionesSinLeer = notificacionesSinLeer
+        )
     }
+
+    // P25 (LVL-02): aparece sobre cualquier pantalla cuando el nivel supera el más alto alcanzado
+    val subida by subidaNivelViewModel.subida.collectAsStateWithLifecycle()
+    subida?.let { DialogoSubisteNivel(subida = it, onEvent = subidaNivelViewModel::onEvent) }
 }

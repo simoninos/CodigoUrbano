@@ -19,4 +19,15 @@ class FakeComentarioRepository(comentariosIniciales: List<Comentario> = emptyLis
     override suspend fun agregar(comentario: Comentario) {
         comentarios.update { it + comentario }
     }
+
+    override suspend fun pendientesDe(usuarioId: String): List<Comentario> =
+        comentarios.value.filter { it.usuarioId == usuarioId && !it.sincronizado }
+
+    override suspend fun marcarSincronizados(ids: List<String>) {
+        comentarios.update { lista -> lista.map { if (it.id in ids) it.copy(sincronizado = true) else it } }
+    }
+
+    override suspend fun quitar(id: String) {
+        comentarios.update { lista -> lista.filterNot { it.id == id } }
+    }
 }

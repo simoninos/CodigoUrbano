@@ -11,7 +11,9 @@ import kotlinx.coroutines.flow.update
 // Versión de prueba: guarda los puntos en memoria a partir de DatosPrueba.
 // Los cambios se emiten al instante a quien escucha, pero se pierden al cerrar la app.
 class FakePuntoInteresRepository(
-    puntosIniciales: List<PuntoInteres> = DatosPrueba.puntos
+    puntosIniciales: List<PuntoInteres> = DatosPrueba.puntos,
+    //para revisar la cápsula del punto antes de activarlo (RN-14)
+    private val capsulaRepository: CapsulaRepository = FakeCapsulaRepository()
 ) : PuntoInteresRepository {
 
     private val puntos = MutableStateFlow(puntosIniciales)
@@ -46,7 +48,8 @@ class FakePuntoInteresRepository(
 
     override suspend fun cambiarActivo(id: String, activo: Boolean): Boolean {
         val punto = puntos.value.find { it.id == id } ?: return false
-        if (activo && !punto.puedeActivarse()) return false
+        val capsula = punto.capsulaId?.let { capsulaRepository.obtenerPorId(it) }
+        if (activo && !punto.puedeActivarse(capsula)) return false
         guardar(punto.copy(activo = activo))
         return true
     }

@@ -14,4 +14,7 @@ class FakePreferenciasRepository : PreferenciasRepository {
     override suspend fun guardar(preferencias: Preferencias) {
         actuales.value = preferencias
     }
+
+    override suspend fun preferenciasDe(usuarioId: String): Preferencias =
+        actuales.value.takeIf { it.usuarioId == usuarioId } ?: Preferencias(usuarioId = usuarioId)
 }
