@@ -14,6 +14,7 @@ local.properties
 # Caché de sesión del compilador de Kotlin
 .kotlin/
 
-# Llaves de firma del APK: nunca al repositorio
+# Llaves de firma del APK y sus contraseñas: nunca al repositorio (RNF-08)
 *.jks
 *.keystore
+keystore.properties

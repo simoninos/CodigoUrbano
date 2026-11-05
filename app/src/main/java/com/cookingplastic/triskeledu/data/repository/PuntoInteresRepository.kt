@@ -24,6 +24,6 @@ interface PuntoInteresRepository {
 
     suspend fun eliminar(id: String)
 
-    // Devuelve false si el id no existe o si se intenta activar un punto incompleto (RN-14)
+    // Devuelve false si el id no existe o si se intenta activar un punto incompleto o sin cápsula publicada (RN-14)
     suspend fun cambiarActivo(id: String, activo: Boolean): Boolean
 }

@@ -18,5 +18,7 @@ data class Sesion(
     @PrimaryKey
     val id: Int = 1,
         //Así, cuando recién tengan la app o cierren sesión, así el sistema detecta que no hay nadie conectado
-    val usuarioId: String? = null
+    val usuarioId: String? = null,
+        //token del backend (BKD-02); queda en null mientras no exista el backend
+    val token: String? = null
 )

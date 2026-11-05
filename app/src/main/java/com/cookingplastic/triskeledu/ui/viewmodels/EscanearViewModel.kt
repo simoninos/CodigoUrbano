@@ -17,7 +17,9 @@ import com.cookingplastic.triskeledu.ui.event.EscanearUiEvent
 import com.cookingplastic.triskeledu.ui.state.EscanearUiState
 import com.cookingplastic.triskeledu.ui.state.EstadoGps
 import com.cookingplastic.triskeledu.ui.state.LugarEncontrado
+import com.cookingplastic.triskeledu.ui.state.LugarYaDescubierto
 import com.cookingplastic.triskeledu.ui.validation.ReglaEscaneo
+import com.cookingplastic.triskeledu.ui.validation.ReglaQr
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -31,14 +33,17 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
+import kotlinx.coroutines.flow.combine
 
 //Resultado de revisar un QR
 sealed interface ResultadoEscaneo {
     data class Desbloqueado(
         val punto: PuntoInteres,
-        val distanciaMetros: Double,
-        val yaDescubierto: Boolean
+        val distanciaMetros: Double
     ) : ResultadoEscaneo
+
+    //EXC-04: ya lo había escaneado; no se mide la distancia ni se suma
+    data class YaDescubierto(val punto: PuntoInteres) : ResultadoEscaneo
 
     data class Rechazado(val mensaje: String) : ResultadoEscaneo
 }
@@ -53,10 +58,14 @@ class ProcesadorEscaneo(
     suspend fun procesar(codigo: String, usuarioId: String?): ResultadoEscaneo {
         if (usuarioId == null) return ResultadoEscaneo.Rechazado("Inicia sesión para guardar tus lugares")
 
-        //un QR que no existe o de un lugar desactivado no desbloquea nada
+        //EXC-04: un QR que no es del juego, o de un lugar desactivado o eliminado, no desbloquea nada
         val punto = puntoInteresRepository.obtenerPorCodigoQr(codigo)
-        if (punto == null || !punto.activo) {
-            return ResultadoEscaneo.Rechazado("Este QR no es de un lugar del juego")
+            ?: return ResultadoEscaneo.Rechazado(if (ReglaQr.esCodigoDelJuego(codigo)) LUGAR_NO_DISPONIBLE else CODIGO_AJENO)
+        if (!punto.activo) return ResultadoEscaneo.Rechazado(LUGAR_NO_DISPONIBLE)
+
+        //EXC-04: si ya lo tenía, se abre su detalle aunque esté lejos, y no suma de nuevo
+        if (progresoRepository.progresoDePunto(usuarioId, punto.id).first() != null) {
+            return ResultadoEscaneo.YaDescubierto(punto)
         }
 
         //sin GPS no se escanea
@@ -68,10 +77,16 @@ class ProcesadorEscaneo(
         val rechazo = ReglaEscaneo.mensajeRechazo(distancia)
         if (rechazo != null) return ResultadoEscaneo.Rechazado(rechazo)
 
-        //fecha, ubicación, +5 puntos y sincronizado = false; si ya existía, no suma de nuevo
-        val yaDescubierto = progresoRepository.progresoDePunto(usuarioId, punto.id).first() != null
+        //fecha, ubicación, +10 puntos y sincronizado = false; si ya existía, no suma de nuevo
         progresoRepository.registrarEscaneo(usuarioId, punto.id, ubicacion)
-        return ResultadoEscaneo.Desbloqueado(punto, distancia, yaDescubierto)
+        return ResultadoEscaneo.Desbloqueado(punto, distancia)
+    }
+
+    companion object {
+        //EXC-04: los mensajes del QR que no corresponde
+        const val CODIGO_AJENO = "Este código no es de Aprendo IA"
+        const val LUGAR_NO_DISPONIBLE = "Este lugar no está disponible"
+        const val YA_DESCUBIERTO = "Ya descubriste este lugar"
     }
 }
 
@@ -90,6 +105,7 @@ class EscanearViewModel(
 
     private var usuarioId: String? = null
     private val permisoUbicacion = MutableStateFlow(false)
+    private val gpsEncendido = MutableStateFlow(true)
 
     init {
         viewModelScope.launch {
@@ -97,9 +113,11 @@ class EscanearViewModel(
         }
         //el estado del GPS se muestra arriba; escucharlo además deja lista la última ubicación
         viewModelScope.launch {
-            permisoUbicacion.flatMapLatest { concedido ->
+            combine(permisoUbicacion, gpsEncendido) { concedido, encendido -> concedido to encendido }.flatMapLatest { (concedido, encendido) ->
                 if (!concedido) {
                     flowOf(EstadoGps.SIN_PERMISO)
+                } else if (!encendido) {
+                    flowOf(EstadoGps.APAGADO)
                 } else {
                     ubicacionRepository.ubicaciones()
                         .map { EstadoGps.ACTIVO }
@@ -114,9 +132,10 @@ class EscanearViewModel(
         when (evento) {
             is EscanearUiEvent.OnPermisoCamara -> _estado.update { it.copy(permisoCamara = evento.concedido) }
             is EscanearUiEvent.OnPermisoUbicacion -> permisoUbicacion.value = evento.concedido
+            is EscanearUiEvent.OnGpsEncendido -> gpsEncendido.value = evento.encendido
             is EscanearUiEvent.OnCodigoLeido -> codigoLeido(evento.codigo)
             EscanearUiEvent.OnEscanearOtro -> _estado.update {
-                it.copy(codigoLeido = null, mensajeRechazo = null, encontrado = null)
+                it.copy(codigoLeido = null, mensajeRechazo = null, encontrado = null, yaDescubierto = null)
             }
         }
     }
@@ -125,6 +144,8 @@ class EscanearViewModel(
         //la cámara ve el mismo QR muchas veces por segundo: solo se toma el primero
         val actual = _estado.value
         if (actual.procesando || actual.codigoLeido != null) return
+        //EXC-01 y RN-05: sin ubicación la cámara no escanea; el aviso de abajo explica cómo activarla
+        if (actual.sinUbicacion) return
         val limpio = codigo.trim()
         if (limpio.isEmpty()) return
         _estado.update { it.copy(codigoLeido = limpio, procesando = true, mensajeRechazo = null) }
@@ -143,9 +164,12 @@ class EscanearViewModel(
                             puntoId = resultado.punto.id,
                             nombre = resultado.punto.nombre,
                             tipo = resultado.punto.tipo.descripcion,
-                            distanciaMetros = resultado.distanciaMetros.roundToInt(),
-                            yaDescubierto = resultado.yaDescubierto
+                            distanciaMetros = resultado.distanciaMetros.roundToInt()
                         )
+                    )
+                    is ResultadoEscaneo.YaDescubierto -> it.copy(
+                        procesando = false,
+                        yaDescubierto = LugarYaDescubierto(resultado.punto.id, resultado.punto.nombre)
                     )
                     is ResultadoEscaneo.Rechazado -> it.copy(procesando = false, mensajeRechazo = resultado.mensaje)
                 }

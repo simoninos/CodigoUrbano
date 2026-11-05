@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,16 +50,19 @@ fun EsferaAgua(
         label = "nivelAgua"
     )
 
-    //un número que va de 0 a una vuelta completa (2π) y vuelve a empezar sin parar: mueve la ola
-    val transicionOla = rememberInfiniteTransition(label = "ola")
-    val fase by transicionOla.animateFloat(
-        initialValue = 0f,
-        targetValue = (2 * PI).toFloat(),
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 2000, easing = LinearEasing)
-        ),
-        label = "faseOla"
-    )
+    //un número que va de 0 a una vuelta completa (2π) y vuelve a empezar sin parar: mueve la ola.
+    //RNF-09: si el sistema pide reducir el movimiento, la ola queda quieta (la animación ni siquiera se crea)
+    val reducirMovimiento = rememberReducirMovimiento()
+    val faseOla: State<Float>? = if (reducirMovimiento) null else {
+        rememberInfiniteTransition(label = "ola").animateFloat(
+            initialValue = 0f,
+            targetValue = (2 * PI).toFloat(),
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = 2000, easing = LinearEasing)
+            ),
+            label = "faseOla"
+        )
+    }
 
     //colores solo desde el tema, como pide el plan (tertiary es Agua)
     val colorAgua = MaterialTheme.colorScheme.tertiary
@@ -77,7 +81,7 @@ fun EsferaAgua(
             if (nivelAnimado > 0f) {
                 //altura (en píxeles) donde está la superficie del agua, contando desde arriba
                 val superficie = size.height * (1f - nivelAnimado)
-                //la ola se aplana al llenarse, para que 20/20 se vea completa
+                //la ola se aplana al llenarse, para que 80/80 se vea completa
                 val altoOla = size.height * 0.06f * (1f - nivelAnimado)
 
                 //Path es un contorno: se baja a la esquina, se sube por la izquierda,
@@ -86,6 +90,8 @@ fun EsferaAgua(
                     moveTo(0f, size.height)
                     lineTo(0f, superficie)
                     val pasos = 24
+                    //se lee aquí, al dibujar: así la ola se redibuja sin recomponer la esfera
+                    val fase = faseOla?.value ?: 0f
                     for (i in 0..pasos) {
                         val x = size.width * i / pasos
                         val y = superficie + altoOla * sin(fase + (x / size.width) * 2f * PI.toFloat())
@@ -115,9 +121,9 @@ fun EsferaAguaPreview() {
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier.padding(16.dp)
         ) {
-            EsferaAgua(puntos = 0, maximo = 20)
-            EsferaAgua(puntos = 5, maximo = 20)
-            EsferaAgua(puntos = 20, maximo = 20)
+            EsferaAgua(puntos = 0, maximo = 80)
+            EsferaAgua(puntos = 10, maximo = 80)
+            EsferaAgua(puntos = 80, maximo = 80)
         }
     }
 }

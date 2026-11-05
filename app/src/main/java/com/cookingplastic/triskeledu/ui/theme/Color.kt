@@ -2,6 +2,7 @@ package com.cookingplastic.triskeledu.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
+// Colores del tema Clásico (nivel 1). Los otros 7 temas están en Paletas.kt
 
 // ---------- Tema Día ----------
 val Primario = Color(0xFF00796B)

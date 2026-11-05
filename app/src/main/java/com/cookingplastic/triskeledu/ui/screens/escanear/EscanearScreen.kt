@@ -3,9 +3,9 @@ package com.cookingplastic.triskeledu.ui.screens.escanear
 import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.Settings
-import android.content.pm.PackageManager
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -61,19 +61,29 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.cookingplastic.triskeledu.ui.components.ContenidoAvisoUbicacion
+import com.cookingplastic.triskeledu.ui.components.EstadoUbicacion
+import com.cookingplastic.triskeledu.ui.components.gpsEncendido
+import com.cookingplastic.triskeledu.ui.components.registrarRespuestaUbicacion
+import com.cookingplastic.triskeledu.ui.components.rememberActivarUbicacion
 import com.cookingplastic.triskeledu.ui.event.EscanearUiEvent
 import com.cookingplastic.triskeledu.ui.state.EscanearUiState
 import com.cookingplastic.triskeledu.ui.state.EstadoGps
 import com.cookingplastic.triskeledu.ui.theme.TriskeleduTheme
 import com.cookingplastic.triskeledu.ui.viewmodels.EscanearViewModel
+import com.cookingplastic.triskeledu.ui.viewmodels.ProcesadorEscaneo
 import com.google.mlkit.vision.barcode.BarcodeScanner
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
 import java.util.concurrent.Executors
-//Preview de CameraX se llama igual que la anotación @Preview de Compose: le damos otro nombre
+import kotlinx.coroutines.delay
+
 import androidx.camera.core.Preview as CamaraPreview
+
+//EXC-04: cuánto se ve "Ya descubriste este lugar" antes de abrir el detalle
+private const val ESPERA_YA_DESCUBIERTO_MS = 1500L
 
 //Permisos que necesita Escanear: la cámara para leer el QR y la ubicación para la regla de 60 m
 private val PERMISOS = arrayOf(
@@ -105,12 +115,27 @@ fun EscanearScreen(
     fun informarPermisos() {
         viewModel.onEvent(EscanearUiEvent.OnPermisoCamara(tienePermiso(context, Manifest.permission.CAMERA)))
         viewModel.onEvent(EscanearUiEvent.OnPermisoUbicacion(tieneUbicacion(context)))
+        viewModel.onEvent(EscanearUiEvent.OnGpsEncendido(gpsEncendido(context)))
     }
 
     //abre los diálogos del sistema y, al responder, se revisa cómo quedó cada permiso
     val pedirPermisos = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
-    ) { informarPermisos() }
+    ) {
+        registrarRespuestaUbicacion(context, tieneUbicacion(context))
+        informarPermisos()
+    }
+
+    //EXC-01: el botón del aviso pide la ubicación, abre los ajustes o los del GPS
+    val activarUbicacion = rememberActivarUbicacion { informarPermisos() }
+
+    //EXC-04: "Ya descubriste este lugar" se lee un momento y se abre su detalle (P04), sin sumar
+    LaunchedEffect(estado.yaDescubierto) {
+        val lugar = estado.yaDescubierto ?: return@LaunchedEffect
+        delay(ESPERA_YA_DESCUBIERTO_MS)
+        viewModel.onEvent(EscanearUiEvent.OnEscanearOtro)
+        alAbrirLugar(lugar.puntoId)
+    }
 
     //el diálogo automático sale una sola vez; rememberSaveable lo recuerda al girar y al cambiar de pestaña
     var permisosPreguntados by rememberSaveable { mutableStateOf(false) }
@@ -153,7 +178,6 @@ fun EscanearScreen(
             nombreLugar = encontrado.nombre,
             tipoLugar = encontrado.tipo,
             distanciaMetros = encontrado.distanciaMetros,
-            yaDescubierto = encontrado.yaDescubierto,
             alAbrirLugar = {
                 viewModel.onEvent(EscanearUiEvent.OnEscanearOtro)
                 alAbrirLugar(encontrado.puntoId)
@@ -164,7 +188,10 @@ fun EscanearScreen(
         EscanearContent(
             estado = estado,
             onEvent = viewModel::onEvent,
-            onPedirPermiso = pedirDeNuevo
+            onPedirPermiso = pedirDeNuevo,
+            onActivarUbicacion = {
+                activarUbicacion(if (estado.gps == EstadoGps.APAGADO) EstadoUbicacion.GPS_APAGADO else EstadoUbicacion.SIN_PERMISO)
+            }
         )
     }
 }
@@ -175,7 +202,8 @@ fun EscanearContent(
     estado: EscanearUiState,
     onEvent: (EscanearUiEvent) -> Unit,
     onPedirPermiso: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onActivarUbicacion: () -> Unit = {}
 ) {
     Box(
         modifier = modifier
@@ -249,6 +277,23 @@ fun EscanearContent(
                             Text("Dar permiso")
                         }
                     }
+
+                    //EXC-04: ya lo tenía; en un momento se abre su detalle
+                    estado.yaDescubierto != null -> {
+                        Text(text = ProcesadorEscaneo.YA_DESCUBIERTO, style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            text = "${estado.yaDescubierto.nombre}: te llevamos a su detalle. No suma puntos de nuevo.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                    }
+
+                    //EXC-01: sin ubicación no se escanea (RN-05)
+                    estado.sinUbicacion -> ContenidoAvisoUbicacion(
+                        estado = if (estado.gps == EstadoGps.APAGADO) EstadoUbicacion.GPS_APAGADO else EstadoUbicacion.SIN_PERMISO,
+                        alActivar = onActivarUbicacion
+                    )
 
                     estado.procesando -> {
                         Text(text = "Revisando el QR…", style = MaterialTheme.typography.bodyLarge)

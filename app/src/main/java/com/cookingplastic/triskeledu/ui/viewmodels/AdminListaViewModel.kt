@@ -6,21 +6,30 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.cookingplastic.triskeledu.TriskeleduApp
+import com.cookingplastic.triskeledu.data.RepositoriosProgreso
 import com.cookingplastic.triskeledu.data.model.datosFaltantes
 import com.cookingplastic.triskeledu.data.model.puedeActivarse
+import com.cookingplastic.triskeledu.data.repository.CapsulaRepository
+import com.cookingplastic.triskeledu.data.repository.ProgresoRepository
 import com.cookingplastic.triskeledu.data.repository.PuntoInteresRepository
 import com.cookingplastic.triskeledu.ui.event.AdminListaUiEvent
 import com.cookingplastic.triskeledu.ui.state.AdminListaUiState
+import com.cookingplastic.triskeledu.ui.validation.ReglaPunto
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-// ViewModel de la pantalla 9 (Admin: puntos de interés): listar, buscar, activar o desactivar y eliminar
+// ViewModel de P07-Admin (la pestaña Mis lugares del administrador, que reemplaza a la pantalla 9):
+// listar, buscar, filtrar por estado, activar o desactivar y eliminar
 class AdminListaViewModel(
-    private val puntoInteresRepository: PuntoInteresRepository
+    private val puntoInteresRepository: PuntoInteresRepository,
+    capsulaRepository: CapsulaRepository,
+    // RN-30: quién escaneó cada punto decide si se puede eliminar
+    progresoRepository: ProgresoRepository
 ) : ViewModel() {
 
     private val _estado = MutableStateFlow(AdminListaUiState())
@@ -29,10 +38,22 @@ class AdminListaViewModel(
     init {
         viewModelScope.launch {
             // A-02: todos los puntos, activos e inactivos, ordenados por nombre
-            puntoInteresRepository.obtenerTodos()
+            // las cápsulas vienen junto a los puntos: sin ellas no se sabe si un punto se puede activar (RN-14)
+            combine(
+                puntoInteresRepository.obtenerTodos(),
+                capsulaRepository.capsulas(),
+                progresoRepository.escaneosPorPunto()
+            ) { puntos, capsulas, escaneos -> Triple(puntos, capsulas, escaneos) }
                 .catch { _estado.update { it.copy(cargando = false, mensaje = "No se pudieron cargar los puntos") } }
-                .collect { puntos ->
-                    _estado.update { it.copy(puntos = puntos.sortedBy { p -> p.nombre }, cargando = false) }
+                .collect { (puntos, capsulas, escaneos) ->
+                    _estado.update {
+                        it.copy(
+                            puntos = puntos.sortedBy { p -> p.nombre },
+                            capsulas = capsulas.associateBy { c -> c.id },
+                            puntosConProgreso = escaneos,
+                            cargando = false
+                        )
+                    }
                 }
         }
     }
@@ -40,8 +61,14 @@ class AdminListaViewModel(
     fun onEvent(evento: AdminListaUiEvent) {
         when (evento) {
             is AdminListaUiEvent.OnBusquedaChange -> _estado.update { it.copy(busqueda = evento.valor) }
+            is AdminListaUiEvent.OnFiltroChange -> _estado.update { it.copy(filtro = evento.filtro) }
             is AdminListaUiEvent.OnCambiarActivo -> cambiarActivo(evento.puntoId, evento.activo)
-            is AdminListaUiEvent.OnPedirEliminar -> _estado.update { it.copy(puntoAEliminar = evento.punto) }
+            // RN-30: con progreso no se abre el diálogo; se explica por qué
+            is AdminListaUiEvent.OnPedirEliminar -> {
+                val motivo = ReglaPunto.motivoNoEliminable(_estado.value.escaneosDe(evento.punto))
+                if (motivo != null) _estado.update { it.copy(mensaje = motivo) }
+                else _estado.update { it.copy(puntoAEliminar = evento.punto) }
+            }
             AdminListaUiEvent.OnCancelarEliminar -> _estado.update { it.copy(puntoAEliminar = null) }
             AdminListaUiEvent.OnConfirmarEliminar -> eliminar()
             AdminListaUiEvent.OnMensajeMostrado -> _estado.update { it.copy(mensaje = null) }
@@ -50,9 +77,15 @@ class AdminListaViewModel(
 
     private fun cambiarActivo(puntoId: String, activo: Boolean) {
         val punto = _estado.value.puntos.find { it.id == puntoId } ?: return
+        // ADM-09: con Sin cápsula el interruptor está bloqueado
+        if (ReglaPunto.interruptorBloqueado(_estado.value.estadoDe(punto))) {
+            _estado.update { it.copy(mensaje = ReglaPunto.ACTIVAR_SIN_CAPSULA) }
+            return
+        }
         // A-07: un punto incompleto no se activa y se dice qué le falta
-        if (activo && !punto.puedeActivarse()) {
-            _estado.update { it.copy(mensaje = "No se puede activar. Falta: ${unirConY(punto.datosFaltantes())}") }
+        val capsula = punto.capsulaId?.let { _estado.value.capsulas[it] }
+        if (activo && !punto.puedeActivarse(capsula)) {
+            _estado.update { it.copy(mensaje = "No se puede activar. Falta: ${unirConY(punto.datosFaltantes(capsula))}") }
             return
         }
         viewModelScope.launch {
@@ -70,8 +103,14 @@ class AdminListaViewModel(
     private fun eliminar() {
         val punto = _estado.value.puntoAEliminar ?: return
         _estado.update { it.copy(puntoAEliminar = null) }
+        // RN-30: se revisa de nuevo por si alguien lo escaneó con el diálogo abierto
+        ReglaPunto.motivoNoEliminable(_estado.value.escaneosDe(punto))?.let { motivo ->
+            _estado.update { it.copy(mensaje = motivo) }
+            return
+        }
         viewModelScope.launch {
             try {
+                // RN-30: al eliminarlo, su cápsula queda libre para otro punto
                 puntoInteresRepository.eliminar(punto.id)
                 _estado.update { it.copy(mensaje = "Se eliminó «${punto.nombre}»") }
             } catch (e: Exception) {
@@ -84,13 +123,13 @@ class AdminListaViewModel(
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val app = this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as TriskeleduApp
-                AdminListaViewModel(app.container.puntoInteresRepository)
+                AdminListaViewModel(app.container.puntoInteresRepository, app.container.capsulaRepository, RepositoriosProgreso.progreso(app))
             }
         }
     }
 }
 
-// ["imagen", "video", "QR"] -> "imagen, video y QR"
+// ["imagen", "cápsula", "QR"] -> "imagen, cápsula y QR"
 fun unirConY(partes: List<String>): String = when (partes.size) {
     0 -> ""
     1 -> partes[0]

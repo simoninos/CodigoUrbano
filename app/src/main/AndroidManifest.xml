@@ -7,6 +7,13 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.CAMERA" />
+    <!-- Android 13 o superior pide permiso para mostrar notificaciones (código de recuperación, avisos) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- RNF-03: "Lugar cercano" con la app minimizada, con un servicio en primer plano de tipo ubicación.
+         Android 10 o superior pide aparte "Permitir todo el tiempo" (EXC-13) -->
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
 
     <uses-feature android:name="android.hardware.camera" android:required="true" />
 
@@ -31,6 +38,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- RNF-03: busca lugares cercanos con la app minimizada; muestra su notificación mientras corre -->
+        <service
+            android:name=".data.location.ServicioLugaresCercanos"
+            android:exported="false"
+            android:foregroundServiceType="location" />
 
         <!-- Comparte con la app de cámara el archivo donde debe dejar la foto del punto (Admin) -->
         <provider
