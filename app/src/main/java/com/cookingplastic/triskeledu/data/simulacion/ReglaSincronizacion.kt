@@ -12,7 +12,7 @@ import com.cookingplastic.triskeledu.ui.validation.ValidacionComentario
 //SIM-03: las revisiones que haría el backend al recibir lo guardado sin conexión. Solo lógica: se prueban sin Android
 object ReglaSincronizacion {
 
-    //ESC-02 y EXC-08: un escaneo pasa si se hizo a 60 m o menos del punto y el usuario no tiene ya ese lugar.
+    //ESC-02 y EXC-08: un escaneo pasa si se hizo a 100 m o menos del punto y el usuario no tiene ya ese lugar.
     //confirmados son las filas que el servidor ya aceptó antes (sincronizado = true)
     fun revisarEscaneos(
         pendientes: List<ProgresoPunto>,

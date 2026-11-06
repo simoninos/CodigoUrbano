@@ -193,7 +193,7 @@ fun MapaContent(
         if (mostrarMapa) {
             MapaOsm(
                 puntos = estado.puntosVisibles,
-                // EXC-01: sin ubicación no se dibuja el usuario ni el círculo de 60 m
+                // EXC-01: sin ubicación no se dibuja el usuario ni el círculo de 100 m
                 ubicacionUsuario = estado.ubicacionUsuario.takeIf { estadoUbicacion == EstadoUbicacion.LISTA },
                 seleccionadoId = estado.seleccionadoId,
                 seguirUbicacion = estado.seguirUbicacion,

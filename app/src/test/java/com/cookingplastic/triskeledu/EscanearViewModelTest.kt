@@ -47,7 +47,7 @@ class EscanearViewModelTest {
     }
 
     @Test
-    fun enElBordeDeLos60Metros() = runBlocking {
+    fun enElBordeDeLos100Metros() = runBlocking {
         val dentro = procesador(DatosPrueba.UBICACION_BORDE_DENTRO).procesar("TRISKEL-PI-001", "u1")
         val fuera = procesador(DatosPrueba.UBICACION_BORDE_FUERA).procesar("TRISKEL-PI-001", "u2")
 

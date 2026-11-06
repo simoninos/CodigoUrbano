@@ -27,7 +27,7 @@ data class PuntoMapa(
     val activo: Boolean
         get() = estadoAdmin == EstadoAdminPunto.ACTIVO
 
-    // MAP-03: un punto activo sin escanear a 60 m o menos se puede escanear: su marcador late
+    // MAP-03: un punto activo sin escanear a 100 m o menos se puede escanear: su marcador late
     val enRango: Boolean
         get() = estado == EstadoPunto.BLOQUEADO && activo && distanciaMetros != null && distanciaMetros <= RADIO_ESCANEO_METROS
 }

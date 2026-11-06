@@ -24,7 +24,7 @@ data class RespuestaRegistro(
 
 //EXC-08: por qué el servidor no aceptó un registro
 enum class MotivoRechazo(val explicacion: String) {
-    LEJOS("El escaneo quedó a más de 60 m del lugar"),
+    LEJOS("El escaneo quedó a más de 100 m del lugar"),
     DUPLICADO("Ese lugar ya estaba registrado en tu cuenta"),
     LUGAR_DESCONOCIDO("El lugar ya no existe"),
     TEXTO_INVALIDO("El comentario no cumple las reglas")
