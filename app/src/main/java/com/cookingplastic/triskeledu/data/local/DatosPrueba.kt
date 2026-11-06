@@ -37,21 +37,27 @@ object DatosPrueba {
     const val CLIP_PRUEBA = "android.resource://com.cookingplastic.triskeledu/raw/capsula_prueba"
 
     // ---------- ENLACES_CAPSULAS ----------
-    // Cuando existan los videos (V1 a V6), pega aquí el enlace de compartir de Google Drive de cada punto,
-    // entre comillas y en vez de null. Por ejemplo: val LA_MONEDA: String? = "https://drive.google.com/file/d/ID/view"
-    // Mientras quede en null, la cápsula funciona sin enlace (RN-35); La Moneda usa el clip de prueba (RN-36).
+    // Enlace de compartir de Google Drive del video de cada punto, entre comillas. Los seis videos de la EP3
+    // (V1 a V6) ya están puestos; para otro punto, pega su enlace en vez de null.
+    // Mientras quede en null, la cápsula funciona sin enlace (RN-35). Si se borra el de La Moneda, vuelve el clip de prueba (RN-36).
     // Para que se vean, hay que desinstalar la app o borrar sus datos: la base se llena una sola vez.
     object ENLACES_CAPSULAS {
-        val LA_MONEDA: String? = null
-        val PRECOLOMBINO: String? = null
+        // V1 · «Por qué la Inteligencia Artificial inventa cosas con seguridad»
+        val LA_MONEDA: String? = "https://drive.google.com/file/d/1bli39LeGysXEh2Ax6gyAkHrQa0e8VVAY/view?usp=sharing"
+        // V4 · «La IA que lee pergaminos de carbón»
+        val PRECOLOMBINO: String? = "https://drive.google.com/file/d/12vUa70wHOpW0bS6bZZCbH1_d3Svvrd8T/view?usp=sharing"
         val BELLAS_ARTES: String? = null
         val CATEDRAL: String? = null
-        val PLAZA_ARMAS: String? = null
-        val MERCADO_CENTRAL: String? = null
-        val SANTA_LUCIA: String? = null
+        // V3 · «Por qué tu IA inventa respuestas»
+        val PLAZA_ARMAS: String? = "https://drive.google.com/file/d/1n-ZSZP3nPIHP7xChTLB3xjrR6RSnXRsQ/view?usp=sharing"
+        // V6 · «Cómo tu feed predice tu próximo video»
+        val MERCADO_CENTRAL: String? = "https://drive.google.com/file/d/1zSdR-pKlChP2EpGO2eCroTLi0CSLHQoO/view?usp=sharing"
+        // V5 · «El punto ciego de la inteligencia artificial»
+        val SANTA_LUCIA: String? = "https://drive.google.com/file/d/16NaSD7D2dOCrIb_vbU3_7-xE_12rrB_P/view?usp=sharing"
         val TEATRO_MUNICIPAL: String? = null
         val SACRAMENTINOS: String? = null
-        val ESTACION_MAPOCHO: String? = null
+        // V2 · «Cómo predicen los mapas tu hora de llegada»
+        val ESTACION_MAPOCHO: String? = "https://drive.google.com/file/d/1f95XhZzu-h1xFkwzD9-3DrKPEygoErC1/view?usp=sharing"
         val PALACIO_COUSINO: String? = null
         val CORAZON_MARIA: String? = null
         val MUSEO_MERCED: String? = null
@@ -184,7 +190,7 @@ object DatosPrueba {
     // ---------- Cápsulas ----------
     // Una cápsula propia por punto (RN-20), todas PUBLICADAS por contenido_ia, más una en borrador y una
     // publicada, las dos sin punto.
-    // Sin enlace (null) salvo La Moneda, que usa el clip de prueba hasta tener su video (RN-35, RN-36).
+    // Los seis puntos de los videos V1 a V6 tienen su enlace de Drive; el resto queda sin enlace (RN-35).
     private fun capsulaPublicada(id: String, titulo: String, descripcion: String, categoria: CategoriaCapsula, duracion: Int, enlace: String?) =
         Capsula(
             id = id,
@@ -208,9 +214,9 @@ object DatosPrueba {
     )
     val CAPSULA_PRECOLOMBINO = capsulaPublicada(
         id = "40b5663b-077d-5d87-bad8-efd95d1c4142",
-        titulo = "Cómo aprende una máquina",
-        descripcion = "Ejemplos y patrones: la base del aprendizaje automático.",
-        categoria = CategoriaCapsula.QUE_ES_IA,
+        titulo = "La IA que lee el pasado",
+        descripcion = "Cómo la IA ayuda a leer y restaurar textos antiguos que parecían perdidos.",
+        categoria = CategoriaCapsula.HISTORIA_PATRIMONIO,
         duracion = 60,
         enlace = ENLACES_CAPSULAS.PRECOLOMBINO,
     )
@@ -232,9 +238,9 @@ object DatosPrueba {
     )
     val CAPSULA_PLAZA_ARMAS = capsulaPublicada(
         id = "9fa4bdeb-8dca-563b-a114-11d0672287ac",
-        titulo = "La ciudad que aprende: sensores y datos",
-        descripcion = "Datos del tránsito y del aire que una ciudad puede usar mejor.",
-        categoria = CategoriaCapsula.IA_CIUDAD,
+        titulo = "Estudiar con IA sin que piense por ti",
+        descripcion = "Cómo usar la IA para aprender y por qué hay que revisar lo que responde.",
+        categoria = CategoriaCapsula.IA_VIDA_DIARIA,
         duracion = 100,
         enlace = ENLACES_CAPSULAS.PLAZA_ARMAS,
     )
@@ -248,9 +254,9 @@ object DatosPrueba {
     )
     val CAPSULA_SANTA_LUCIA = capsulaPublicada(
         id = "2869a974-6053-5600-b71d-574229d91702",
-        titulo = "Mapas y rutas: la IA que te guía",
-        descripcion = "Cómo una app calcula el mejor camino.",
-        categoria = CategoriaCapsula.IA_CIUDAD,
+        titulo = "Sesgos: la IA repite los errores de sus datos",
+        descripcion = "Por qué una IA puede ser injusta si aprende de datos desequilibrados.",
+        categoria = CategoriaCapsula.IA_RESPONSABLE,
         duracion = 75,
         enlace = ENLACES_CAPSULAS.SANTA_LUCIA,
     )
@@ -273,7 +279,7 @@ object DatosPrueba {
     val CAPSULA_ESTACION_MAPOCHO = capsulaPublicada(
         id = "099f50aa-4c1b-58f2-ba63-de19da751217",
         titulo = "Transporte inteligente en Santiago",
-        descripcion = "Frecuencias y horarios que se ajustan con datos.",
+        descripcion = "Cómo una app predice a qué hora vas a llegar.",
         categoria = CategoriaCapsula.IA_CIUDAD,
         duracion = 130,
         enlace = ENLACES_CAPSULAS.ESTACION_MAPOCHO,
@@ -288,9 +294,9 @@ object DatosPrueba {
     )
     val CAPSULA_CORAZON_MARIA = capsulaPublicada(
         id = "c1e91a22-ffcf-5366-9d12-668bd798a86c",
-        titulo = "Sesgos: cuando la IA se equivoca",
-        descripcion = "Por qué una IA puede ser injusta y cómo evitarlo.",
-        categoria = CategoriaCapsula.IA_RESPONSABLE,
+        titulo = "La ciudad que aprende: sensores y datos",
+        descripcion = "Datos del tránsito y del aire que una ciudad puede usar mejor.",
+        categoria = CategoriaCapsula.IA_CIUDAD,
         duracion = 140,
         enlace = ENLACES_CAPSULAS.CORAZON_MARIA,
     )
@@ -628,10 +634,10 @@ object DatosPrueba {
     // ---------- Ubicaciones fijas para la versión Fake del GPS ----------
     /** A 35.0 m de La Moneda: el escaneo se acepta. */
     val UBICACION_CERCA_LA_MONEDA = Ubicacion(latitud = -33.442626, longitud = -70.65388, altitud = 537.0)
-    /** A 58.9 m de La Moneda: justo dentro del radio. */
-    val UBICACION_BORDE_DENTRO = Ubicacion(latitud = -33.44241, longitud = -70.65388, altitud = 537.0)
-    /** A 60.9 m de La Moneda: justo fuera del radio, el escaneo se rechaza. */
-    val UBICACION_BORDE_FUERA = Ubicacion(latitud = -33.442392, longitud = -70.65388, altitud = 537.0)
+    /** A 99,0 m de La Moneda: justo dentro del radio de 100 m. */
+    val UBICACION_BORDE_DENTRO = Ubicacion(latitud = -33.44205, longitud = -70.65388, altitud = 537.0)
+    /** A 101,2 m de La Moneda: justo fuera del radio, el escaneo se rechaza. */
+    val UBICACION_BORDE_FUERA = Ubicacion(latitud = -33.44203, longitud = -70.65388, altitud = 537.0)
     /** En la Plaza de Armas, a 712 m de La Moneda: lejos para escanear La Moneda. */
     val UBICACION_PLAZA_DE_ARMAS = Ubicacion(latitud = -33.43728, longitud = -70.65029, altitud = 574.0)
     /** A unos 300 m de la Catedral: el servidor simulado rechaza un escaneo hecho desde aquí (EXC-08). */

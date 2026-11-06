@@ -39,7 +39,7 @@ Cada tema tiene versión Día y Noche. Si los puntos bajan (por ejemplo, cuando 
 - Sin permiso de ubicación o con el GPS apagado, el mapa y Escanear muestran **"Activa la ubicación para encontrar lugares"** con un botón que pide el permiso, abre los ajustes de la app (si se negó dos veces) o los del GPS.
 - **Escanear QR**: desbloquea solo a 100 m o menos (+10 y la celebración "Lugar encontrado"). Un código ajeno muestra "Este código no es de Aprendo IA"; un lugar inactivo o eliminado, "Este lugar no está disponible"; uno ya escaneado, "Ya descubriste este lugar" y abre su detalle sin sumar.
 - **Detalle del lugar**: esfera de avance, distancia, comentarios y las tres actividades:
-  - **Cápsula de video** (Media3): la primera vez va bloqueada (no se puede adelantar) y al llegar al final suma 50; después queda libre. La Moneda usa un clip de prueba incluido en la app; las demás, mientras no tengan enlace, se marcan vistas al tocarlas.
+  - **Cápsula de video** (Media3): la primera vez va bloqueada (no se puede adelantar) y al llegar al final suma 50; después queda libre. Seis lugares tienen su video en Drive (necesitan internet); los demás, mientras no tengan enlace, se marcan vistas al tocarlas.
   - **Selfie** con la cámara frontal (+20).
 - **Mis descubrimientos**: la tarjeta "Mis puntos" con **Ver ranking ›**, "Lugares escaneados X de Y" y los cuadros QR, Cápsulas y Selfie. Cada vista lista lo desbloqueado y lo que falta por descubrir, que se puede abrir en el mapa.
 - **Ranking** (P20): los usuarios del teléfono ordenados por puntos, **este mes** o **siempre**, con el usuario actual destacado aunque no esté entre los primeros. El administrador no aparece.
@@ -83,9 +83,20 @@ Contraseña de todos: **`Demo1234`**. También están en "Acceso rápido (demo)"
 
 La base se llena con estos datos **solo la primera vez**. Si la app ya estaba instalada, desinstálala o borra sus datos (*Ajustes → Apps → Aprendo IA → Almacenamiento → Borrar datos*) para verlos.
 
-## Enlazar los videos (ENLACES_CAPSULAS)
+## Videos de las cápsulas (ENLACES_CAPSULAS)
 
-Cuando existan los videos de las cápsulas:
+Los seis videos de la EP3 están enlazados en `ENLACES_CAPSULAS` (`DatosPrueba.kt`). Se hicieron con NotebookLM.
+
+| Video | Lugar | Cápsula | Categoría |
+| --- | --- | --- | --- |
+| V1 | Palacio de La Moneda | ¿Qué es la inteligencia artificial? | ¿Qué es la IA? |
+| V2 | Estación Mapocho | Transporte inteligente en Santiago | IA y la ciudad |
+| V3 | Plaza de Armas | Estudiar con IA sin que piense por ti | IA en la vida diaria |
+| V4 | Museo Chileno de Arte Precolombino | La IA que lee el pasado | Historia y patrimonio |
+| V5 | Cerro Santa Lucía | Sesgos: la IA repite los errores de sus datos | IA responsable |
+| V6 | Mercado Central | Recomendaciones: cómo una app adivina lo que te gusta | IA en la vida diaria |
+
+Para enlazar otro video o cambiar uno:
 
 1. En Google Drive, comparte cada video como **"Cualquier persona con el enlace"** y copia el enlace.
 2. Abre `app/src/main/java/com/cookingplastic/triskeledu/data/local/DatosPrueba.kt` y busca el bloque `ENLACES_CAPSULAS`, al inicio del archivo.
@@ -95,7 +106,7 @@ Cuando existan los videos de las cápsulas:
    ```
 4. Compila e instala de nuevo, y borra los datos de la app para que la base se cree con los enlaces.
 
-Mientras un lugar quede en `null`, su cápsula funciona sin video (RN-35) y La Moneda usa el clip de prueba. El creador también puede pegar enlaces desde la app, al editar una cápsula.
+Mientras un lugar quede en `null`, su cápsula funciona sin video (RN-35). Si se quita el enlace de La Moneda, vuelve el clip de prueba incluido en la app (RN-36). El creador también puede pegar enlaces desde la app, al editar una cápsula.
 
 ## Cómo ejecutar
 
@@ -210,7 +221,6 @@ app/src/main/java/com/cookingplastic/triskeledu/
 
 - Backend en Spring Boot (BKD-01 a BKD-07): hoy lo reemplaza `data/simulacion/`.
 - Recuperación de contraseña por correo real, sesión que vence en el servidor (EXC-07) y servidor caído (EXC-06).
-- Videos reales en Drive (V1 a V6): se enlazan en `ENLACES_CAPSULAS`.
 
 ## Flujo de ramas
 

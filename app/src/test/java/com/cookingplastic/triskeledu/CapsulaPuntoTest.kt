@@ -7,6 +7,7 @@ import com.cookingplastic.triskeledu.data.model.EstadoCapsula
 import com.cookingplastic.triskeledu.data.model.datosFaltantes
 import com.cookingplastic.triskeledu.data.model.puedeActivarse
 import com.cookingplastic.triskeledu.data.repository.FakePuntoInteresRepository
+import com.cookingplastic.triskeledu.ui.validation.EnlaceVideo
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -40,10 +41,20 @@ class CapsulaPuntoTest {
     }
 
     @Test
-    fun soloLaMonedaTieneVideoYEsElClipDePrueba() {
-        //RN-35 y RN-36: el resto queda sin enlace hasta tener los videos
-        assertEquals(DatosPrueba.CLIP_PRUEBA, DatosPrueba.CAPSULA_LA_MONEDA.urlStream)
-        assertEquals(1, DatosPrueba.capsulas.count { it.urlStream != null })
+    fun losSeisVideosEstanEnlazadosYElRestoNo() {
+        //V1 a V6: cada uno en su punto, con un enlace de Drive que el reproductor puede convertir
+        val conVideo = listOf(
+            DatosPrueba.CAPSULA_LA_MONEDA, DatosPrueba.CAPSULA_ESTACION_MAPOCHO, DatosPrueba.CAPSULA_PLAZA_ARMAS,
+            DatosPrueba.CAPSULA_PRECOLOMBINO, DatosPrueba.CAPSULA_SANTA_LUCIA, DatosPrueba.CAPSULA_MERCADO_CENTRAL
+        )
+        assertTrue(conVideo.all { EnlaceVideo.idDeDrive(it.urlStream.orEmpty()) != null })
+        assertEquals(6, conVideo.map { it.urlStream }.toSet().size)
+        //RN-35: las demás siguen sin enlace
+        assertEquals(6, DatosPrueba.capsulas.count { it.urlStream != null })
+        //las categorías siguen la tabla de videos del ERS 6
+        assertEquals(CategoriaCapsula.IA_VIDA_DIARIA, DatosPrueba.CAPSULA_PLAZA_ARMAS.categoria)
+        assertEquals(CategoriaCapsula.HISTORIA_PATRIMONIO, DatosPrueba.CAPSULA_PRECOLOMBINO.categoria)
+        assertEquals(CategoriaCapsula.IA_RESPONSABLE, DatosPrueba.CAPSULA_SANTA_LUCIA.categoria)
     }
 
     @Test

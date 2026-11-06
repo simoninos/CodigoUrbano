@@ -82,17 +82,17 @@ class DetalleCapsulaTest {
     @Test
     fun soloDrivePideInternet() {
         red.conectado = false
-        //el clip de prueba se abre igual (RN-36)
-        val clip = detalle(DatosPrueba.PUNTO_LA_MONEDA)
+        //el clip de prueba se abre igual (RN-36: es el respaldo si se quita el enlace de La Moneda)
+        val conClip = DatosPrueba.capsulas.map {
+            if (it.id == DatosPrueba.CAPSULA_LA_MONEDA.id) it.copy(urlStream = DatosPrueba.CLIP_PRUEBA) else it
+        }
+        val clip = detalle(DatosPrueba.PUNTO_LA_MONEDA, conClip)
         clip.onEvent(DetalleUiEvent.OnVerVideo)
         assertFalse(clip.estado.value.mostrarSinConexion)
         assertEquals(DatosPrueba.CAPSULA_LA_MONEDA.id, clip.estado.value.capsulaPorAbrir)
 
-        //con un enlace de Drive aparece el aviso sin conexión (P11)
-        val conDrive = DatosPrueba.capsulas.map {
-            if (it.id == DatosPrueba.CAPSULA_LA_MONEDA.id) it.copy(urlStream = "https://drive.google.com/file/d/abc/view") else it
-        }
-        val drive = detalle(DatosPrueba.PUNTO_LA_MONEDA, conDrive)
+        //con su video de Drive (V1) aparece el aviso sin conexión (P11)
+        val drive = detalle(DatosPrueba.PUNTO_LA_MONEDA)
         drive.onEvent(DetalleUiEvent.OnVerVideo)
         assertTrue(drive.estado.value.mostrarSinConexion)
         assertNull(drive.estado.value.capsulaPorAbrir)

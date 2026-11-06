@@ -27,7 +27,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-//RN-08, RN-35, RN-36 y ACT-02 con los Fake: Camila tiene La Moneda sin ver (clip de prueba),
+//RN-08, RN-35, RN-36 y ACT-02 con los Fake: Camila tiene La Moneda sin ver (video V1 en Drive),
 //Catedral sin ver (sin enlace) y Bellas Artes ya vista. Parte con 160 puntos
 @OptIn(ExperimentalCoroutinesApi::class)
 class VideoViewModelTest {
@@ -70,13 +70,19 @@ class VideoViewModelTest {
     //las cápsulas de prueba con un enlace de Drive puesto, para probar los videos de internet
     private fun conDrive(capsula: Capsula) = DatosPrueba.capsulas.map { if (it.id == capsula.id) it.copy(urlStream = drive) else it }
 
+    //RN-36: si se quita el enlace de La Moneda, vuelve el clip incluido en la app
+    private fun conClip() = DatosPrueba.capsulas.map {
+        if (it.id == DatosPrueba.CAPSULA_LA_MONEDA.id) it.copy(urlStream = DatosPrueba.CLIP_PRUEBA) else it
+    }
+
     @Test
     fun sinVerLaCapsulaVaBloqueado() {
         val estado = abrir(DatosPrueba.CAPSULA_LA_MONEDA, DatosPrueba.PUNTO_LA_MONEDA).estado.value
 
         assertEquals(ModoReproductor.BLOQUEADO, estado.modo)
         assertFalse(estado.puedeAdelantar)
-        assertEquals(DatosPrueba.CLIP_PRUEBA, estado.enlace)
+        //V1: el enlace de compartir de Drive se convierte en descarga directa
+        assertEquals("https://drive.google.com/uc?export=download&id=1bli39LeGysXEh2Ax6gyAkHrQa0e8VVAY", estado.enlace)
         assertEquals("Palacio de La Moneda", estado.nombrePunto)
     }
 
@@ -145,7 +151,7 @@ class VideoViewModelTest {
     @Test
     fun elClipDePruebaNoNecesitaInternet() {
         red.conectado = false
-        val estado = abrir(DatosPrueba.CAPSULA_LA_MONEDA, DatosPrueba.PUNTO_LA_MONEDA).estado.value
+        val estado = abrir(DatosPrueba.CAPSULA_LA_MONEDA, DatosPrueba.PUNTO_LA_MONEDA, capsulas = conClip()).estado.value
 
         assertFalse(estado.sinConexion)
     }
