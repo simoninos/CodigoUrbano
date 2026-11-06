@@ -35,9 +35,9 @@ Cada tema tiene versión Día y Noche. Si los puntos bajan (por ejemplo, cuando 
 - **Bienvenida, registro e inicio de sesión** con validación bajo cada campo (contraseñas con hash PBKDF2 y sal). En el registro se puede pedir ser **creador de contenido**: la cuenta queda "En revisión" hasta que un administrador la apruebe. Los términos se leen desde "Leer los términos" y explican el uso de la ubicación, también en segundo plano.
 - **Acceso rápido (demo)** en el inicio de sesión: rellena el correo y la contraseña de cada usuario de prueba.
 - **Recuperar contraseña** con un código de 6 dígitos que llega como notificación local (vence a los 15 minutos y sirve una vez).
-- **Mapa** (OpenStreetMap) con la ubicación del usuario, el círculo de 60 m y un marcador por estado (bloqueado, desbloqueado, completado). Un lugar sin escanear a 60 m o menos **late con un halo** para indicar que se puede escanear. La tarjeta del usuario muestra su nivel y abre **Mi nivel** (niveles, temas y cuánto falta).
+- **Mapa** (OpenStreetMap) con la ubicación del usuario, el círculo de 100 m y un marcador por estado (bloqueado, desbloqueado, completado). Un lugar sin escanear a 100 m o menos **late con un halo** para indicar que se puede escanear. La tarjeta del usuario muestra su nivel y abre **Mi nivel** (niveles, temas y cuánto falta).
 - Sin permiso de ubicación o con el GPS apagado, el mapa y Escanear muestran **"Activa la ubicación para encontrar lugares"** con un botón que pide el permiso, abre los ajustes de la app (si se negó dos veces) o los del GPS.
-- **Escanear QR**: desbloquea solo a 60 m o menos (+10 y la celebración "Lugar encontrado"). Un código ajeno muestra "Este código no es de Aprendo IA"; un lugar inactivo o eliminado, "Este lugar no está disponible"; uno ya escaneado, "Ya descubriste este lugar" y abre su detalle sin sumar.
+- **Escanear QR**: desbloquea solo a 100 m o menos (+10 y la celebración "Lugar encontrado"). Un código ajeno muestra "Este código no es de Aprendo IA"; un lugar inactivo o eliminado, "Este lugar no está disponible"; uno ya escaneado, "Ya descubriste este lugar" y abre su detalle sin sumar.
 - **Detalle del lugar**: esfera de avance, distancia, comentarios y las tres actividades:
   - **Cápsula de video** (Media3): la primera vez va bloqueada (no se puede adelantar) y al llegar al final suma 50; después queda libre. La Moneda usa un clip de prueba incluido en la app; las demás, mientras no tengan enlace, se marcan vistas al tocarlas.
   - **Selfie** con la cámara frontal (+20).
@@ -60,7 +60,7 @@ Cada tema tiene versión Día y Noche. Si los puntos bajan (por ejemplo, cuando 
 
 ### Sincronización simulada (sin backend)
 - Todo se guarda primero en el teléfono (Room) con `sincronizado = false`.
-- Al volver la red, **WorkManager** envía lo pendiente de la cuenta conectada a `ServidorSimulado`, que revalida cada escaneo (60 m o menos y sin duplicado) y cada comentario. Lo aceptado pasa a `sincronizado = true`.
+- Al volver la red, **WorkManager** envía lo pendiente de la cuenta conectada a `ServidorSimulado`, que revalida cada escaneo (100 m o menos y sin duplicado) y cada comentario. Lo aceptado pasa a `sincronizado = true`.
 - Si un escaneo no pasa, se quitan los puntos de ese lugar, llega la notificación **"No pudimos validar tu visita a [lugar]"** y el resto se mantiene.
 - `ServidorApi` es la interfaz que la app usa para hablar con el servidor: cuando exista el backend, una versión con Retrofit la implementa y solo cambia `AppContainer`.
 
@@ -115,7 +115,7 @@ Mientras un lugar quede en `null`, su cápsula funciona sin video (RN-35) y La M
 5. Pruebas unitarias: `./gradlew test` (en Windows, `gradlew test`).
 
 **En el emulador**
-- Fija la ubicación en Santiago: *Extended Controls (⋯) → Location*, por ejemplo en La Moneda (-33.44294, -70.65388). A menos de 60 m de un lugar sin escanear, su marcador late.
+- Fija la ubicación en Santiago: *Extended Controls (⋯) → Location*, por ejemplo en La Moneda (-33.44294, -70.65388). A menos de 100 m de un lugar sin escanear, su marcador late.
 - Para probar la sincronización: activa el modo avión, escanea un lugar y desactiva el modo avión; WorkManager lo envía solo.
 - Para probar el rechazo (EXC-08): entra con `explorador_demo` con internet.
 

@@ -49,7 +49,7 @@ sealed interface ResultadoEscaneo {
 }
 
 //La validación del escaneo: buscar el lugar por su QR, medir la distancia, aplicar la regla
-//de 60 m y registrar el progreso. Está aparte para poder probarla con las Fakes, sin Android
+//de 100 m y registrar el progreso. Está aparte para poder probarla con las Fakes, sin Android
 class ProcesadorEscaneo(
     private val puntoInteresRepository: PuntoInteresRepository,
     private val ubicacionRepository: UbicacionRepository,
@@ -73,7 +73,7 @@ class ProcesadorEscaneo(
             ?: return ResultadoEscaneo.Rechazado("Activa el GPS para escanear")
         val distancia = ubicacionRepository.distanciaMetros(ubicacion, punto.ubicacion)
 
-        //regla de los 60 m
+        //regla de los 100 m
         val rechazo = ReglaEscaneo.mensajeRechazo(distancia)
         if (rechazo != null) return ResultadoEscaneo.Rechazado(rechazo)
 

@@ -55,7 +55,7 @@ import kotlin.math.sin
 // Centro del mapa mientras no hay ubicación del usuario: La Moneda (M-06)
 private val CENTRO_INICIAL = GeoPoint(-33.44294, -70.65388)
 private const val ZOOM_INICIAL = 17.0
-private const val RADIO_ESCANEO_METROS = 60.0
+private const val RADIO_ESCANEO_METROS = 100.0
 
 // Trazos del marcador en una grilla de 44 x 52, iguales a los del mockup
 private const val TRAZO_PIN = "M22 2C11 2 3 10 3 20c0 13 19 30 19 30s19-17 19-30C41 10 33 2 22 2z"
@@ -80,7 +80,7 @@ fun colorUbicacionUsuario(): Color = ColoresApp.ubicacion
 
 // Mapa de OpenStreetMap (osmdroid) dentro de Compose. osmdroid es una vista clásica de Android,
 // por eso se inserta con AndroidView. Dibuja los marcadores de los puntos (M-02, M-03),
-// la posición del usuario con el círculo de 60 m (M-05) y responde a los toques (M-09, M-11).
+// la posición del usuario con el círculo de 100 m (M-05) y responde a los toques (M-09, M-11).
 @Composable
 fun MapaOsm(
     puntos: List<PuntoMapa>,
@@ -283,7 +283,7 @@ fun MapaOsm(
                 if (puntoMapa.enRango && !reducirMovimiento) latiendo += marcador to seleccionado
             }
 
-            // Usuario, círculo de 60 m y su etiqueta
+            // Usuario, círculo de 100 m y su etiqueta
             if (ubicacionUsuario != null) {
                 val densidad = context.resources.displayMetrics.density
                 val centro = GeoPoint(ubicacionUsuario.latitud, ubicacionUsuario.longitud)
@@ -296,10 +296,10 @@ fun MapaOsm(
                     DashPathEffect(floatArrayOf(6f * densidad, 4f * densidad), 0f)
                 capas.circulo.isEnabled = true
 
-                // La etiqueta "60 m" va sobre el borde del círculo, hacia el noreste
+                // La etiqueta "100 m" va sobre el borde del círculo, hacia el noreste
                 capas.etiquetaRadio.position = centro.destinationPoint(RADIO_ESCANEO_METROS, 45.0)
                 capas.etiquetaRadio.icon = iconos.getOrPut("etiqueta-$firmaColores") {
-                    etiquetaTexto(context, "60 m", colorUbicacion, colorEtiqueta)
+                    etiquetaTexto(context, "100 m", colorUbicacion, colorEtiqueta)
                 }
                 capas.etiquetaRadio.isEnabled = true
 
@@ -533,7 +533,7 @@ private fun puntoUsuario(color: Int, tamanoPx: Int): Drawable =
         setSize(tamanoPx, tamanoPx)
     }
 
-// Etiqueta de texto con fondo redondeado, usada para "60 m"
+// Etiqueta de texto con fondo redondeado, usada para "100 m"
 private fun etiquetaTexto(context: Context, texto: String, colorTexto: Int, colorFondo: Int): Drawable {
     val densidad = context.resources.displayMetrics.density
     val pintura = Paint(Paint.ANTI_ALIAS_FLAG).apply {

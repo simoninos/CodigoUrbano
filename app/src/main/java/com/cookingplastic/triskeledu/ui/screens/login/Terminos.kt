@@ -19,7 +19,7 @@ const val TEXTO_TERMINOS = """Aprendo IA Jugando en Santiago es un juego educati
 
 Tu cuenta. Guardamos tu nombre de usuario, tu correo y tu contraseña (protegida con hash, nunca como texto). Tus puntos, los lugares que escaneas, tus comentarios y tus selfies quedan asociados a tu cuenta. Los comentarios los ven todos los usuarios.
 
-Ubicación. La usamos para mostrarte en el mapa, medir la distancia a cada lugar y validar el escaneo (60 m o menos).
+Ubicación. La usamos para mostrarte en el mapa, medir la distancia a cada lugar y validar el escaneo (100 m o menos).
 
 Ubicación en segundo plano. Si lo permites ("Permitir todo el tiempo"), también la usamos con la app minimizada, solo para avisarte cuando estés a 200 m de un lugar por descubrir. Mientras eso ocurre verás una notificación fija. Puedes apagarlo cuando quieras en Configuración ("Lugares cercanos" o "Seguir mi ubicación") o quitando el permiso en los ajustes del teléfono. Si no lo permites, el aviso funciona solo con la app abierta.
 

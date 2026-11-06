@@ -414,14 +414,12 @@ private fun TarjetaLugar(lugar: LugarDesbloqueado, alPresionar: () -> Unit) {
         ) {
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(text = lugar.nombre, style = MaterialTheme.typography.titleMedium)
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Etiqueta(texto = lugar.tipo)
-                    Text(
-                        text = lugar.estado.texto,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = if (completado) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                Etiqueta(texto = lugar.tipo)
+                Text(
+                    text = lugar.estado.texto,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (completado) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
             Spacer(modifier = Modifier.size(12.dp))
             EsferaAgua(puntos = lugar.puntos, maximo = lugar.maximo)

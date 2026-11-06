@@ -63,6 +63,11 @@ private fun AnimatedContentTransitionScope<NavBackStackEntry>.volverSalir(): Exi
     if (entreTabs()) fadeOut(tween(DURACION_MS))
     else fadeOut(tween(DURACION_MS)) + slideOutOfContainer(SlideDirection.End, tween(DURACION_MS)) { it / 4 }
 
+// Evita que dos toques rápidos al engranaje apilen Configuración dos veces
+private fun NavHostController.abrirConfiguracion() {
+    navigate(Rutas.CONFIGURACION) { launchSingleTop = true }
+}
+
 @Composable
 fun AppNavHost(
     navController: NavHostController,
@@ -132,7 +137,7 @@ fun AppNavHost(
         composable(Destination.MAPA.route) {
             MapaScreen(
                 alVerDetalle = { puntoId -> navController.navigate(Rutas.detalle(puntoId)) },
-                alAbrirConfiguracion = { navController.navigate(Rutas.CONFIGURACION) },
+                alAbrirConfiguracion = { navController.abrirConfiguracion() },
                 alVerNivel = { navController.navigate(Rutas.NIVEL) },
                 alAsociarCapsula = { puntoId -> navController.navigate(Rutas.asociarCapsula(puntoId)) },
                 alEditarPunto = { puntoId -> navController.navigate(Rutas.adminEditar(puntoId)) },
@@ -150,7 +155,7 @@ fun AppNavHost(
                 MisLugaresAdminScreen(
                     alNuevoPunto = { navController.navigate(Rutas.adminEditar()) },
                     alEditar = { puntoId -> navController.navigate(Rutas.adminEditar(puntoId)) },
-                    alAbrirConfiguracion = { navController.navigate(Rutas.CONFIGURACION) },
+                    alAbrirConfiguracion = { navController.abrirConfiguracion() },
                     alAbrirNotificaciones = { navController.navigate(Rutas.NOTIFICACIONES) },
                     notificacionesSinLeer = notificacionesSinLeer
                 )
@@ -158,7 +163,7 @@ fun AppNavHost(
             }
             MisLugaresScreen(
                 alVerDetalle = { puntoId -> navController.navigate(Rutas.detalle(puntoId)) },
-                alAbrirConfiguracion = { navController.navigate(Rutas.CONFIGURACION) },
+                alAbrirConfiguracion = { navController.abrirConfiguracion() },
                 alAbrirNotificaciones = { navController.navigate(Rutas.NOTIFICACIONES) },
                 notificacionesSinLeer = notificacionesSinLeer,
                 alVerCapsula = { capsulaId, puntoId -> navController.navigate(Rutas.video(capsulaId, puntoId)) },
@@ -183,7 +188,7 @@ fun AppNavHost(
             NivelScreen(
                 alVolver = { navController.popBackStack() },
                 //LVL-01: "Cambiar tema" abre Configuración, donde está Apariencia
-                alCambiarTema = { navController.navigate(Rutas.CONFIGURACION) }
+                alCambiarTema = { navController.abrirConfiguracion() }
             )
         }
         composable(
@@ -193,7 +198,7 @@ fun AppNavHost(
             // DetalleViewModel lee el puntoId de la ruta
             DetalleScreen(
                 alVolver = { navController.popBackStack() },
-                alAbrirConfiguracion = { navController.navigate(Rutas.CONFIGURACION) },
+                alAbrirConfiguracion = { navController.abrirConfiguracion() },
                 alVerCapsula = { capsulaId, puntoId -> navController.navigate(Rutas.video(capsulaId, puntoId)) },
                 alTomarSelfie = { puntoId -> navController.navigate(Rutas.selfie(puntoId)) }
             )

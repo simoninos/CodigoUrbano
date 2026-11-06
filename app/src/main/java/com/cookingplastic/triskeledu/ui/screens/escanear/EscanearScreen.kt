@@ -85,7 +85,7 @@ import androidx.camera.core.Preview as CamaraPreview
 //EXC-04: cuánto se ve "Ya descubriste este lugar" antes de abrir el detalle
 private const val ESPERA_YA_DESCUBIERTO_MS = 1500L
 
-//Permisos que necesita Escanear: la cámara para leer el QR y la ubicación para la regla de 60 m
+//Permisos que necesita Escanear: la cámara para leer el QR y la ubicación para la regla de 100 m
 private val PERMISOS = arrayOf(
     Manifest.permission.CAMERA,
     Manifest.permission.ACCESS_FINE_LOCATION,
@@ -350,7 +350,7 @@ private fun EtiquetaGps(gps: EstadoGps) {
     }
 }
 
-//"Debes estar a 60 m o menos...", como en el mockup
+//"Debes estar a 100 m o menos...", como en el mockup
 @Composable
 private fun AvisoDistancia() {
     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -367,7 +367,7 @@ private fun AvisoDistancia() {
             )
         }
         Text(
-            text = "Debes estar a 60 m o menos del lugar para desbloquearlo. Funciona sin internet.",
+            text = "Debes estar a 100 m o menos del lugar para desbloquearlo. Funciona sin internet.",
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.padding(start = 12.dp)
         )
@@ -521,7 +521,7 @@ fun EscanearLejosPreview() {
                 permisoCamara = true,
                 gps = EstadoGps.ACTIVO,
                 codigoLeido = "TRISKEL-PI-003",
-                mensajeRechazo = "Estás a 120 m. Acércate a 60 m o menos para desbloquearlo"
+                mensajeRechazo = "Estás a 120 m. Acércate a 100 m o menos para desbloquearlo"
             ),
             onEvent = {},
             onPedirPermiso = {}

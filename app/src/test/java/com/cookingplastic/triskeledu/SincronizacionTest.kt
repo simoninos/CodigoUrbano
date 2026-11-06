@@ -50,7 +50,7 @@ class SincronizacionTest {
 
         assertTrue(respuestas.getValue("cerca").aceptado)
         assertTrue(respuestas.getValue("exacto").aceptado)
-        //60,9 m: fuera del radio
+        //100,9 m: fuera del radio
         assertEquals(MotivoRechazo.LEJOS, respuestas.getValue("lejos").motivo)
     }
 

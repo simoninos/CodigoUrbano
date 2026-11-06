@@ -109,7 +109,7 @@ fun BienvenidaContent(
         //los tres pasos del juego
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Paso(1, Icons.Outlined.Map, "Explora el mapa", "Descubre puntos de interés de Santiago Centro.")
-            Paso(2, Icons.Outlined.QrCodeScanner, "Escanea el QR", "A 60 m o menos del lugar, desbloquéalo con la cámara.")
+            Paso(2, Icons.Outlined.QrCodeScanner, "Escanea el QR", "A 100 m o menos del lugar, desbloquéalo con la cámara.")
             Paso(3, Icons.Outlined.Videocam, "Aprende y suma", "Mira la cápsula sobre IA y gana puntos.")
         }
 

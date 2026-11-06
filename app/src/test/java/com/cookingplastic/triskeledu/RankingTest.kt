@@ -135,12 +135,12 @@ class RankingTest {
     //---------- MAP-03 ----------
 
     @Test
-    fun enRangoSoloBloqueadoActivoA60MetrosOMenos() {
+    fun enRangoSoloBloqueadoActivoA100MetrosOMenos() {
         val punto = DatosPrueba.PUNTO_LA_MONEDA
-        assertTrue(PuntoMapa(punto, EstadoPunto.BLOQUEADO, 59.0).enRango)
-        assertTrue(PuntoMapa(punto, EstadoPunto.BLOQUEADO, 60.0).enRango)
+        assertTrue(PuntoMapa(punto, EstadoPunto.BLOQUEADO, 99.0).enRango)
+        assertTrue(PuntoMapa(punto, EstadoPunto.BLOQUEADO, 100.0).enRango)
         //al salir del radio deja de latir
-        assertFalse(PuntoMapa(punto, EstadoPunto.BLOQUEADO, 60.5).enRango)
+        assertFalse(PuntoMapa(punto, EstadoPunto.BLOQUEADO, 100.5).enRango)
         //sin ubicación no hay distancia
         assertFalse(PuntoMapa(punto, EstadoPunto.BLOQUEADO, null).enRango)
         //ya escaneado o completado no late
