@@ -40,7 +40,7 @@ class SincronizacionTest {
         ProgresoPunto(id = id, usuarioId = usuarioId, puntoId = puntoId, escaneoUbicacion = donde, sincronizado = sincronizado, escaneadoEn = 1_000_000L - hace)
 
     @Test
-    fun aceptaDentroDe60MetrosYRechazaMasLejos() {
+    fun aceptaDentroDe100MetrosYRechazaMasLejos() {
         val pendientes = listOf(
             escaneo("cerca", "u", laMoneda.id, DatosPrueba.UBICACION_CERCA_LA_MONEDA),
             escaneo("exacto", "u", DatosPrueba.PUNTO_PRECOLOMBINO.id, DatosPrueba.PUNTO_PRECOLOMBINO.ubicacion),
@@ -50,7 +50,7 @@ class SincronizacionTest {
 
         assertTrue(respuestas.getValue("cerca").aceptado)
         assertTrue(respuestas.getValue("exacto").aceptado)
-        //100,9 m: fuera del radio
+        //101,2 m: fuera del radio
         assertEquals(MotivoRechazo.LEJOS, respuestas.getValue("lejos").motivo)
     }
 

@@ -3,7 +3,7 @@ package com.cookingplastic.triskeledu.ui.validation
 import kotlin.math.roundToInt
 
 //Distancia máxima para desbloquear un lugar al escanear su QR
-const val RADIO_ESCANEO_METROS = 105.0
+const val RADIO_ESCANEO_METROS = 100.0
 
 //Regla de los 100 m. Recibe la distancia ya medida (eso lo hace UbicacionRepository de Simon),
 //así se puede probar sin GPS. null significa que no hay GPS: sin ubicación no se escanea
