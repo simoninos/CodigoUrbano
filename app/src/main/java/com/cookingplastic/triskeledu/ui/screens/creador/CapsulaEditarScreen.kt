@@ -48,13 +48,10 @@ import com.cookingplastic.triskeledu.data.model.CategoriaCapsula
 import com.cookingplastic.triskeledu.ui.components.BotonEnviar
 import com.cookingplastic.triskeledu.ui.components.EnfocarPrimerError
 import com.cookingplastic.triskeledu.ui.components.MensajeError
-import com.cookingplastic.triskeledu.ui.event.CapsulaEditarUiEvent
-import com.cookingplastic.triskeledu.ui.state.CampoCapsula
-import com.cookingplastic.triskeledu.ui.state.CapsulaEditarUiState
-import com.cookingplastic.triskeledu.ui.state.ConfirmacionCapsula
 import com.cookingplastic.triskeledu.ui.theme.TriskeleduTheme
-import com.cookingplastic.triskeledu.ui.validation.ValidacionCapsula
-import com.cookingplastic.triskeledu.ui.viewmodels.CapsulaEditarViewModel
+import com.cookingplastic.triskeledu.domain.rules.ValidacionCapsula
+import com.cookingplastic.triskeledu.ui.components.CabeceraCreador
+import com.cookingplastic.triskeledu.ui.components.EtiquetaEstadoCapsula
 
 //P18 · Crear o editar cápsula (CRE-02, CRE-06)
 @Composable

@@ -5,7 +5,7 @@ import com.cookingplastic.triskeledu.data.model.Notificacion
 import com.cookingplastic.triskeledu.data.model.TipoNotificacion
 import com.cookingplastic.triskeledu.data.model.Usuario
 import com.cookingplastic.triskeledu.data.notificaciones.AvisoLocal
-import com.cookingplastic.triskeledu.data.repository.UsuarioRepository
+import com.cookingplastic.triskeledu.domain.repository.UsuarioRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 

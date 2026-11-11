@@ -49,13 +49,9 @@ import com.cookingplastic.triskeledu.ui.components.BotonEnviar
 import com.cookingplastic.triskeledu.ui.components.EnfocarPrimerError
 import com.cookingplastic.triskeledu.ui.components.MensajeError
 import com.cookingplastic.triskeledu.ui.components.mesYAnio
-import com.cookingplastic.triskeledu.ui.event.PerfilUiEvent
-import com.cookingplastic.triskeledu.ui.screens.creador.Etiqueta
-import com.cookingplastic.triskeledu.ui.state.CampoPerfil
-import com.cookingplastic.triskeledu.ui.state.PerfilUiState
+import com.cookingplastic.triskeledu.ui.components.Etiqueta
 import com.cookingplastic.triskeledu.ui.theme.TriskeleduTheme
-import com.cookingplastic.triskeledu.ui.validation.ReglaNivel
-import com.cookingplastic.triskeledu.ui.viewmodels.PerfilViewModel
+import com.cookingplastic.triskeledu.domain.rules.ReglaNivel
 
 //P15 · Mi perfil (PER-02): se llega desde la tarjeta del perfil en Configuración; "Volver" regresa ahí
 @Composable

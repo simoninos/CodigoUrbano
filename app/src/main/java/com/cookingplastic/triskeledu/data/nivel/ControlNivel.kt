@@ -7,10 +7,10 @@ import com.cookingplastic.triskeledu.data.model.RolUsuario
 import com.cookingplastic.triskeledu.data.model.TemaApp
 import com.cookingplastic.triskeledu.data.model.TipoNotificacion
 import com.cookingplastic.triskeledu.data.notificaciones.AvisoLocal
-import com.cookingplastic.triskeledu.data.repository.PreferenciasRepository
-import com.cookingplastic.triskeledu.data.repository.ProgresoRepository
-import com.cookingplastic.triskeledu.data.repository.UsuarioRepository
-import com.cookingplastic.triskeledu.ui.validation.ReglaNivel
+import com.cookingplastic.triskeledu.domain.repository.PreferenciasRepository
+import com.cookingplastic.triskeledu.domain.repository.ProgresoRepository
+import com.cookingplastic.triskeledu.domain.repository.UsuarioRepository
+import com.cookingplastic.triskeledu.domain.rules.ReglaNivel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

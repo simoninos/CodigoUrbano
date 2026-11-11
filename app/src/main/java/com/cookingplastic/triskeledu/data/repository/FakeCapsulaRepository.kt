@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
+import com.cookingplastic.triskeledu.domain.repository.CapsulaRepository
 
 //Versión de prueba: las mismas cápsulas de DatosPrueba que llenan Room, guardadas en memoria
 class FakeCapsulaRepository(capsulasIniciales: List<Capsula> = DatosPrueba.capsulas) : CapsulaRepository {

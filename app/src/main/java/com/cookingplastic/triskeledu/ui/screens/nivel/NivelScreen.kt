@@ -48,12 +48,7 @@ import com.cookingplastic.triskeledu.data.model.TemaApp
 import com.cookingplastic.triskeledu.ui.components.AvatarNivel
 import com.cookingplastic.triskeledu.ui.components.BarraNivel
 import com.cookingplastic.triskeledu.ui.components.MuestraColores
-import com.cookingplastic.triskeledu.ui.state.EstadoFilaNivel
-import com.cookingplastic.triskeledu.ui.state.FilaNivel
-import com.cookingplastic.triskeledu.ui.state.NivelUiState
 import com.cookingplastic.triskeledu.ui.theme.TriskeleduTheme
-import com.cookingplastic.triskeledu.ui.viewmodels.NivelViewModel
-import com.cookingplastic.triskeledu.ui.viewmodels.armarNivel
 
 //P24 · Mi nivel (LVL-01): se abre al tocar la tarjeta del usuario en el mapa
 @Composable

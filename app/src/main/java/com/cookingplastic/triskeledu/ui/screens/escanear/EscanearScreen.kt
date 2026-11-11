@@ -66,12 +66,7 @@ import com.cookingplastic.triskeledu.ui.components.EstadoUbicacion
 import com.cookingplastic.triskeledu.ui.components.gpsEncendido
 import com.cookingplastic.triskeledu.ui.components.registrarRespuestaUbicacion
 import com.cookingplastic.triskeledu.ui.components.rememberActivarUbicacion
-import com.cookingplastic.triskeledu.ui.event.EscanearUiEvent
-import com.cookingplastic.triskeledu.ui.state.EscanearUiState
-import com.cookingplastic.triskeledu.ui.state.EstadoGps
 import com.cookingplastic.triskeledu.ui.theme.TriskeleduTheme
-import com.cookingplastic.triskeledu.ui.viewmodels.EscanearViewModel
-import com.cookingplastic.triskeledu.ui.viewmodels.ProcesadorEscaneo
 import com.google.mlkit.vision.barcode.BarcodeScanner
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
@@ -79,7 +74,6 @@ import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
 import java.util.concurrent.Executors
 import kotlinx.coroutines.delay
-
 import androidx.camera.core.Preview as CamaraPreview
 
 //EXC-04: cuánto se ve "Ya descubriste este lugar" antes de abrir el detalle

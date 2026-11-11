@@ -77,11 +77,8 @@ import com.cookingplastic.triskeledu.data.model.PUNTOS_ESCANEO
 import com.cookingplastic.triskeledu.data.model.PUNTOS_SELFIE
 import com.cookingplastic.triskeledu.ui.components.DialogoSinConexion
 import com.cookingplastic.triskeledu.ui.components.EsferaAgua
-import com.cookingplastic.triskeledu.ui.event.DetalleUiEvent
-import com.cookingplastic.triskeledu.ui.state.DetalleUiState
 import com.cookingplastic.triskeledu.ui.theme.TriskeleduTheme
-import com.cookingplastic.triskeledu.ui.validation.ValidacionComentario
-import com.cookingplastic.triskeledu.ui.viewmodels.DetalleViewModel
+import com.cookingplastic.triskeledu.domain.rules.ValidacionComentario
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale

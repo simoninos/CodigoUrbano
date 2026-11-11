@@ -3,6 +3,7 @@ package com.cookingplastic.triskeledu.data.repository
 import com.cookingplastic.triskeledu.data.local.dao.CapsulaDao
 import com.cookingplastic.triskeledu.data.model.Capsula
 import kotlinx.coroutines.flow.Flow
+import com.cookingplastic.triskeledu.domain.repository.CapsulaRepository
 
 class RoomCapsulaRepository(private val dao: CapsulaDao) : CapsulaRepository {
 

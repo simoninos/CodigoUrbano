@@ -70,10 +70,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cookingplastic.triskeledu.data.model.PUNTOS_SELFIE
 import com.cookingplastic.triskeledu.ui.components.MensajeError
-import com.cookingplastic.triskeledu.ui.event.SelfieUiEvent
-import com.cookingplastic.triskeledu.ui.state.SelfieUiState
 import com.cookingplastic.triskeledu.ui.theme.TriskeleduTheme
-import com.cookingplastic.triskeledu.ui.viewmodels.SelfieViewModel
 import kotlinx.coroutines.delay
 import java.io.File
 

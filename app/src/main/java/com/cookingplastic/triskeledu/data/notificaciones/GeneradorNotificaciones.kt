@@ -6,8 +6,8 @@ import com.cookingplastic.triskeledu.data.model.RolUsuario
 import com.cookingplastic.triskeledu.data.model.TipoNotificacion
 import com.cookingplastic.triskeledu.data.model.Usuario
 import com.cookingplastic.triskeledu.data.repository.NotificacionRepository
-import com.cookingplastic.triskeledu.data.repository.PreferenciasRepository
-import com.cookingplastic.triskeledu.data.repository.UsuarioRepository
+import com.cookingplastic.triskeledu.domain.repository.PreferenciasRepository
+import com.cookingplastic.triskeledu.domain.repository.UsuarioRepository
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock

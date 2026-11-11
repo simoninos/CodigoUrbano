@@ -7,6 +7,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
+import com.cookingplastic.triskeledu.domain.repository.CapsulaRepository
+import com.cookingplastic.triskeledu.domain.repository.PuntoInteresRepository
 
 // Versión de prueba: guarda los puntos en memoria a partir de DatosPrueba.
 // Los cambios se emiten al instante a quien escucha, pero se pierden al cerrar la app.

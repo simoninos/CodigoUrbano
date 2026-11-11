@@ -84,11 +84,7 @@ import com.cookingplastic.triskeledu.ui.components.MapaSimple
 import com.cookingplastic.triskeledu.ui.components.MensajeError
 import com.cookingplastic.triskeledu.ui.components.SelectorUbicacionMapa
 import com.cookingplastic.triskeledu.ui.components.guardarQrPng
-import com.cookingplastic.triskeledu.ui.event.AdminEditarUiEvent
-import com.cookingplastic.triskeledu.ui.state.AdminEditarUiState
-import com.cookingplastic.triskeledu.ui.state.CampoPunto
 import com.cookingplastic.triskeledu.ui.theme.TriskeleduTheme
-import com.cookingplastic.triskeledu.ui.viewmodels.AdminEditarViewModel
 import java.io.File
 
 //se conecta al ViewModel, abre galería, cámara, permisos y el selector de ubicación, y avisa cuando hay que volver

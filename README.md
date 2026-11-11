@@ -163,10 +163,10 @@ Pantalla (Composable)  ──eventos──▶  ViewModel  ──▶  Repository 
 ```
 
 - **Model** (`data/model`): entidades (`Usuario`, `Preferencias`, `PuntoInteres`, `Capsula`, `ProgresoPunto`, `Comentario`, `Notificacion`, `CodigoRecuperacion`).
-- **Repository** (`data/repository`, `data/location`, `data/red`): una interfaz por fuente de datos, con la versión Room o real y una versión `Fake…Repository` en memoria para las pruebas.
+- **Repository**: una interfaz por fuente de datos, con la versión Room o real y una versión `Fake…Repository` en memoria para las pruebas. Las interfaces que tienen archivo propio están en `domain/repository` y sus implementaciones en `data/repository`; `data/location`, `data/red` y `data/simulacion` todavía tienen la interfaz y la implementación en el mismo archivo.
 - **Reglas del juego** (`data/nivel`, `data/creador`, `data/notificaciones`, `data/sincronizacion`): nivel, cápsulas del creador, notificaciones locales y sincronización. Envuelven a los repositorios (`ProgresoConNivel`, `PuntosConAvisos`, `ProgresoConSincronizacion`) para que ninguna pantalla tenga que acordarse de ellas.
 - **Simulación** (`data/simulacion`): recuperación de contraseña, solicitudes de creador y servidor de sincronización, en el mismo teléfono.
-- **ViewModel** (`ui/viewmodels`): un `UiState` por pantalla y sus `UiEvent`. Las validaciones están en `ui/validation` y los errores se muestran bajo cada campo con `MensajeError`.
+- **ViewModel**: cada pantalla tiene su carpeta en `ui/screens/<pantalla>` con su Screen, ViewModel, `UiState` y `UiEvent`; lo que usan varias pantallas (sesión, rol, tema, subida de nivel) está en `ui/shared`. Las validaciones son Kotlin puro en `domain/rules` y los errores se muestran bajo cada campo con `MensajeError`.
 - **Screens y Composables** (`ui/screens`, `ui/components`): solo dibujan el estado. Los colores salen del tema (`ui/theme`), nunca escritos en una pantalla.
 
 ### Estructura de carpetas
@@ -174,10 +174,14 @@ Pantalla (Composable)  ──eventos──▶  ViewModel  ──▶  Repository 
 ```
 app/src/main/java/com/cookingplastic/triskeledu/
 ├── MainActivity.kt, TriskeleduApp.kt, AppContainer.kt
+├── domain/
+│   ├── rules/           Reglas de formularios, escaneo, mapa, QR, cápsulas y nivel (Kotlin puro)
+│   └── repository/      Interfaces de los repositorios
 ├── data/
 │   ├── model/           Entidades
 │   ├── local/           AppDatabase (Room v3), DAO, carga inicial y DatosPrueba (con ENLACES_CAPSULAS)
-│   ├── repository/      Repositorios (interfaz + Room + Fake)
+│   ├── repository/      Implementaciones Room y Fake
+│   ├── remote/          Vacío: aquí entra la conexión con el backend
 │   ├── location/        GPS y servicio de "Lugar cercano" en segundo plano
 │   ├── nivel/           Nivel, temas y "¡Subiste de nivel!"
 │   ├── creador/         Reglas de las cápsulas del creador
@@ -188,11 +192,9 @@ app/src/main/java/com/cookingplastic/triskeledu/
 │   └── security/        Hash de contraseñas
 ├── navigation/          Rutas, barra inferior por rol y NavHost
 └── ui/
-    ├── screens/         Una carpeta por pantalla
-    ├── components/      Composables reutilizables (mapa, esfera, avisos, botones, diálogos…)
-    ├── state/, event/   UiState y UiEvent de cada pantalla
-    ├── viewmodels/      ViewModels
-    ├── validation/      Reglas de formularios, escaneo, mapa, QR, cápsulas y nivel
+    ├── screens/         Una carpeta por pantalla: Screen, ViewModel, UiState y UiEvent
+    ├── shared/          Sesión, rol, tema y subida de nivel (los usan varias pantallas)
+    ├── components/      Composables reutilizables (mapa, esfera, avisos, botones, diálogos, etiquetas…)
     └── theme/           8 temas con Día y Noche (Material 3)
 ```
 

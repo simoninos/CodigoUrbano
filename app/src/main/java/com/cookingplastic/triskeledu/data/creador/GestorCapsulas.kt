@@ -5,9 +5,9 @@ import com.cookingplastic.triskeledu.data.model.EstadoCapsula
 import com.cookingplastic.triskeledu.data.model.RolUsuario
 import com.cookingplastic.triskeledu.data.model.Usuario
 import com.cookingplastic.triskeledu.data.notificaciones.GeneradorNotificaciones
-import com.cookingplastic.triskeledu.data.repository.CapsulaRepository
-import com.cookingplastic.triskeledu.data.repository.PuntoInteresRepository
-import com.cookingplastic.triskeledu.ui.validation.ReglaCapsula
+import com.cookingplastic.triskeledu.domain.repository.CapsulaRepository
+import com.cookingplastic.triskeledu.domain.repository.PuntoInteresRepository
+import com.cookingplastic.triskeledu.domain.rules.ReglaCapsula
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 

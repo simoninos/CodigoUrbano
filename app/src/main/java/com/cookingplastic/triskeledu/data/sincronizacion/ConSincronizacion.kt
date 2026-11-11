@@ -3,8 +3,8 @@ package com.cookingplastic.triskeledu.data.sincronizacion
 import com.cookingplastic.triskeledu.data.model.Comentario
 import com.cookingplastic.triskeledu.data.model.ProgresoPunto
 import com.cookingplastic.triskeledu.data.model.Ubicacion
-import com.cookingplastic.triskeledu.data.repository.ComentarioRepository
-import com.cookingplastic.triskeledu.data.repository.ProgresoRepository
+import com.cookingplastic.triskeledu.domain.repository.ComentarioRepository
+import com.cookingplastic.triskeledu.domain.repository.ProgresoRepository
 
 //ESC-02 y BKD-06: después de guardar algo en Room se pide una sincronización. Si no hay red, queda esperando.
 //"by" delega lo demás sin cambios, igual que ProgresoConNivel

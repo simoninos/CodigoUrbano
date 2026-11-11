@@ -50,14 +50,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cookingplastic.triskeledu.data.model.Notificacion
 import com.cookingplastic.triskeledu.data.model.TipoNotificacion
-import com.cookingplastic.triskeledu.ui.event.NotificacionesUiEvent
-import com.cookingplastic.triskeledu.ui.state.DestinoNotificacion
-import com.cookingplastic.triskeledu.ui.state.FilaNotificacion
-import com.cookingplastic.triskeledu.ui.state.NotificacionesUiState
 import com.cookingplastic.triskeledu.ui.theme.ColoresApp
 import com.cookingplastic.triskeledu.ui.theme.TriskeleduTheme
-import com.cookingplastic.triskeledu.ui.viewmodels.NotificacionesViewModel
-import com.cookingplastic.triskeledu.ui.viewmodels.armarNotificaciones
 
 //P16 · Historial de notificaciones (PER-03): desde la campana. Tocar una la marca leída y abre lo relacionado.
 //El administrador tiene además el botón "Solicitudes de creador", que abre P22

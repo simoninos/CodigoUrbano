@@ -13,12 +13,12 @@ import com.cookingplastic.triskeledu.data.notificaciones.GeneradorNotificaciones
 import com.cookingplastic.triskeledu.data.notificaciones.PuntosConAvisos
 import com.cookingplastic.triskeledu.navigation.PedidoMapa
 import kotlinx.coroutines.flow.first
-import com.cookingplastic.triskeledu.data.repository.CapsulaRepository
-import com.cookingplastic.triskeledu.data.repository.ComentarioRepository
+import com.cookingplastic.triskeledu.domain.repository.CapsulaRepository
+import com.cookingplastic.triskeledu.domain.repository.ComentarioRepository
 import com.cookingplastic.triskeledu.data.repository.NotificacionRepository
-import com.cookingplastic.triskeledu.data.repository.PreferenciasRepository
-import com.cookingplastic.triskeledu.data.repository.ProgresoRepository
-import com.cookingplastic.triskeledu.data.repository.PuntoInteresRepository
+import com.cookingplastic.triskeledu.domain.repository.PreferenciasRepository
+import com.cookingplastic.triskeledu.domain.repository.ProgresoRepository
+import com.cookingplastic.triskeledu.domain.repository.PuntoInteresRepository
 import com.cookingplastic.triskeledu.data.repository.RoomCapsulaRepository
 import com.cookingplastic.triskeledu.data.repository.RoomComentarioRepository
 import com.cookingplastic.triskeledu.data.repository.RoomNotificacionRepository
@@ -26,7 +26,7 @@ import com.cookingplastic.triskeledu.data.repository.RoomPreferenciasRepository
 import com.cookingplastic.triskeledu.data.repository.RoomProgresoRepository
 import com.cookingplastic.triskeledu.data.repository.RoomPuntoInteresRepository
 import com.cookingplastic.triskeledu.data.repository.RoomUsuarioRepository
-import com.cookingplastic.triskeledu.data.repository.UsuarioRepository
+import com.cookingplastic.triskeledu.domain.repository.UsuarioRepository
 import com.cookingplastic.triskeledu.data.simulacion.RecuperacionRepository
 import com.cookingplastic.triskeledu.data.simulacion.RecuperacionSimulada
 import com.cookingplastic.triskeledu.data.simulacion.SolicitudesRepository

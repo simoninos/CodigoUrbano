@@ -3,10 +3,10 @@ package com.cookingplastic.triskeledu.data.sincronizacion
 import com.cookingplastic.triskeledu.data.model.RolUsuario
 import com.cookingplastic.triskeledu.data.model.puntosTotales
 import com.cookingplastic.triskeledu.data.notificaciones.GeneradorNotificaciones
-import com.cookingplastic.triskeledu.data.repository.ComentarioRepository
-import com.cookingplastic.triskeledu.data.repository.ProgresoRepository
-import com.cookingplastic.triskeledu.data.repository.PuntoInteresRepository
-import com.cookingplastic.triskeledu.data.repository.UsuarioRepository
+import com.cookingplastic.triskeledu.domain.repository.ComentarioRepository
+import com.cookingplastic.triskeledu.domain.repository.ProgresoRepository
+import com.cookingplastic.triskeledu.domain.repository.PuntoInteresRepository
+import com.cookingplastic.triskeledu.domain.repository.UsuarioRepository
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock

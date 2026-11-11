@@ -27,7 +27,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.cookingplastic.triskeledu.ui.state.CampoRegistro
 import com.cookingplastic.triskeledu.ui.components.EnfocarPrimerError
 import com.cookingplastic.triskeledu.ui.components.BotonEnviar
 import androidx.compose.runtime.remember
@@ -44,10 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cookingplastic.triskeledu.ui.components.MensajeError
-import com.cookingplastic.triskeledu.ui.event.RegistroUiEvent
-import com.cookingplastic.triskeledu.ui.state.RegistroUiState
 import com.cookingplastic.triskeledu.ui.theme.TriskeleduTheme
-import com.cookingplastic.triskeledu.ui.viewmodels.RegistroViewModel
 
 //igual que LoginScreen: se conecta al ViewModel y avisa cuando hay que navegar
 @Composable

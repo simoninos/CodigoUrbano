@@ -59,11 +59,7 @@ import com.cookingplastic.triskeledu.data.simulacion.RecuperacionSimulada
 import com.cookingplastic.triskeledu.ui.components.BotonEnviar
 import com.cookingplastic.triskeledu.ui.components.EnfocarPrimerError
 import com.cookingplastic.triskeledu.ui.components.MensajeError
-import com.cookingplastic.triskeledu.ui.event.RecuperarUiEvent
-import com.cookingplastic.triskeledu.ui.state.CampoRecuperar
-import com.cookingplastic.triskeledu.ui.state.RecuperarUiState
 import com.cookingplastic.triskeledu.ui.theme.TriskeleduTheme
-import com.cookingplastic.triskeledu.ui.viewmodels.RecuperarViewModel
 
 //P02b (ACC-05, SIM-01): el código llega como notificación local. La pantalla pide el permiso antes de enviarlo
 @Composable

@@ -41,12 +41,15 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cookingplastic.triskeledu.data.local.DatosPrueba
 import com.cookingplastic.triskeledu.data.model.EstadoAdminPunto
 import com.cookingplastic.triskeledu.ui.components.MensajeError
-import com.cookingplastic.triskeledu.ui.event.CapsulaDetalleUiEvent
-import com.cookingplastic.triskeledu.ui.state.CapsulaDetalleUiState
 import com.cookingplastic.triskeledu.ui.theme.TriskeleduTheme
-import com.cookingplastic.triskeledu.ui.validation.EnlaceVideo
-import com.cookingplastic.triskeledu.ui.validation.ReglaCapsula
-import com.cookingplastic.triskeledu.ui.viewmodels.CapsulaDetalleViewModel
+import com.cookingplastic.triskeledu.domain.rules.EnlaceVideo
+import com.cookingplastic.triskeledu.domain.rules.ReglaCapsula
+import com.cookingplastic.triskeledu.ui.components.CabeceraCreador
+import com.cookingplastic.triskeledu.ui.components.Etiqueta
+import com.cookingplastic.triskeledu.ui.components.EtiquetaCategoria
+import com.cookingplastic.triskeledu.ui.components.EtiquetaEstadoCapsula
+import com.cookingplastic.triskeledu.ui.components.MiniaturaCapsula
+import com.cookingplastic.triskeledu.ui.components.textoDuracion
 
 //P17-B · Detalle de la cápsula (CRE-05): se llega desde una cápsula publicada de P17
 @Composable

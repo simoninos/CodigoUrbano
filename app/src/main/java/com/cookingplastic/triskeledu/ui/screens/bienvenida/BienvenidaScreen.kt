@@ -37,7 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cookingplastic.triskeledu.ui.theme.TriskeleduTheme
-import com.cookingplastic.triskeledu.ui.viewmodels.SesionViewModel
+import com.cookingplastic.triskeledu.ui.shared.SesionViewModel
 
 //P00 (ACC-01): la primera pantalla sin sesión. No tiene UiState propio; usa SesionViewModel
 //solo para saber si ya había una sesión guardada y, si la hay, ir directo al mapa

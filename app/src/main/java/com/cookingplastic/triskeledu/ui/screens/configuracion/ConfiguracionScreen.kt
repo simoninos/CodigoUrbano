@@ -51,11 +51,8 @@ import com.cookingplastic.triskeledu.ui.components.AvisoUbicacionSegundoPlano
 import com.cookingplastic.triskeledu.ui.components.BotonMapa
 import com.cookingplastic.triskeledu.ui.components.Interruptor
 import com.cookingplastic.triskeledu.ui.components.MensajeError
-import com.cookingplastic.triskeledu.ui.event.ConfiguracionUiEvent
-import com.cookingplastic.triskeledu.ui.state.ConfiguracionUiState
 import com.cookingplastic.triskeledu.ui.theme.TriskeleduTheme
-import com.cookingplastic.triskeledu.ui.validation.ReglaNivel
-import com.cookingplastic.triskeledu.ui.viewmodels.ConfiguracionViewModel
+import com.cookingplastic.triskeledu.domain.rules.ReglaNivel
 
 //se conecta al ViewModel, avisa cuando hay que navegar y anima la entrada
 @Composable

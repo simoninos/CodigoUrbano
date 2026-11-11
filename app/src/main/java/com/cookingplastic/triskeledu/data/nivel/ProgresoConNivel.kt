@@ -3,7 +3,7 @@ package com.cookingplastic.triskeledu.data.nivel
 import com.cookingplastic.triskeledu.data.model.ProgresoPunto
 import com.cookingplastic.triskeledu.data.model.Ubicacion
 import com.cookingplastic.triskeledu.data.model.estaCompletado
-import com.cookingplastic.triskeledu.data.repository.ProgresoRepository
+import com.cookingplastic.triskeledu.domain.repository.ProgresoRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 

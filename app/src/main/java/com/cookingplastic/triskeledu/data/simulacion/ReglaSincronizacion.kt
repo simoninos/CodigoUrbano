@@ -6,8 +6,8 @@ import com.cookingplastic.triskeledu.data.model.ProgresoPunto
 import com.cookingplastic.triskeledu.data.model.PuntoInteres
 import com.cookingplastic.triskeledu.data.sincronizacion.MotivoRechazo
 import com.cookingplastic.triskeledu.data.sincronizacion.RespuestaRegistro
-import com.cookingplastic.triskeledu.ui.validation.RADIO_ESCANEO_METROS
-import com.cookingplastic.triskeledu.ui.validation.ValidacionComentario
+import com.cookingplastic.triskeledu.domain.rules.RADIO_ESCANEO_METROS
+import com.cookingplastic.triskeledu.domain.rules.ValidacionComentario
 
 //SIM-03: las revisiones que haría el backend al recibir lo guardado sin conexión. Solo lógica: se prueban sin Android
 object ReglaSincronizacion {

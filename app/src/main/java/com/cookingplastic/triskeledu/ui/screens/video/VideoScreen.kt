@@ -67,11 +67,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import com.cookingplastic.triskeledu.data.local.DatosPrueba
 import com.cookingplastic.triskeledu.data.model.PUNTOS_CAPSULA
-import com.cookingplastic.triskeledu.ui.event.VideoUiEvent
-import com.cookingplastic.triskeledu.ui.state.ModoReproductor
-import com.cookingplastic.triskeledu.ui.state.VideoUiState
 import com.cookingplastic.triskeledu.ui.theme.TriskeleduTheme
-import com.cookingplastic.triskeledu.ui.viewmodels.VideoViewModel
 import kotlinx.coroutines.delay
 
 //P12: se conecta al ViewModel y es dueña del ExoPlayer, que necesita el Context y se libera al salir

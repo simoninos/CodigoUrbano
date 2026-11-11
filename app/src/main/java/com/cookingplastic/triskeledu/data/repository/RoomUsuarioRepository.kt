@@ -9,6 +9,7 @@ import com.cookingplastic.triskeledu.data.security.HashContrasena
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
+import com.cookingplastic.triskeledu.domain.repository.UsuarioRepository
 
 //Versión con Room: usuario y sesión quedan guardados al cerrar la app. La clave se guarda solo como hash
 class RoomUsuarioRepository(private val dao: UsuarioDao) : UsuarioRepository {

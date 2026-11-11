@@ -25,7 +25,6 @@ import coil3.compose.AsyncImage
 import com.cookingplastic.triskeledu.data.local.DatosPrueba
 import com.cookingplastic.triskeledu.data.model.PUNTOS_SELFIE
 import com.cookingplastic.triskeledu.ui.components.fechaCorta
-import com.cookingplastic.triskeledu.ui.state.SelfieTomada
 
 //P07-D (LUG-08): las selfies del usuario. Son privadas: solo las ve su autor (RN-10).
 //La cámara para tomarlas llega en la etapa 8; mientras tanto se ven las de los datos de prueba
