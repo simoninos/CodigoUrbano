@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- El clip de prueba se abre por su nombre (DatosPrueba.CLIP_PRUEBA), no con R.raw:
+     esto evita que se borre si se activa la reducción de recursos en el APK release -->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@raw/capsula_prueba" />

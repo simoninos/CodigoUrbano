@@ -10,7 +10,14 @@ data class Preferencias(
     val usuarioId: String,
     val temaNoche: Boolean = false,
     val notifLugaresCercanos: Boolean = true,
-    val notifNuevosVideos: Boolean = false,
+    val notifNuevasCapsulas: Boolean = false,
     val seguirUbicacion: Boolean = true,
-    val mostrarBloqueados: Boolean = true
+    val mostrarBloqueados: Boolean = true,
+    //estas tres solo las usa el administrador (P08-Admin)
+    val notifSolicitudes: Boolean = true,
+    val notifPuntosListos: Boolean = true,
+    val mostrarInactivos: Boolean = true,
+    val tema: TemaApp = TemaApp.CLASICO,
+    //RN-33: el nivel más alto que alcanzó; los temas desbloqueados no se pierden aunque el nivel baje
+    val nivelMaximoAlcanzado: Int = 1
 )

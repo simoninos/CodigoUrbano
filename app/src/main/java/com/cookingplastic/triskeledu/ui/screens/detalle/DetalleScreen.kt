@@ -53,6 +53,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -66,9 +69,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import com.cookingplastic.triskeledu.R
+import com.cookingplastic.triskeledu.data.externo.ResumenLugar
 import com.cookingplastic.triskeledu.data.local.DatosPrueba
 import com.cookingplastic.triskeledu.data.model.Comentario
 import com.cookingplastic.triskeledu.data.model.EstadoPunto
+import com.cookingplastic.triskeledu.data.model.PUNTOS_CAPSULA
+import com.cookingplastic.triskeledu.data.model.PUNTOS_ESCANEO
+import com.cookingplastic.triskeledu.data.model.PUNTOS_SELFIE
 import com.cookingplastic.triskeledu.ui.components.DialogoSinConexion
 import com.cookingplastic.triskeledu.ui.components.EsferaAgua
 import com.cookingplastic.triskeledu.ui.event.DetalleUiEvent
@@ -86,9 +93,32 @@ import kotlin.math.roundToInt
 fun DetalleScreen(
     alVolver: () -> Unit,
     alAbrirConfiguracion: () -> Unit,
+    // P12: abre el reproductor con la cápsula y el punto
+    alVerCapsula: (capsulaId: String, puntoId: String) -> Unit,
+    // P13 (ACT-03): abre la cámara para la selfie de este punto
+    alTomarSelfie: (puntoId: String) -> Unit = {},
     viewModel: DetalleViewModel = viewModel(factory = DetalleViewModel.Factory)
 ) {
     val estado by viewModel.estado.collectAsStateWithLifecycle()
+
+    LaunchedEffect(estado.abrirSelfie) {
+        val puntoId = estado.punto?.id
+        if (estado.abrirSelfie && puntoId != null) {
+            viewModel.onEvent(DetalleUiEvent.OnSelfieAbierta)
+            alTomarSelfie(puntoId)
+        }
+    }
+
+    // navega una sola vez y avisa al ViewModel para que no vuelva a abrirse
+    LaunchedEffect(estado.capsulaPorAbrir) {
+        val capsulaId = estado.capsulaPorAbrir
+        val puntoId = estado.punto?.id
+        if (capsulaId != null && puntoId != null) {
+            viewModel.onEvent(DetalleUiEvent.OnCapsulaAbierta)
+            alVerCapsula(capsulaId, puntoId)
+        }
+    }
+
     DetalleContent(
         estado = estado,
         onEvent = viewModel::onEvent,
@@ -255,6 +285,17 @@ fun DetalleContent(
                         }
                     }
 
+                    // API externa: resumen del artículo de Wikipedia del lugar
+                    if (estado.cargandoWikipedia || estado.wikipedia != null || estado.wikipediaNoDisponible) {
+                        item {
+                            ResumenWikipedia(
+                                resumen = estado.wikipedia,
+                                cargando = estado.cargandoWikipedia,
+                                noDisponible = estado.wikipediaNoDisponible
+                            )
+                        }
+                    }
+
                     // D-08 y D-09: actividades
                     item {
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -266,7 +307,7 @@ fun DetalleContent(
                                     fondoIcono = MaterialTheme.colorScheme.primary,
                                     colorIcono = MaterialTheme.colorScheme.onPrimary,
                                     titulo = "QR escaneado",
-                                    detalle = "+5 pts · Completado",
+                                    detalle = "+$PUNTOS_ESCANEO pts · Completado",
                                     fondo = MaterialTheme.colorScheme.primaryContainer,
                                     borde = null
                                 )
@@ -274,18 +315,20 @@ fun DetalleContent(
                                 Actividad(
                                     icono = Icons.Filled.QrCodeScanner,
                                     titulo = "Escanea el QR del lugar",
-                                    detalle = "+5 pts · Pendiente"
+                                    detalle = "+$PUNTOS_ESCANEO pts · Pendiente"
                                 )
                             }
-                            if (estado.videoVisto) {
+                            if (estado.capsulaVista) {
                                 Actividad(
                                     icono = Icons.Filled.Check,
                                     fondoIcono = MaterialTheme.colorScheme.primary,
                                     colorIcono = MaterialTheme.colorScheme.onPrimary,
-                                    titulo = "Video visto",
-                                    detalle = listOfNotNull(estado.capsula?.titulo, "+15 pts · Completado").joinToString(" · "),
+                                    titulo = "Cápsula vista",
+                                    detalle = listOfNotNull(estado.capsula?.titulo, "+$PUNTOS_CAPSULA pts · Completado").joinToString(" · "),
                                     fondo = MaterialTheme.colorScheme.primaryContainer,
-                                    borde = null
+                                    borde = null,
+                                    // ACT-06: se puede ver de nuevo, ya con la barra para adelantar
+                                    alPresionar = { onEvent(DetalleUiEvent.OnVerVideo) }
                                 )
                             } else {
                                 Actividad(
@@ -293,9 +336,9 @@ fun DetalleContent(
                                     fondoIcono = MaterialTheme.colorScheme.secondary,
                                     colorIcono = MaterialTheme.colorScheme.onSecondary,
                                     // D-21: título y duración de la cápsula del punto
-                                    titulo = estado.capsula?.titulo ?: "Mira el video sobre IA",
+                                    titulo = estado.capsula?.titulo ?: "Mira la cápsula sobre IA",
                                     detalle = listOfNotNull(
-                                        "+15 pts",
+                                        "+$PUNTOS_CAPSULA pts",
                                         estado.capsula?.duracionSegundos?.let { textoDuracion(it) },
                                         "Hay que verlo completo"
                                     ).joinToString(" · "),
@@ -303,12 +346,26 @@ fun DetalleContent(
                                     alPresionar = { onEvent(DetalleUiEvent.OnVerVideo) }
                                 )
                             }
-                            Actividad(
-                                icono = Icons.Filled.PhotoCamera,
-                                titulo = "Sube tu selfie",
-                                detalle = "Evidencia de tu visita",
-                                alPresionar = { onEvent(DetalleUiEvent.OnTomarSelfie) }
-                            )
+                            //ACT-03: hecha, se ve igual que la cápsula vista
+                            if (estado.selfieTomada) {
+                                Actividad(
+                                    icono = Icons.Filled.Check,
+                                    fondoIcono = MaterialTheme.colorScheme.primary,
+                                    colorIcono = MaterialTheme.colorScheme.onPrimary,
+                                    titulo = "Selfie subida",
+                                    detalle = "+$PUNTOS_SELFIE pts · Completado",
+                                    fondo = MaterialTheme.colorScheme.primaryContainer,
+                                    borde = null,
+                                    alPresionar = { onEvent(DetalleUiEvent.OnTomarSelfie) }
+                                )
+                            } else {
+                                Actividad(
+                                    icono = Icons.Filled.PhotoCamera,
+                                    titulo = "Sube tu selfie",
+                                    detalle = "+$PUNTOS_SELFIE pts · Evidencia de tu visita",
+                                    alPresionar = { onEvent(DetalleUiEvent.OnTomarSelfie) }
+                                )
+                            }
                             Actividad(
                                 icono = Icons.Filled.ChatBubbleOutline,
                                 titulo = "Comenta algo interesante",
@@ -447,9 +504,14 @@ private fun Actividad(
 }
 
 // Formulario de comentario (D-17 y D-18): error con ícono bajo el campo, contador de caracteres
-// y "Publicar" deshabilitado mientras el texto no sea válido
+// y "Publicar" atenuado mientras el texto no sea válido; al tocarlo muestra el error (RN-18)
 @Composable
 private fun FormularioComentario(estado: DetalleUiState, onEvent: (DetalleUiEvent) -> Unit) {
+    // RN-18: con el comentario inválido, el foco vuelve al campo
+    val foco = remember { FocusRequester() }
+    LaunchedEffect(estado.intentoComentario) {
+        if (estado.intentoComentario > 0) foco.requestFocus()
+    }
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         OutlinedTextField(
             value = estado.textoComentario,
@@ -474,7 +536,7 @@ private fun FormularioComentario(estado: DetalleUiState, onEvent: (DetalleUiEven
             },
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             shape = RoundedCornerShape(14.dp),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth().focusRequester(foco)
         )
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -483,10 +545,12 @@ private fun FormularioComentario(estado: DetalleUiState, onEvent: (DetalleUiEven
         ) {
             TextButton(onClick = { onEvent(DetalleUiEvent.OnComentar) }) { Text("Cancelar") }
             Button(
-                onClick = { onEvent(DetalleUiEvent.OnPublicarComentario) },
-                enabled = estado.puedePublicarComentario,
+                // EXC-09: mientras se guarda no acepta un segundo toque
+                onClick = { if (!estado.guardandoComentario) onEvent(DetalleUiEvent.OnPublicarComentario) },
                 shape = RoundedCornerShape(14.dp),
-                modifier = Modifier.height(48.dp)
+                modifier = Modifier
+                    .height(48.dp)
+                    .alpha(if (estado.puedePublicarComentario || estado.guardandoComentario) 1f else 0.5f)
             ) {
                 if (estado.guardandoComentario) {
                     CircularProgressIndicator(
@@ -579,9 +643,9 @@ private fun DetalleNochePreview() {
         DetalleContent(
             estado = DetalleUiState(
                 punto = DatosPrueba.PUNTO_LA_MONEDA,
-                capsula = DatosPrueba.CAPSULA_IA_01,
+                capsula = DatosPrueba.CAPSULA_LA_MONEDA,
                 estadoPunto = EstadoPunto.DESBLOQUEADO,
-                puntosLugar = 5,
+                puntosLugar = 10,
                 distanciaMetros = 35.0,
                 cargando = false,
                 formularioComentarioAbierto = true,
@@ -595,5 +659,47 @@ private fun DetalleNochePreview() {
             alVolver = {},
             alAbrirConfiguracion = {}
         )
+    }
+}
+
+// API externa: tarjeta con el resumen de Wikipedia. Si la red falla queda un aviso corto y el resto del Detalle sigue
+@Composable
+private fun ResumenWikipedia(resumen: ResumenLugar?, cargando: Boolean, noDisponible: Boolean) {
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("Desde Wikipedia", style = MaterialTheme.typography.titleSmall)
+            when {
+                cargando -> Row(verticalAlignment = Alignment.CenterVertically) {
+                    CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                    Spacer(Modifier.width(10.dp))
+                    Text("Cargando resumen...", style = MaterialTheme.typography.bodySmall)
+                }
+                resumen != null -> Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    resumen.imagenUrl?.let { url ->
+                        AsyncImage(
+                            model = url,
+                            contentDescription = resumen.titulo,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.size(72.dp).clip(RoundedCornerShape(10.dp))
+                        )
+                    }
+                    Text(
+                        text = resumen.extracto,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 8
+                    )
+                }
+                noDisponible -> Text(
+                    "No se pudo cargar el resumen. Revisa tu conexión.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
     }
 }

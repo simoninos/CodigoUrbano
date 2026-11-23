@@ -16,4 +16,14 @@ interface ComentarioDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertar(comentario: Comentario)
+
+    //SIM-03: lo que falta enviar al servidor
+    @Query("SELECT * FROM comentarios WHERE usuarioId = :usuarioId AND sincronizado = 0 ORDER BY creadoEn")
+    suspend fun pendientesDe(usuarioId: String): List<Comentario>
+
+    @Query("UPDATE comentarios SET sincronizado = 1 WHERE id IN (:ids)")
+    suspend fun marcarSincronizados(ids: List<String>)
+
+    @Query("DELETE FROM comentarios WHERE id = :id")
+    suspend fun quitar(id: String)
 }

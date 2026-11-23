@@ -17,16 +17,23 @@ class ProgresoTest {
     private val enLaMoneda = Ubicacion(-33.4429, -70.6540, 567.0)
 
     @Test
-    fun recienEscaneadoTiene5Puntos() {
+    fun recienEscaneadoTiene10Puntos() {
         val progreso = ProgresoPunto(usuarioId = "u1", puntoId = "p1", escaneoUbicacion = enLaMoneda)
-        assertEquals(5, progreso.puntosTotales())
+        assertEquals(10, progreso.puntosTotales())
         assertFalse(progreso.estaCompletado())
     }
 
     @Test
-    fun conVideoVistoQuedaCompletado() {
-        val progreso = ProgresoPunto(usuarioId = "u1", puntoId = "p1", escaneoUbicacion = enLaMoneda, puntosVideo = 15)
-        assertEquals(20, progreso.puntosTotales())
+    fun conLaCapsulaVistaTodaviaFaltaLaSelfie() {
+        val progreso = ProgresoPunto(usuarioId = "u1", puntoId = "p1", escaneoUbicacion = enLaMoneda, puntosCapsula = 50)
+        assertEquals(60, progreso.puntosTotales())
+        assertFalse(progreso.estaCompletado())
+    }
+
+    @Test
+    fun conCapsulaYSelfieQuedaCompletado() {
+        val progreso = ProgresoPunto(usuarioId = "u1", puntoId = "p1", escaneoUbicacion = enLaMoneda, puntosCapsula = 50, puntosSelfie = 20)
+        assertEquals(80, progreso.puntosTotales())
         assertTrue(progreso.estaCompletado())
     }
 
@@ -38,7 +45,7 @@ class ProgresoTest {
         repo.registrarEscaneo("u1", "p2", enLaMoneda)
         repo.registrarEscaneo("u2", "p1", enLaMoneda)
 
-        assertEquals(10, repo.totalPuntos("u1").first())
+        assertEquals(20, repo.totalPuntos("u1").first())
         assertEquals(2, repo.progresoDe("u1").first().size)
         assertEquals(null, repo.progresoDePunto("u1", "p3").first())
     }

@@ -29,9 +29,15 @@ import com.cookingplastic.triskeledu.data.repository.UsuarioRepository
 import com.cookingplastic.triskeledu.navigation.Rutas
 import com.cookingplastic.triskeledu.ui.event.DetalleUiEvent
 import com.cookingplastic.triskeledu.ui.state.DetalleUiState
+import com.cookingplastic.triskeledu.ui.validation.EnlaceVideo
 import com.cookingplastic.triskeledu.ui.validation.ValidacionComentario
+import com.cookingplastic.triskeledu.data.externo.SinWikipedia
+import com.cookingplastic.triskeledu.data.externo.WikipediaRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -57,7 +63,8 @@ class DetalleViewModel(
     usuarioRepository: UsuarioRepository,
     progresoRepository: ProgresoRepository,
     private val comentarioRepository: ComentarioRepository,
-    capsulaRepository: CapsulaRepository
+    capsulaRepository: CapsulaRepository,
+    private val wikipediaRepository: WikipediaRepository = SinWikipedia
 ) : ViewModel() {
 
     private val puntoId: String = savedStateHandle.get<String>(Rutas.ARG_PUNTO_ID).orEmpty()
@@ -103,7 +110,8 @@ class DetalleViewModel(
                         comentarios = comentarios,
                         estadoPunto = EstadoPunto.desde(fila),
                         puntosLugar = fila?.puntosTotales() ?: 0,
-                        videoVisto = fila?.videoVistoEn != null,
+                        capsulaVista = fila?.capsulaVistaEn != null,
+                        selfieTomada = fila?.selfieEn != null,
                         distanciaMetros = if (punto != null && ubicacionActual != null) {
                             ubicacionRepository.distanciaMetros(ubicacionActual, punto.ubicacion)
                         } else {
@@ -118,12 +126,38 @@ class DetalleViewModel(
                 .catch { _estado.update { it.copy(cargando = false, mensaje = "No se pudo cargar el lugar") } }
                 .collect { }
         }
+        // API externa: se pide el resumen una vez por enlace; si el admin cambia el enlace, se pide de nuevo
+        viewModelScope.launch {
+            puntoInteresRepository.obtenerPorId(puntoId)
+                .map { it?.descubreMasUrl }
+                .distinctUntilChanged()
+                .catch { }
+                .collectLatest { enlace -> cargarWikipedia(enlace) }
+        }
+    }
+
+    // El Detalle funciona igual sin el resumen: un fallo solo deja el aviso, nunca bloquea la pantalla (RNF-11)
+    private suspend fun cargarWikipedia(enlace: String?) {
+        if (enlace.isNullOrBlank()) {
+            _estado.update { it.copy(wikipedia = null, cargandoWikipedia = false, wikipediaNoDisponible = false) }
+            return
+        }
+        _estado.update { it.copy(cargandoWikipedia = true, wikipediaNoDisponible = false) }
+        try {
+            val resumen = wikipediaRepository.resumen(enlace)
+            _estado.update { it.copy(wikipedia = resumen, cargandoWikipedia = false) }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            _estado.update { it.copy(wikipedia = null, cargandoWikipedia = false, wikipediaNoDisponible = true) }
+        }
     }
 
     fun onEvent(evento: DetalleUiEvent) {
         when (evento) {
             DetalleUiEvent.OnVerVideo -> verVideo()
-            DetalleUiEvent.OnTomarSelfie -> actividadDesbloqueable()
+            DetalleUiEvent.OnTomarSelfie -> tomarSelfie()
+            DetalleUiEvent.OnSelfieAbierta -> _estado.update { it.copy(abrirSelfie = false) }
             DetalleUiEvent.OnComentar -> alternarFormularioComentario()
             is DetalleUiEvent.OnTextoComentarioChange -> _estado.update {
                 // D-17: se valida en cada cambio, así el error aparece y desaparece mientras se escribe
@@ -131,18 +165,31 @@ class DetalleViewModel(
             }
             DetalleUiEvent.OnPublicarComentario -> publicarComentario()
             DetalleUiEvent.OnCerrarSinConexion -> _estado.update { it.copy(mostrarSinConexion = false) }
+            DetalleUiEvent.OnCapsulaAbierta -> _estado.update { it.copy(capsulaPorAbrir = null) }
             DetalleUiEvent.OnMensajeMostrado -> _estado.update { it.copy(mensaje = null) }
             DetalleUiEvent.OnEnlaceNoDisponible -> _estado.update { it.copy(mensaje = "No se pudo abrir el enlace") }
         }
     }
 
     private fun verVideo() {
-        // D-10: el video es streaming; sin internet se muestra el popup, sea cual sea el estado del punto
-        if (!redRepository.hayConexion()) {
+        val actual = _estado.value
+        // RN-07: la cápsula se desbloquea al escanear el QR del punto
+        if (!actual.desbloqueado) {
+            _estado.update { it.copy(mensaje = "Escanea el QR del lugar para desbloquear esta actividad") }
+            return
+        }
+        val capsula = actual.capsula
+        if (capsula == null) {
+            _estado.update { it.copy(mensaje = "Este lugar todavía no tiene cápsula") }
+            return
+        }
+        // ACT-02: solo el video de Drive necesita internet; el clip incluido y la cápsula sin enlace no (RN-35, RN-36)
+        val enlace = capsula.urlStream
+        if (enlace != null && EnlaceVideo.necesitaInternet(enlace) && !redRepository.hayConexion()) {
             _estado.update { it.copy(mostrarSinConexion = true) }
             return
         }
-        actividadDesbloqueable()
+        _estado.update { it.copy(capsulaPorAbrir = capsula.id) }
     }
 
     // D-11 y D-16: comentar requiere el punto desbloqueado; si lo está, el formulario se abre o se cierra
@@ -159,7 +206,7 @@ class DetalleViewModel(
         val actual = _estado.value
         val error = ValidacionComentario.validar(actual.textoComentario)
         if (error != null) {
-            _estado.update { it.copy(errorComentario = error) }
+            _estado.update { it.copy(errorComentario = error, intentoComentario = it.intentoComentario + 1) }
             return
         }
         val usuarioId = actual.usuarioId
@@ -187,14 +234,14 @@ class DetalleViewModel(
         }
     }
 
-    // D-11: video, selfie y comentario se desbloquean al escanear el QR del punto (RN-07)
-    private fun actividadDesbloqueable() {
-        val mensaje = if (_estado.value.desbloqueado) {
-            "Esta actividad estará disponible en la próxima versión"
-        } else {
-            "Escanea el QR del lugar para desbloquear esta actividad"
+    // D-11 y ACT-03: la selfie se desbloquea al escanear el QR del punto (RN-07) y suma una sola vez
+    private fun tomarSelfie() {
+        val actual = _estado.value
+        when {
+            !actual.desbloqueado -> _estado.update { it.copy(mensaje = "Escanea el QR del lugar para desbloquear esta actividad") }
+            actual.selfieTomada -> _estado.update { it.copy(mensaje = "Ya subiste tu selfie en este lugar") }
+            else -> _estado.update { it.copy(abrirSelfie = true) }
         }
-        _estado.update { it.copy(mensaje = mensaje) }
     }
 
     companion object {
@@ -209,7 +256,8 @@ class DetalleViewModel(
                     usuarioRepository = app.container.usuarioRepository,
                     progresoRepository = RepositoriosProgreso.progreso(app),
                     comentarioRepository = RepositoriosProgreso.comentarios(app),
-                    capsulaRepository = app.container.capsulaRepository
+                    capsulaRepository = app.container.capsulaRepository,
+                    wikipediaRepository = app.container.wikipediaRepository
                 )
             }
         }

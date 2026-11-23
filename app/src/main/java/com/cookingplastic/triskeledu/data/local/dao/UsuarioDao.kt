@@ -5,6 +5,8 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Upsert
+import com.cookingplastic.triskeledu.data.model.EstadoSolicitud
+import com.cookingplastic.triskeledu.data.model.RolUsuario
 import com.cookingplastic.triskeledu.data.model.Sesion
 import com.cookingplastic.triskeledu.data.model.Usuario
 import kotlinx.coroutines.flow.Flow
@@ -26,9 +28,44 @@ interface UsuarioDao {
     @Query("SELECT EXISTS(SELECT 1 FROM usuarios WHERE correo = :correo)")
     suspend fun existeCorreo(correo: String): Boolean
 
+    //SIM-01: contraseña nueva, también con hash y sal
+    @Query("UPDATE usuarios SET claveHash = :hash, claveSal = :sal WHERE id = :id")
+    suspend fun cambiarClave(id: String, hash: String, sal: String)
+
+    @Query("SELECT * FROM usuarios WHERE id = :id")
+    suspend fun buscarPorId(id: String): Usuario?
+
+    //RN-24: para dejar una notificación a cada usuario que corresponde (por ejemplo, a los administradores)
+    @Query("SELECT * FROM usuarios")
+    suspend fun todos(): List<Usuario>
+
+    //PER-02: el índice único de username lanza error si ya existe
+    @Query("UPDATE usuarios SET username = :username WHERE id = :id")
+    suspend fun cambiarUsername(id: String, username: String)
+
+    //ADM-10: las cuentas que esperan respuesta, de la más antigua a la más nueva
+    @Query("SELECT * FROM usuarios WHERE solicitudCreador = 'PENDIENTE' ORDER BY solicitadoEn")
+    fun solicitudesPendientes(): Flow<List<Usuario>>
+
+    //RN-29: solo cambia si la solicitud sigue PENDIENTE. Devuelve 0 si otro administrador ya la respondió (EXC-09)
+    @Query(
+        "UPDATE usuarios SET rol = :rol, solicitudCreador = :estado, solicitudResueltaEn = :fecha, solicitudResueltaPor = :adminId " +
+            "WHERE id = :id AND solicitudCreador = 'PENDIENTE'"
+    )
+    suspend fun resolverSolicitud(id: String, rol: RolUsuario, estado: EstadoSolicitud, fecha: Long, adminId: String): Int
+
     //Upsert: la primera vez crea la fila 1 de sesiones; después la reemplaza
     @Upsert
     suspend fun guardarSesion(sesion: Sesion)
+
+    //BKD-02: copia local del usuario que respondió ms-usuarios. Upsert actualiza la fila sin borrarla,
+    //así la sesión que apunta a ese usuario no se pierde
+    @Upsert
+    suspend fun guardarUsuario(usuario: Usuario)
+
+    //BKD-05: el token de la sesión actual, para la cabecera Authorization; null sin sesión o sin conexión al entrar
+    @Query("SELECT token FROM sesiones WHERE id = 1 AND usuarioId IS NOT NULL")
+    suspend fun token(): String?
 
     //JOIN une la sesión con su usuario. Sin sesión, o con usuarioId en null, emite null.
     //Como es Flow, vuelve a emitir cuando cambia cualquiera de las dos tablas

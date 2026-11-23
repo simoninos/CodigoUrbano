@@ -37,17 +37,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.cookingplastic.triskeledu.data.model.PUNTOS_ESCANEO
-import com.cookingplastic.triskeledu.data.model.PUNTOS_VIDEO
+import com.cookingplastic.triskeledu.data.model.PUNTOS_CAPSULA
 import com.cookingplastic.triskeledu.ui.theme.TriskeleduTheme
 
 //Pantalla 6: aparece cuando el escaneo es válido. Solo dibuja: recibe los datos y avisa los clics.
-//Registrar el escaneo (fecha, ubicación, +5) lo hace el ViewModel con ProgresoRepository
+//Registrar el escaneo (fecha, ubicación, +10) lo hace el ViewModel con ProgresoRepository
 @Composable
 fun EncontradoContent(
     nombreLugar: String,
     tipoLugar: String,
     distanciaMetros: Int?,
-    yaDescubierto: Boolean,
     alAbrirLugar: () -> Unit,
     alSeguirEscaneando: () -> Unit,
     modifier: Modifier = Modifier
@@ -126,35 +125,26 @@ fun EncontradoContent(
                     }
                 }
 
-                if (yaDescubierto) {
-                    //si ya lo había escaneado, no hay celebración: los puntos no cambian
+                //la celebración "+10 puntos": crece desde chica y aparece de a poco
+                AnimatedVisibility(
+                    visibleState = celebracion,
+                    enter = scaleIn(
+                        initialScale = 0.3f,
+                        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)
+                    ) + fadeIn()
+                ) {
                     Text(
-                        text = "Ya habías descubierto este lugar",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        text = "+$PUNTOS_ESCANEO puntos",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSecondary,
+                        modifier = Modifier
+                            .background(MaterialTheme.colorScheme.secondary, RoundedCornerShape(12.dp))
+                            .padding(horizontal = 20.dp, vertical = 6.dp)
                     )
-                } else {
-                    //la celebración "+5 puntos": crece desde chica y aparece de a poco
-                    AnimatedVisibility(
-                        visibleState = celebracion,
-                        enter = scaleIn(
-                            initialScale = 0.3f,
-                            animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)
-                        ) + fadeIn()
-                    ) {
-                        Text(
-                            text = "+$PUNTOS_ESCANEO puntos",
-                            style = MaterialTheme.typography.titleLarge,
-                            color = MaterialTheme.colorScheme.onSecondary,
-                            modifier = Modifier
-                                .background(MaterialTheme.colorScheme.secondary, RoundedCornerShape(12.dp))
-                                .padding(horizontal = 20.dp, vertical = 6.dp)
-                        )
-                    }
                 }
 
                 Text(
-                    text = "Desbloqueaste el video sobre IA de este lugar. Míralo completo para ganar $PUNTOS_VIDEO puntos más.",
+                    text = "Desbloqueaste la cápsula sobre IA de este lugar. Mírala completa para ganar $PUNTOS_CAPSULA puntos más.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
@@ -219,7 +209,6 @@ fun EncontradoPreview() {
             nombreLugar = "La Moneda",
             tipoLugar = "Monumento",
             distanciaMetros = 34,
-            yaDescubierto = false,
             alAbrirLugar = {},
             alSeguirEscaneando = {}
         )

@@ -6,13 +6,14 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.cookingplastic.triskeledu.TriskeleduApp
+import com.cookingplastic.triskeledu.data.model.TemaApp
 import com.cookingplastic.triskeledu.data.repository.PreferenciasRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
-//Le dice a toda la app si va de día o de noche, según las preferencias del usuario conectado
+//Le dice a toda la app qué tema usar y si va de día o de noche, según las preferencias del usuario conectado
 class TemaViewModel(preferenciasRepository: PreferenciasRepository) : ViewModel() {
 
     //stateIn convierte el Flow en StateFlow, que siempre tiene un valor: parte en false (día) mientras llega el guardado.
@@ -20,6 +21,11 @@ class TemaViewModel(preferenciasRepository: PreferenciasRepository) : ViewModel(
     val temaNoche: StateFlow<Boolean> = preferenciasRepository.preferencias()
         .map { it.temaNoche }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
+    //LVL-03: el tema elegido en Apariencia; sin sesión es el Clásico
+    val tema: StateFlow<TemaApp> = preferenciasRepository.preferencias()
+        .map { it.tema }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), TemaApp.CLASICO)
 
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {

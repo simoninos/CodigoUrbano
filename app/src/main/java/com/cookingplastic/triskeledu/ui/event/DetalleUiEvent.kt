@@ -9,6 +9,10 @@ sealed interface DetalleUiEvent {
     data class OnTextoComentarioChange(val texto: String) : DetalleUiEvent
     data object OnPublicarComentario : DetalleUiEvent
     data object OnCerrarSinConexion : DetalleUiEvent
+    // La pantalla ya abrió el reproductor (P12)
+    data object OnCapsulaAbierta : DetalleUiEvent
+    // La pantalla ya abrió la selfie (P13)
+    data object OnSelfieAbierta : DetalleUiEvent
     data object OnMensajeMostrado : DetalleUiEvent
     // El enlace "Descubre más" no se pudo abrir en el teléfono
     data object OnEnlaceNoDisponible : DetalleUiEvent

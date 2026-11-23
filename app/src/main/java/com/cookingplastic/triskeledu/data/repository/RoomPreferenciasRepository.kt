@@ -5,6 +5,7 @@ import com.cookingplastic.triskeledu.data.local.dao.UsuarioDao
 import com.cookingplastic.triskeledu.data.model.Preferencias
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -34,4 +35,7 @@ class RoomPreferenciasRepository(
         if (preferencias.usuarioId.isBlank()) return
         preferenciasDao.guardar(preferencias)
     }
+
+    override suspend fun preferenciasDe(usuarioId: String): Preferencias =
+        preferenciasDao.preferenciasDe(usuarioId).first() ?: Preferencias(usuarioId = usuarioId)
 }
