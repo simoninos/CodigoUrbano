@@ -48,6 +48,11 @@ class RecuperacionTest {
             lista.replaceAll { if (it.id == id) it.copy(claveHash = hash, claveSal = sal) else it }
         }
         override suspend fun guardarSesion(sesion: Sesion) = Unit
+        override suspend fun guardarUsuario(usuario: Usuario) {
+            lista.removeAll { it.id == usuario.id }
+            lista.add(usuario)
+        }
+        override suspend fun token(): String? = null
         override fun usuarioActual(): Flow<Usuario?> = flowOf(null)
         override suspend fun buscarPorId(id: String) = lista.find { it.id == id }
         override fun solicitudesPendientes(): Flow<List<Usuario>> = flowOf(emptyList())
