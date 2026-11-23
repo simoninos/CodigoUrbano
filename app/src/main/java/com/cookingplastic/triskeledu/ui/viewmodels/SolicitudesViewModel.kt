@@ -1,5 +1,6 @@
 package com.cookingplastic.triskeledu.ui.viewmodels
 
+import com.cookingplastic.triskeledu.data.remoto.mensajeParaUsuario
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -12,6 +13,7 @@ import com.cookingplastic.triskeledu.data.simulacion.SolicitudesRepository
 import com.cookingplastic.triskeledu.ui.event.SolicitudesUiEvent
 import com.cookingplastic.triskeledu.ui.state.DecisionSolicitud
 import com.cookingplastic.triskeledu.ui.state.SolicitudesUiState
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -55,8 +57,16 @@ class SolicitudesViewModel(
                 return@launch
             }
             val usuario = decision.usuario
-            val resultado = if (decision.aprobar) solicitudesRepository.aprobar(usuario.id, admin.id)
-            else solicitudesRepository.rechazar(usuario.id, admin.id)
+            val resultado = try {
+                if (decision.aprobar) solicitudesRepository.aprobar(usuario.id, admin.id)
+                else solicitudesRepository.rechazar(usuario.id, admin.id)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                //EXC-06: el servidor no respondió o rechazó la operación; la solicitud sigue pendiente
+                _estado.update { it.copy(procesando = false, mensaje = e.mensajeParaUsuario("No se pudo responder la solicitud")) }
+                return@launch
+            }
             val mensaje = when {
                 resultado == ResultadoSolicitud.YA_RESPONDIDA -> YA_RESPONDIDA
                 decision.aprobar -> "${usuario.username} ya es creador de contenido"

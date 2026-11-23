@@ -32,8 +32,19 @@ import com.cookingplastic.triskeledu.data.repository.UsuarioRepository
 import com.cookingplastic.triskeledu.data.simulacion.RecuperacionRepository
 import com.cookingplastic.triskeledu.data.simulacion.RecuperacionSimulada
 import com.cookingplastic.triskeledu.data.simulacion.SolicitudesRepository
-import com.cookingplastic.triskeledu.data.simulacion.ServidorSimulado
 import com.cookingplastic.triskeledu.data.simulacion.SolicitudesSimuladas
+import com.cookingplastic.triskeledu.data.remoto.ActualizadorContenido
+import com.cookingplastic.triskeledu.data.remoto.BackendApi
+import com.cookingplastic.triskeledu.data.remoto.CapsulasConBackend
+import com.cookingplastic.triskeledu.data.remoto.ClienteBackend
+import com.cookingplastic.triskeledu.data.remoto.PuntosConBackend
+import com.cookingplastic.triskeledu.data.remoto.RankingServidor
+import com.cookingplastic.triskeledu.data.remoto.RetrofitServidorApi
+import com.cookingplastic.triskeledu.data.remoto.SolicitudesConBackend
+import com.cookingplastic.triskeledu.data.remoto.UsuariosConBackend
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.runBlocking
 import com.cookingplastic.triskeledu.data.sincronizacion.ComentariosConSincronizacion
 import com.cookingplastic.triskeledu.data.sincronizacion.ProgramadorSincronizacion
 import com.cookingplastic.triskeledu.data.sincronizacion.ProgresoConSincronizacion
@@ -60,17 +71,39 @@ class AppContainer(context: Context) {
             .build()
     }
 
-    //Ahora los repositorios guardan en Room; los Fake quedan para las pruebas.
-    //Siguen siendo una sola instancia: todas las pantallas ven la misma sesión
-    val usuarioRepository: UsuarioRepository by lazy { RoomUsuarioRepository(database.usuarioDao()) }
+    //BKD-01: backend propio a través del API Gateway. La URL sale de BuildConfig (app/build.gradle.kts):
+    //10.0.2.2 es el computador visto desde el emulador; en un teléfono, adb reverse tcp:8080 tcp:8080 y localhost
+    private val alcance = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    val backendApi: BackendApi by lazy {
+        ClienteBackend.crear(
+            urlBase = BuildConfig.URL_BACKEND,
+            //el interceptor corre en un hilo de OkHttp, nunca en el principal: puede esperar a Room
+            token = { runBlocking { database.usuarioDao().token() } },
+            //EXC-07: token vencido o inválido; se cierra la sesión y la app vuelve al Login
+            alVencer = { alcance.launch { usuarioRepository.cerrarSesion() } }
+        )
+    }
+
+    //Room sigue siendo la base del teléfono (offline-first); los repositorios ConBackend escriben primero en el
+    //servidor y después en Room. Los Fake quedan para las pruebas. Una sola instancia: todas las pantallas ven lo mismo
+    private val usuariosRoom: UsuarioRepository by lazy { RoomUsuarioRepository(database.usuarioDao()) }
+    val usuarioRepository: UsuarioRepository by lazy { UsuariosConBackend(usuariosRoom, database.usuarioDao(), backendApi) }
     val preferenciasRepository: PreferenciasRepository by lazy {
         RoomPreferenciasRepository(database.preferenciasDao(), database.usuarioDao())
     }
-    val capsulaRepository: CapsulaRepository by lazy { RoomCapsulaRepository(database.capsulaDao()) }
-    //RN-24: al activarse un punto se avisa "Nueva cápsula"; PuntosConAvisos envuelve al repositorio de Room
-    val puntoInteresRepository: PuntoInteresRepository by lazy {
-        PuntosConAvisos(RoomPuntoInteresRepository(database.puntoInteresDao(), database.capsulaDao()), generadorNotificaciones)
+    private val capsulasRoom: CapsulaRepository by lazy { RoomCapsulaRepository(database.capsulaDao()) }
+    val capsulaRepository: CapsulaRepository by lazy { CapsulasConBackend(capsulasRoom, backendApi) }
+    private val puntosRoom: PuntoInteresRepository by lazy {
+        RoomPuntoInteresRepository(database.puntoInteresDao(), database.capsulaDao())
     }
+    //RN-24: al activarse un punto se avisa "Nueva cápsula"; PuntosConAvisos envuelve a PuntosConBackend
+    val puntoInteresRepository: PuntoInteresRepository by lazy {
+        PuntosConAvisos(PuntosConBackend(puntosRoom, backendApi), generadorNotificaciones)
+    }
+    //trae del servidor las cápsulas y los puntos que el usuario puede ver; escribe directo en Room
+    val actualizadorContenido: ActualizadorContenido by lazy { ActualizadorContenido(backendApi, capsulasRoom, puntosRoom) }
+    //LUG-06: el ranking de todos los usuarios lo calcula ms-progreso
+    val rankingServidor: RankingServidor by lazy { RankingServidor(backendApi) }
     //LVL-02: el progreso de Room envuelto para revisar el nivel después de cada suma de puntos
     private val progresoRoom: ProgresoRepository by lazy { RoomProgresoRepository(database.progresoDao()) }
     val controlNivel: ControlNivel by lazy {
@@ -104,9 +137,9 @@ class AppContainer(context: Context) {
         GestorCapsulas(capsulaRepository, puntoInteresRepository, avisos = generadorNotificaciones)
     }
 
-    //SIM-02: solicitudes de creador resueltas en el mismo teléfono
+    //ADM-10: el servidor responde la solicitud; la versión local deja la notificación al usuario
     val solicitudesRepository: SolicitudesRepository by lazy {
-        SolicitudesSimuladas(usuarioRepository, database.notificacionDao(), avisoLocal)
+        SolicitudesConBackend(SolicitudesSimuladas(usuarioRepository, database.notificacionDao(), avisoLocal), database.usuarioDao(), backendApi)
     }
 
     //PER-03: el historial de notificaciones (P16)
@@ -120,8 +153,9 @@ class AppContainer(context: Context) {
     //API externa: resumen de Wikipedia del lugar en el Detalle (Retrofit)
     val wikipediaRepository: WikipediaRepository by lazy { RetrofitWikipediaRepository.crear() }
 
-    //SIM-03: el servidor es simulado. Con backend, aquí va la versión Retrofit de ServidorApi y nada más cambia
-    val servidorApi: ServidorApi by lazy { ServidorSimulado(progresoRoom, puntoInteresRepository) }
+    //ESC-02: ms-progreso revalida los escaneos y comentarios. Es la misma interfaz que implementaba ServidorSimulado
+    //(sigue en data/simulacion para las pruebas): solo cambió esta línea, ni el Sincronizador ni los ViewModels
+    val servidorApi: ServidorApi by lazy { RetrofitServidorApi(backendApi) }
     val sincronizador: Sincronizador by lazy {
         Sincronizador(servidorApi, progresoRepository, comentarioRepository, puntoInteresRepository, usuarioRepository, generadorNotificaciones)
     }
@@ -133,7 +167,11 @@ class AppContainer(context: Context) {
             usuarioRepository.usuarioActual().map { it?.id }.distinctUntilChanged().filterNotNull()
                 //RNF-11: si la base falla, no se sincroniza al entrar, pero la app sigue
                 .catch { }
-                .collect { programadorSincronizacion.programar() }
+                .collect {
+                    programadorSincronizacion.programar()
+                    //BKD-03: los puntos y cápsulas que ve este rol; sin servidor quedan los de Room (EXC-06)
+                    runCatching { actualizadorContenido.actualizar() }
+                }
         }
     }
 }

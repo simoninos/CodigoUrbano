@@ -1,5 +1,6 @@
 package com.cookingplastic.triskeledu.ui.viewmodels
 
+import com.cookingplastic.triskeledu.data.remoto.mensajeParaUsuario
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -133,7 +134,7 @@ class SesionViewModel(
                 if (usuario != null && usuario.solicitudResueltaEn != null) avisarRespuesta(usuario.id)
             } catch (e: Exception) {
                 _estado.update {
-                    it.copy(cargando = false, mensajeError = "No se pudo iniciar sesión, intenta de nuevo")
+                    it.copy(cargando = false, mensajeError = e.mensajeParaUsuario("No se pudo iniciar sesión, intenta de nuevo"))
                 }
             }
         }

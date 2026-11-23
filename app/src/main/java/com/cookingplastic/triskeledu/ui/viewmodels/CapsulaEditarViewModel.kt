@@ -156,7 +156,12 @@ class CapsulaEditarViewModel(
                 publicadaEn = base?.publicadaEn
             )
             try {
-                gestorCapsulas.guardar(capsula)
+                val resultado = gestorCapsulas.guardar(capsula)
+                //BKD-03: el servidor puede rechazarla (por ejemplo, un enlace que no es de Drive)
+                if (resultado is ResultadoCapsula.Error) {
+                    _estado.update { it.copy(guardando = false, mensajeError = resultado.mensaje) }
+                    return@launch
+                }
                 original = capsula
                 _estado.update {
                     it.copy(

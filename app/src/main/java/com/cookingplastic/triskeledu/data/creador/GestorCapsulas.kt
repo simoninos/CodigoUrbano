@@ -8,6 +8,7 @@ import com.cookingplastic.triskeledu.data.notificaciones.GeneradorNotificaciones
 import com.cookingplastic.triskeledu.data.repository.CapsulaRepository
 import com.cookingplastic.triskeledu.data.repository.PuntoInteresRepository
 import com.cookingplastic.triskeledu.ui.validation.ReglaCapsula
+import com.cookingplastic.triskeledu.data.remoto.mensajeParaUsuario
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 
@@ -28,49 +29,50 @@ class GestorCapsulas(
 ) {
 
     //CRE-02 y CRE-06: guarda la cápsula nueva como BORRADOR, o los cambios de una existente
-    suspend fun guardar(capsula: Capsula): ResultadoCapsula {
+    suspend fun guardar(capsula: Capsula): ResultadoCapsula = intentar {
         capsulaRepository.guardar(capsula)
-        return ResultadoCapsula.Listo
+        ResultadoCapsula.Listo
     }
 
     //CRE-05: el borrador pasa a PUBLICADA y queda libre para asociarlo a un punto
-    suspend fun publicar(capsulaId: String): ResultadoCapsula {
-        val capsula = capsulaRepository.obtenerPorId(capsulaId) ?: return NO_EXISTE
-        ReglaCapsula.motivoNoPublicable(capsula)?.let { return ResultadoCapsula.Error(it) }
+    suspend fun publicar(capsulaId: String): ResultadoCapsula = intentar {
+        val capsula = capsulaRepository.obtenerPorId(capsulaId) ?: return@intentar NO_EXISTE
+        ReglaCapsula.motivoNoPublicable(capsula)?.let { return@intentar ResultadoCapsula.Error(it) }
         capsulaRepository.guardar(capsula.copy(estado = EstadoCapsula.PUBLICADA, publicadaEn = ahora()))
-        return ResultadoCapsula.Listo
+        ResultadoCapsula.Listo
     }
 
     //CRE-05 y RN-21: con el punto activo no se puede; con el punto inactivo se desasocia
     //y el punto queda Sin cápsula. La cápsula vuelve a ser borrador
-    suspend fun retirar(capsulaId: String): ResultadoCapsula {
-        val capsula = capsulaRepository.obtenerPorId(capsulaId) ?: return NO_EXISTE
+    suspend fun retirar(capsulaId: String): ResultadoCapsula = intentar {
+        val capsula = capsulaRepository.obtenerPorId(capsulaId) ?: return@intentar NO_EXISTE
         val punto = ReglaCapsula.puntoDe(capsula, puntoInteresRepository.obtenerTodos().first())
-        ReglaCapsula.motivoNoRetirable(capsula, punto)?.let { return ResultadoCapsula.Error(it) }
-        //primero se suelta el punto: así nunca queda un punto con una cápsula en borrador
-        punto?.let { puntoInteresRepository.guardar(it.copy(capsulaId = null, activo = false)) }
+        ReglaCapsula.motivoNoRetirable(capsula, punto)?.let { return@intentar ResultadoCapsula.Error(it) }
+        //primero la cápsula: si el servidor no acepta el retiro, el punto conserva su cápsula.
+        //El servidor suelta el punto en la misma operación; aquí se refleja en Room
         capsulaRepository.guardar(capsula.copy(estado = EstadoCapsula.BORRADOR, publicadaEn = null))
-        return ResultadoCapsula.Listo
+        punto?.let { puntoInteresRepository.guardar(it.copy(capsulaId = null, activo = false)) }
+        ResultadoCapsula.Listo
     }
 
     //CRE-06: solo borradores que no estén en un punto
-    suspend fun eliminar(capsulaId: String): ResultadoCapsula {
-        val capsula = capsulaRepository.obtenerPorId(capsulaId) ?: return NO_EXISTE
+    suspend fun eliminar(capsulaId: String): ResultadoCapsula = intentar {
+        val capsula = capsulaRepository.obtenerPorId(capsulaId) ?: return@intentar NO_EXISTE
         val punto = ReglaCapsula.puntoDe(capsula, puntoInteresRepository.obtenerTodos().first())
-        ReglaCapsula.motivoNoEliminable(capsula, punto)?.let { return ResultadoCapsula.Error(it) }
+        ReglaCapsula.motivoNoEliminable(capsula, punto)?.let { return@intentar ResultadoCapsula.Error(it) }
         capsulaRepository.eliminar(capsulaId)
-        return ResultadoCapsula.Listo
+        ResultadoCapsula.Listo
     }
 
     //CRE-08 y RN-28: cápsula propia, publicada y libre, a un punto Sin cápsula. El punto queda Inactivo:
     //activarlo sigue siendo tarea del administrador (RN-14)
-    suspend fun asociar(capsulaId: String, puntoId: String, usuario: Usuario): ResultadoCapsula {
-        val capsula = capsulaRepository.obtenerPorId(capsulaId) ?: return NO_EXISTE
+    suspend fun asociar(capsulaId: String, puntoId: String, usuario: Usuario): ResultadoCapsula = intentar {
+        val capsula = capsulaRepository.obtenerPorId(capsulaId) ?: return@intentar NO_EXISTE
         val puntos = puntoInteresRepository.obtenerTodos().first()
-        val punto = puntos.find { it.id == puntoId } ?: return ResultadoCapsula.Error("Este punto ya no existe")
+        val punto = puntos.find { it.id == puntoId } ?: return@intentar ResultadoCapsula.Error("Este punto ya no existe")
         val capsulaDelPunto = punto.capsulaId?.let { capsulaRepository.obtenerPorId(it) }
-        ReglaCapsula.motivoPuntoNoAsociable(punto, capsulaDelPunto)?.let { return ResultadoCapsula.Error(it) }
-        ReglaCapsula.motivoNoAsociable(capsula, usuario, puntos)?.let { return ResultadoCapsula.Error(it) }
+        ReglaCapsula.motivoPuntoNoAsociable(punto, capsulaDelPunto)?.let { return@intentar ResultadoCapsula.Error(it) }
+        ReglaCapsula.motivoNoAsociable(capsula, usuario, puntos)?.let { return@intentar ResultadoCapsula.Error(it) }
         val listo = punto.copy(capsulaId = capsula.id, activo = false)
         puntoInteresRepository.guardar(listo)
         if (usuario.rol == RolUsuario.CREADOR) {
@@ -82,7 +84,17 @@ class GestorCapsulas(
                 //el punto ya quedó asociado; el aviso no es imprescindible
             }
         }
-        return ResultadoCapsula.Listo
+        ResultadoCapsula.Listo
+    }
+
+    //BKD-03: si el servidor rechaza la acción (403, 409) o no responde (EXC-06), la pantalla recibe un Error con
+    //el mensaje, igual que cuando falla una regla local, y en el teléfono no cambia nada
+    private suspend fun intentar(accion: suspend () -> ResultadoCapsula): ResultadoCapsula = try {
+        accion()
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        ResultadoCapsula.Error(e.mensajeParaUsuario("No se pudo completar la acción, intenta de nuevo"))
     }
 
     private companion object {

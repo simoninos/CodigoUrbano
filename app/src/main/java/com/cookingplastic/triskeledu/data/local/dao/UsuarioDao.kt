@@ -58,6 +58,15 @@ interface UsuarioDao {
     @Upsert
     suspend fun guardarSesion(sesion: Sesion)
 
+    //BKD-02: copia local del usuario que respondió ms-usuarios. Upsert actualiza la fila sin borrarla,
+    //así la sesión que apunta a ese usuario no se pierde
+    @Upsert
+    suspend fun guardarUsuario(usuario: Usuario)
+
+    //BKD-05: el token de la sesión actual, para la cabecera Authorization; null sin sesión o sin conexión al entrar
+    @Query("SELECT token FROM sesiones WHERE id = 1 AND usuarioId IS NOT NULL")
+    suspend fun token(): String?
+
     //JOIN une la sesión con su usuario. Sin sesión, o con usuarioId en null, emite null.
     //Como es Flow, vuelve a emitir cuando cambia cualquiera de las dos tablas
     @Query("SELECT usuarios.* FROM sesiones INNER JOIN usuarios ON usuarios.id = sesiones.usuarioId WHERE sesiones.id = 1")

@@ -21,6 +21,11 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        //BKD-01: dirección del API Gateway. Por defecto, el computador visto desde el emulador (10.0.2.2).
+        //Para un teléfono por USB: adb reverse tcp:8080 tcp:8080 y en gradle.properties urlBackend=http://localhost:8080/
+        val urlBackend = (project.findProperty("urlBackend") as String?) ?: "http://10.0.2.2:8080/"
+        buildConfigField("String", "URL_BACKEND", "\"$urlBackend\"")
     }
 
     //RNF-08: la llave para firmar el APK release se lee de keystore.properties, en la raíz del proyecto.
@@ -62,6 +67,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -118,6 +124,8 @@ dependencies {
     implementation(libs.okhttp)
     //MockK: simula dependencias en las pruebas unitarias
     testImplementation(libs.mockk)
+    //servidor HTTP de mentira para probar las llamadas reales de Retrofit al backend (rutas, JSON y errores)
+    testImplementation(libs.okhttp.mockwebserver)
 }
 
 //EP4: cobertura de la LÓGICA (meta 80 %). Deja fuera lo que no se prueba con pruebas unitarias:

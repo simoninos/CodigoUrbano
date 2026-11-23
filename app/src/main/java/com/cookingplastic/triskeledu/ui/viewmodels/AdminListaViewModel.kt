@@ -1,5 +1,6 @@
 package com.cookingplastic.triskeledu.ui.viewmodels
 
+import com.cookingplastic.triskeledu.data.remoto.mensajeParaUsuario
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -95,7 +96,7 @@ class AdminListaViewModel(
                     _estado.update { it.copy(mensaje = "No se pudo cambiar el estado del punto") }
                 }
             } catch (e: Exception) {
-                _estado.update { it.copy(mensaje = "No se pudo cambiar el estado del punto") }
+                _estado.update { it.copy(mensaje = e.mensajeParaUsuario("No se pudo cambiar el estado del punto")) }
             }
         }
     }
@@ -114,7 +115,7 @@ class AdminListaViewModel(
                 puntoInteresRepository.eliminar(punto.id)
                 _estado.update { it.copy(mensaje = "Se eliminó «${punto.nombre}»") }
             } catch (e: Exception) {
-                _estado.update { it.copy(mensaje = "No se pudo eliminar el punto") }
+                _estado.update { it.copy(mensaje = e.mensajeParaUsuario("No se pudo eliminar el punto")) }
             }
         }
     }

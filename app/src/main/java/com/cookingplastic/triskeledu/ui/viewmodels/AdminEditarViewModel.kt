@@ -1,5 +1,6 @@
 package com.cookingplastic.triskeledu.ui.viewmodels
 
+import com.cookingplastic.triskeledu.data.remoto.mensajeParaUsuario
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.createSavedStateHandle
@@ -297,7 +298,7 @@ class AdminEditarViewModel(
                 _estado.update { it.copy(guardando = false, guardado = true) }
             } catch (e: Exception) {
                 _estado.update {
-                    it.copy(guardando = false, mensajeError = "No se pudo guardar el punto, intenta de nuevo")
+                    it.copy(guardando = false, mensajeError = e.mensajeParaUsuario("No se pudo guardar el punto, intenta de nuevo"))
                 }
             }
         }

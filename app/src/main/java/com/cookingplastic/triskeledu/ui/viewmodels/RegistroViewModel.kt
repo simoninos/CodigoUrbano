@@ -1,5 +1,7 @@
 package com.cookingplastic.triskeledu.ui.viewmodels
 
+import com.cookingplastic.triskeledu.data.remoto.ErrorBackend
+import com.cookingplastic.triskeledu.data.remoto.mensajeParaUsuario
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -139,9 +141,20 @@ class RegistroViewModel(
                     if (!actual.quiereSerCreador) usuarioRepository.iniciarSesion(correo, actual.clave)
                     _estado.update { it.copy(cargando = false, registrado = true) }
                 }
+            } catch (e: ErrorBackend) {
+                //BKD-02: ms-usuarios es quien sabe si el nombre o el correo ya existen (409 con el campo)
+                _estado.update {
+                    it.copy(
+                        cargando = false,
+                        errorUsername = e.campos["username"] ?: it.errorUsername,
+                        errorCorreo = e.campos["correo"] ?: it.errorCorreo,
+                        errorClave = e.campos["clave"] ?: it.errorClave,
+                        mensajeError = if (e.campos.isEmpty()) e.message else null
+                    )
+                }
             } catch (e: Exception) {
                 _estado.update {
-                    it.copy(cargando = false, mensajeError = "No se pudo crear la cuenta, intenta de nuevo")
+                    it.copy(cargando = false, mensajeError = e.mensajeParaUsuario("No se pudo crear la cuenta, intenta de nuevo"))
                 }
             }
         }

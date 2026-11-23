@@ -8,6 +8,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.cookingplastic.triskeledu.TriskeleduApp
 import com.cookingplastic.triskeledu.data.RepositoriosProgreso
 import com.cookingplastic.triskeledu.data.model.EstadoSolicitud
+import com.cookingplastic.triskeledu.data.remoto.RankingServidor
 import com.cookingplastic.triskeledu.data.model.ProgresoPunto
 import com.cookingplastic.triskeledu.data.model.RolUsuario
 import com.cookingplastic.triskeledu.data.model.Usuario
@@ -23,6 +24,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -34,7 +36,9 @@ class RankingViewModel(
     private val progresoRepository: ProgresoRepository,
     private val usuarioRepository: UsuarioRepository,
     private val ahora: () -> Long = System::currentTimeMillis,
-    private val zona: ZoneId = ZoneId.systemDefault()
+    private val zona: ZoneId = ZoneId.systemDefault(),
+    //LUG-06: con backend, el ranking de todos los usuarios lo da ms-progreso; null = solo los del teléfono
+    private val servidor: RankingServidor? = null
 ) : ViewModel() {
 
     private val _estado = MutableStateFlow(RankingUiState())
@@ -42,13 +46,16 @@ class RankingViewModel(
 
     private val periodo = MutableStateFlow(PeriodoRanking.ESTE_MES)
 
+    //lo último que respondió el servidor para cada periodo; mientras no responda (o sin conexión) se usa el de Room
+    private val delServidor = MutableStateFlow<Map<PeriodoRanking, Pair<List<FilaRanking>, FilaRanking?>>>(emptyMap())
+
     init {
         viewModelScope.launch {
             try {
                 //la lista de usuarios casi no cambia: se lee una vez al abrir
                 val usuarios = usuarioRepository.todos()
-                combine(progresoRepository.todas(), usuarioRepository.usuarioActual(), periodo) { filas, actual, elegido ->
-                    val (primeros, filaActual) = armarRanking(usuarios, filas, actual?.id, elegido, ahora(), zona)
+                combine(progresoRepository.todas(), usuarioRepository.usuarioActual(), periodo, delServidor) { filas, actual, elegido, remoto ->
+                    val (primeros, filaActual) = remoto[elegido] ?: armarRanking(usuarios, filas, actual?.id, elegido, ahora(), zona)
                     RankingUiState(periodo = elegido, primeros = primeros, filaActual = filaActual, cargando = false)
                 }.collect { _estado.value = it }
             } catch (e: CancellationException) {
@@ -56,6 +63,25 @@ class RankingViewModel(
             } catch (e: Exception) {
                 //RNF-11: si no se pudo leer, la pantalla queda vacía con su mensaje en vez de cerrar la app
                 _estado.update { it.copy(cargando = false) }
+            }
+        }
+        pedirAlServidor()
+    }
+
+    //cada vez que cambia el periodo (y al abrir) se le pide el ranking al servidor
+    private fun pedirAlServidor() {
+        val ranking = servidor ?: return
+        viewModelScope.launch {
+            periodo.collect { elegido ->
+                try {
+                    val actual = usuarioRepository.usuarioActual().first()?.id
+                    val respuesta = ranking.ranking(elegido, actual, PRIMEROS_RANKING)
+                    delServidor.update { it + (elegido to respuesta) }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    //EXC-06: sin servidor queda el ranking calculado con los usuarios del teléfono
+                }
             }
         }
     }
@@ -70,7 +96,7 @@ class RankingViewModel(
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val app = this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as TriskeleduApp
-                RankingViewModel(RepositoriosProgreso.progreso(app), app.container.usuarioRepository)
+                RankingViewModel(RepositoriosProgreso.progreso(app), app.container.usuarioRepository, servidor = app.container.rankingServidor)
             }
         }
     }
