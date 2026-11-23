@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.room.Room
 import com.cookingplastic.triskeledu.data.local.AppDatabase
 import com.cookingplastic.triskeledu.data.creador.GestorCapsulas
+import com.cookingplastic.triskeledu.data.externo.RetrofitWikipediaRepository
+import com.cookingplastic.triskeledu.data.externo.WikipediaRepository
 import com.cookingplastic.triskeledu.data.local.CargaInicial
 import com.cookingplastic.triskeledu.data.nivel.ControlNivel
 import com.cookingplastic.triskeledu.data.nivel.ProgresoConNivel
@@ -114,6 +116,9 @@ class AppContainer(context: Context) {
     val generadorNotificaciones: GeneradorNotificaciones by lazy {
         GeneradorNotificaciones(notificacionRepository, avisoLocal, usuarioRepository, preferenciasRepository)
     }
+
+    //API externa: resumen de Wikipedia del lugar en el Detalle (Retrofit)
+    val wikipediaRepository: WikipediaRepository by lazy { RetrofitWikipediaRepository.crear() }
 
     //SIM-03: el servidor es simulado. Con backend, aquí va la versión Retrofit de ServidorApi y nada más cambia
     val servidorApi: ServidorApi by lazy { ServidorSimulado(progresoRoom, puntoInteresRepository) }

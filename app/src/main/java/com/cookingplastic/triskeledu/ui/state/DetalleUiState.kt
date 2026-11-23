@@ -1,5 +1,6 @@
 package com.cookingplastic.triskeledu.ui.state
 
+import com.cookingplastic.triskeledu.data.externo.ResumenLugar
 import com.cookingplastic.triskeledu.data.model.Capsula
 import com.cookingplastic.triskeledu.data.model.Comentario
 import com.cookingplastic.triskeledu.data.model.EstadoPunto
@@ -28,6 +29,11 @@ data class DetalleUiState(
     val intentoComentario: Int = 0,
     // Distancia en vivo; null mientras no hay ubicación
     val distanciaMetros: Double? = null,
+    // API externa: resumen de Wikipedia del enlace "Descubre más"; null si no hay o no cargó
+    val wikipedia: ResumenLugar? = null,
+    val cargandoWikipedia: Boolean = false,
+    // true si falló la red: la pantalla muestra un aviso corto en vez del resumen (RNF-11)
+    val wikipediaNoDisponible: Boolean = false,
     // Pantalla 11: popup sin conexión
     val mostrarSinConexion: Boolean = false,
     // P12: id de la cápsula que hay que abrir; la pantalla navega y lo vuelve a null

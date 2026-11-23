@@ -69,6 +69,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import com.cookingplastic.triskeledu.R
+import com.cookingplastic.triskeledu.data.externo.ResumenLugar
 import com.cookingplastic.triskeledu.data.local.DatosPrueba
 import com.cookingplastic.triskeledu.data.model.Comentario
 import com.cookingplastic.triskeledu.data.model.EstadoPunto
@@ -281,6 +282,17 @@ fun DetalleContent(
                                     }
                                 }
                             }
+                        }
+                    }
+
+                    // API externa: resumen del artículo de Wikipedia del lugar
+                    if (estado.cargandoWikipedia || estado.wikipedia != null || estado.wikipediaNoDisponible) {
+                        item {
+                            ResumenWikipedia(
+                                resumen = estado.wikipedia,
+                                cargando = estado.cargandoWikipedia,
+                                noDisponible = estado.wikipediaNoDisponible
+                            )
                         }
                     }
 
@@ -647,5 +659,47 @@ private fun DetalleNochePreview() {
             alVolver = {},
             alAbrirConfiguracion = {}
         )
+    }
+}
+
+// API externa: tarjeta con el resumen de Wikipedia. Si la red falla queda un aviso corto y el resto del Detalle sigue
+@Composable
+private fun ResumenWikipedia(resumen: ResumenLugar?, cargando: Boolean, noDisponible: Boolean) {
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("Desde Wikipedia", style = MaterialTheme.typography.titleSmall)
+            when {
+                cargando -> Row(verticalAlignment = Alignment.CenterVertically) {
+                    CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                    Spacer(Modifier.width(10.dp))
+                    Text("Cargando resumen...", style = MaterialTheme.typography.bodySmall)
+                }
+                resumen != null -> Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    resumen.imagenUrl?.let { url ->
+                        AsyncImage(
+                            model = url,
+                            contentDescription = resumen.titulo,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.size(72.dp).clip(RoundedCornerShape(10.dp))
+                        )
+                    }
+                    Text(
+                        text = resumen.extracto,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 8
+                    )
+                }
+                noDisponible -> Text(
+                    "No se pudo cargar el resumen. Revisa tu conexión.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
     }
 }

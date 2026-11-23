@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
+    jacoco
 }
 
 android {
@@ -38,6 +39,11 @@ android {
     }
 
     buildTypes {
+        //EP4: cobertura de las pruebas unitarias con JaCoCo.
+        //Informe: gradlew createDebugUnitTestCoverageReport -> app/build/reports/coverage/test/debug/index.html
+        debug {
+            enableUnitTestCoverage = true
+        }
         release {
             if (!firma.isEmpty) signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = false
@@ -106,4 +112,40 @@ dependencies {
     //Media3 (ExoPlayer): reproductor de las cápsulas (P12)
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.ui)
+    //API externa (Wikipedia) y backend propio: Retrofit con Gson sobre OkHttp
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.converter.gson)
+    implementation(libs.okhttp)
+    //MockK: simula dependencias en las pruebas unitarias
+    testImplementation(libs.mockk)
+}
+
+//EP4: cobertura de la LÓGICA (meta 80 %). Deja fuera lo que no se prueba con pruebas unitarias:
+//pantallas Compose, tema, navegación, código que genera Room y clases que solo envuelven Android.
+//Uso: gradlew coberturaLogica -> app/build/reports/jacoco/coberturaLogica/html/index.html
+val excluidosCobertura = listOf(
+    "**/R.class", "**/R$*.class", "**/BuildConfig.*", "**/Manifest*.*",
+    "**/ui/screens/**", "**/ui/components/**", "**/ui/theme/**", "**/navigation/**",
+    "**/MainActivity*", "**/TriskeleduApp*", "**/AppContainer*",
+    "**/*_Impl*", "**/data/local/dao/**", "**/data/local/AppDatabase*", "**/data/local/CargaInicial*",
+    "**/data/local/Converters*", "**/data/repository/Room*",
+    "**/data/location/GpsUbicacionRepository*", "**/data/red/AndroidRedRepository*",
+    "**/data/notificaciones/Android*", "**/data/location/ServicioLugaresCercanos*",
+    "**/data/sincronizacion/ProgramadorSincronizacion*", "**/data/sincronizacion/SincronizacionWorker*",
+    "**/RepositoriosCompartidos*", "**/RepositoriosProgreso*",
+    "**/RetrofitWikipediaRepository\$Companion*",
+    "**/*ComposableSingletons*", "**/*Factory*"
+)
+
+tasks.register<JacocoReport>("coberturaLogica") {
+    group = "verification"
+    description = "Cobertura de la lógica (ViewModels, reglas, validaciones y repositorios) con JaCoCo"
+    dependsOn("testDebugUnitTest")
+    classDirectories.setFrom(fileTree(layout.buildDirectory.dir("tmp/kotlin-classes/debug")) { exclude(excluidosCobertura) })
+    sourceDirectories.setFrom(files("src/main/java"))
+    executionData.setFrom(fileTree(layout.buildDirectory) { include("outputs/unit_test_code_coverage/debugUnitTest/*.exec") })
+    reports {
+        html.required.set(true)
+        xml.required.set(true)
+    }
 }

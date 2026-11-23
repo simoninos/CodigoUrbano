@@ -31,8 +31,13 @@ import com.cookingplastic.triskeledu.ui.event.DetalleUiEvent
 import com.cookingplastic.triskeledu.ui.state.DetalleUiState
 import com.cookingplastic.triskeledu.ui.validation.EnlaceVideo
 import com.cookingplastic.triskeledu.ui.validation.ValidacionComentario
+import com.cookingplastic.triskeledu.data.externo.SinWikipedia
+import com.cookingplastic.triskeledu.data.externo.WikipediaRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -58,7 +63,8 @@ class DetalleViewModel(
     usuarioRepository: UsuarioRepository,
     progresoRepository: ProgresoRepository,
     private val comentarioRepository: ComentarioRepository,
-    capsulaRepository: CapsulaRepository
+    capsulaRepository: CapsulaRepository,
+    private val wikipediaRepository: WikipediaRepository = SinWikipedia
 ) : ViewModel() {
 
     private val puntoId: String = savedStateHandle.get<String>(Rutas.ARG_PUNTO_ID).orEmpty()
@@ -119,6 +125,31 @@ class DetalleViewModel(
             }
                 .catch { _estado.update { it.copy(cargando = false, mensaje = "No se pudo cargar el lugar") } }
                 .collect { }
+        }
+        // API externa: se pide el resumen una vez por enlace; si el admin cambia el enlace, se pide de nuevo
+        viewModelScope.launch {
+            puntoInteresRepository.obtenerPorId(puntoId)
+                .map { it?.descubreMasUrl }
+                .distinctUntilChanged()
+                .catch { }
+                .collectLatest { enlace -> cargarWikipedia(enlace) }
+        }
+    }
+
+    // El Detalle funciona igual sin el resumen: un fallo solo deja el aviso, nunca bloquea la pantalla (RNF-11)
+    private suspend fun cargarWikipedia(enlace: String?) {
+        if (enlace.isNullOrBlank()) {
+            _estado.update { it.copy(wikipedia = null, cargandoWikipedia = false, wikipediaNoDisponible = false) }
+            return
+        }
+        _estado.update { it.copy(cargandoWikipedia = true, wikipediaNoDisponible = false) }
+        try {
+            val resumen = wikipediaRepository.resumen(enlace)
+            _estado.update { it.copy(wikipedia = resumen, cargandoWikipedia = false) }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            _estado.update { it.copy(wikipedia = null, cargandoWikipedia = false, wikipediaNoDisponible = true) }
         }
     }
 
@@ -225,7 +256,8 @@ class DetalleViewModel(
                     usuarioRepository = app.container.usuarioRepository,
                     progresoRepository = RepositoriosProgreso.progreso(app),
                     comentarioRepository = RepositoriosProgreso.comentarios(app),
-                    capsulaRepository = app.container.capsulaRepository
+                    capsulaRepository = app.container.capsulaRepository,
+                    wikipediaRepository = app.container.wikipediaRepository
                 )
             }
         }
