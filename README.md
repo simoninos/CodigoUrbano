@@ -2,7 +2,7 @@
 
 Aplicación Android para **Triskeledu SpA** que convierte el recorrido por Santiago Centro en un juego para aprender sobre inteligencia artificial. El usuario explora un mapa, se acerca a un lugar, escanea su código QR, ve una cápsula de video sobre IA, se toma una selfie y suma puntos que lo hacen subir de nivel y desbloquear temas.
 
-Proyecto de la asignatura **DSY1105 Desarrollo de Aplicaciones Móviles** (Duoc UC), Evaluación Parcial 3. Es un MVP académico: no se publica en Google Play, trabaja con datos ficticios y **no tiene backend**: lo que dependería de un servidor se simula en el mismo teléfono (`data/simulacion/`).
+Proyecto de la asignatura **DSY1105 Desarrollo de Aplicaciones Móviles** (Duoc UC), Evaluación Parcial 4. Es un MVP académico: no se publica en Google Play y trabaja con datos ficticios. La app usa un **backend propio de microservicios en Spring Boot** con MySQL ([CodigoUrbano-backend](https://github.com/simoninos/CodigoUrbano-backend), privado) y una **API externa** (Wikipedia). Room sigue siendo la base del teléfono, así que la app funciona también sin conexión.
 
 ## Integrantes
 
@@ -58,11 +58,42 @@ Cada tema tiene versión Día y Noche. Si los puntos bajan (por ejemplo, cuando 
 - **Solicitudes de creador**: aprobar o rechazar desde la campana.
 - En el mapa ve también los puntos Sin cápsula e Inactivos.
 
-### Sincronización simulada (sin backend)
-- Todo se guarda primero en el teléfono (Room) con `sincronizado = false`.
-- Al volver la red, **WorkManager** envía lo pendiente de la cuenta conectada a `ServidorSimulado`, que revalida cada escaneo (100 m o menos y sin duplicado) y cada comentario. Lo aceptado pasa a `sincronizado = true`.
+### Sincronización con el servidor
+- Los escaneos y comentarios se guardan primero en el teléfono (Room) con `sincronizado = false`.
+- Al volver la red, **WorkManager** envía lo pendiente de la cuenta conectada a **ms-progreso**, que revalida cada escaneo (100 m o menos del lugar, sin duplicado y de un lugar activo) y cada comentario. Lo aceptado pasa a `sincronizado = true`.
 - Si un escaneo no pasa, se quitan los puntos de ese lugar, llega la notificación **"No pudimos validar tu visita a [lugar]"** y el resto se mantiene.
-- `ServidorApi` es la interfaz que la app usa para hablar con el servidor: cuando exista el backend, una versión con Retrofit la implementa y solo cambia `AppContainer`.
+
+### API externa: Wikipedia
+- El detalle de cada lugar muestra un **resumen de Wikipedia** en español (Retrofit contra la API REST de Wikipedia). Si no hay internet o el artículo no existe, la sección no aparece y el resto del detalle funciona igual.
+
+## Backend (microservicios)
+
+El backend está en su propio repositorio: [CodigoUrbano-backend](https://github.com/simoninos/CodigoUrbano-backend). La app habla **solo con el API Gateway** (puerto 8080), que reenvía cada ruta al microservicio que corresponde. Cada microservicio tiene su propia base de datos MySQL.
+
+| Microservicio | Puerto | Base de datos | Qué hace |
+| --- | --- | --- | --- |
+| `api-gateway` | 8080 | — | Entrada única; responde 503 si un servicio está caído |
+| `ms-usuarios` | 8081 | `triskeledu_usuarios` | Registro, inicio de sesión (token JWT), perfil y solicitudes de creador |
+| `ms-contenido` | 8082 | `triskeledu_contenido` | Puntos de interés y cápsulas (CRUD del administrador y del creador) |
+| `ms-progreso` | 8083 | `triskeledu_progreso` | Escaneos, comentarios y ranking |
+
+**Endpoints que usa la app** (todos con `Authorization: Bearer <token>`, salvo registro e inicio de sesión):
+
+| Método y ruta | Uso en la app |
+| --- | --- |
+| `POST /api/auth/registro` | Registro (P02) |
+| `POST /api/auth/login` | Inicio de sesión (P01) |
+| `GET /api/solicitudes` · `POST /api/solicitudes/{id}/aprobar` · `POST /api/solicitudes/{id}/rechazar` | Solicitudes de creador (P22) |
+| `GET /api/puntos` · `POST /api/puntos` · `PUT /api/puntos/{id}` · `PATCH /api/puntos/{id}/activo` · `DELETE /api/puntos/{id}` | CRUD de puntos del administrador |
+| `PUT /api/puntos/{id}/capsula` | El creador asocia su cápsula a un punto |
+| `GET /api/capsulas` · `POST /api/capsulas` · `PUT /api/capsulas/{id}` · `POST /api/capsulas/{id}/publicar` · `POST /api/capsulas/{id}/retirar` · `DELETE /api/capsulas/{id}` | Mis cápsulas del creador |
+| `POST /api/escaneos/sincronizar` · `POST /api/comentarios/sincronizar` | Sincronización (WorkManager) |
+| `GET /api/ranking?periodo=MES\|SIEMPRE` | Ranking (P20) |
+
+Cómo se integra (`data/remoto/`):
+- `BackendApi` es la interfaz de Retrofit y `ClienteBackend` agrega el token a cada petición. Un 401 con sesión cierra la sesión (EXC-07); sin conexión se muestra "No hay conexión con el servidor. Intenta más tarde" (EXC-06).
+- Los repositorios `…ConBackend` envuelven a los de Room: **escriben primero en el servidor** y, si acepta, guardan en Room lo que devolvió. Si el servidor rechaza (por ejemplo, eliminar un lugar que ya tiene escaneos), se muestra su mensaje y el teléfono no cambia.
+- Al iniciar sesión se traen del servidor los puntos y cápsulas actuales. Sin servidor, el inicio de sesión usa la copia del teléfono y el ranking se calcula con Room.
 
 ## Usuarios de prueba
 
@@ -81,7 +112,9 @@ Contraseña de todos: **`Demo1234`**. También están en "Acceso rápido (demo)"
 | `admin_triskel` | admin@ejemplo.cl | Administrador | Sin nivel | — | Mis lugares del administrador, solicitudes y todos los temas |
 | `pendiente_demo` | pendiente.demo@ejemplo.cl | Solicitud de creador | En revisión | — | La pantalla "Cuenta en revisión" al iniciar sesión |
 
-La base se llena con estos datos **solo la primera vez**. Si la app ya estaba instalada, desinstálala o borra sus datos (*Ajustes → Apps → Aprendo IA → Almacenamiento → Borrar datos*) para verlos.
+Los mismos usuarios, con la misma contraseña, existen en el backend (los carga `ms-usuarios` al iniciar).
+
+La base del teléfono se llena con estos datos **solo la primera vez**. Si la app ya estaba instalada, desinstálala o borra sus datos (*Ajustes → Apps → Aprendo IA → Almacenamiento → Borrar datos*) para verlos.
 
 ## Videos de las cápsulas (ENLACES_CAPSULAS)
 
@@ -115,15 +148,29 @@ Mientras un lugar quede en `null`, su cápsula funciona sin video (RN-35). Si se
 - JDK 17 o superior (el que trae Android Studio sirve).
 - Emulador o teléfono con **Android 8.0 (API 26)** o superior y Google Play Services. La app compila contra la API 36.
 
-**Pasos**
-1. Clonar el repositorio (la rama principal es `main/components`):
+- Para el backend: Docker Desktop y JDK 21 (ver el README del repositorio del backend).
+
+**1. Encender el backend**
+
+En el repositorio del backend, `demo\iniciar-todo.ps1` levanta MySQL en Docker y los cuatro servicios, y espera a que respondan. Para comprobarlo: `http://localhost:8080/actuator/health` debe responder `UP`. La guía de la demostración en vivo está en `demo/GUIA-DEMO.md` de ese repositorio.
+
+**2. Ejecutar la app**
+1. Clonar el repositorio:
    ```
    git clone https://github.com/simoninos/CodigoUrbano.git
    ```
 2. Abrir la carpeta en Android Studio y esperar la sincronización de Gradle.
 3. Elegir el emulador o el teléfono y presionar **Run ▶** (configuración `app`).
 4. Aceptar los permisos de **ubicación**, **cámara** y **notificaciones** cuando la app los pida.
-5. Pruebas unitarias: `./gradlew test` (en Windows, `gradlew test`).
+
+**Dirección del backend**
+- En el **emulador** no hay que configurar nada: la app usa `http://10.0.2.2:8080/`, que es el computador visto desde el emulador.
+- En un **teléfono por USB**: ejecutar `adb reverse tcp:8080 tcp:8080` y agregar en `gradle.properties` la línea `urlBackend=http://localhost:8080/`, y compilar de nuevo.
+- La app solo permite `http` sin cifrar hacia el computador de desarrollo (`res/xml/seguridad_red.xml`).
+
+**3. Pruebas unitarias**
+
+`./gradlew test` (en Windows, `gradlew test`). Son **219 pruebas** con JUnit, MockK y MockWebServer. `IntegracionBackendTest` prueba la app contra el backend real y **se salta sola** si el gateway no está encendido. El informe de cobertura de la lógica (sin pantallas) se genera con `gradlew coberturaLogica`, en `app/build/reports/jacoco/coberturaLogica/html/index.html`. Hoy cubre el **85,8 % de las líneas**.
 
 **En el emulador**
 - Fija la ubicación en Santiago: *Extended Controls (⋯) → Location*, por ejemplo en La Moneda (-33.44294, -70.65388). A menos de 100 m de un lugar sin escanear, su marcador late.
@@ -132,21 +179,16 @@ Mientras un lugar quede en `null`, su cápsula funciona sin video (RN-35). Si se
 
 ## APK release firmado (RNF-08)
 
-La llave de firma **nunca se sube al repositorio**: `*.jks`, `*.keystore` y `keystore.properties` están en `.gitignore`.
+El almacén de claves está en **`almacen-claves/triskeledu.jks`**, en el repositorio, porque la pauta lo pide. Las contraseñas **nunca se suben**: `keystore.properties` está en `.gitignore`.
 
-1. Crear la llave una sola vez (en Android Studio: *Build → Generate Signed App Bundle or APK → APK → Create new…*), o con:
+1. El almacén se creó una vez en Android Studio (*Build → Generate Signed App Bundle or APK → APK → Create new…*) con el alias `aprendoia` y una validez de 25 años.
+2. Copiar `keystore.properties.ejemplo` como `keystore.properties`, en la raíz del proyecto, y escribir las contraseñas:
    ```
-   keytool -genkeypair -v -keystore aprendo-ia.jks -alias aprendo-ia -keyalg RSA -keysize 2048 -validity 10000
+   storeFile=almacen-claves/triskeledu.jks
+   storePassword=...
+   keyAlias=aprendoia
+   keyPassword=...
    ```
-   Guarda el archivo `.jks` **fuera del proyecto** (o en la raíz, que ya está ignorada) y anota las contraseñas en un lugar seguro.
-2. Crear en la raíz del proyecto el archivo `keystore.properties` (no se sube):
-   ```
-   storeFile=../ruta/a/aprendo-ia.jks
-   storePassword=la_contraseña_del_almacén
-   keyAlias=aprendo-ia
-   keyPassword=la_contraseña_de_la_llave
-   ```
-   `storeFile` es relativo a la raíz del proyecto (también sirve una ruta absoluta).
 3. Generar el APK: `./gradlew :app:assembleRelease` (en Windows, `gradlew :app:assembleRelease`).
 4. El APK queda en `app/build/outputs/apk/release/app-release.apk`. Se instala con `adb install app-release.apk` o copiándolo al teléfono.
 
@@ -157,7 +199,7 @@ Sin `keystore.properties`, `assembleRelease` genera un APK sin firmar (`app-rele
 La app usa **MVVM** con Jetpack Compose:
 
 ```
-Pantalla (Composable)  ──eventos──▶  ViewModel  ──▶  Repository  ──▶  Room / GPS / Simulación
+Pantalla (Composable)  ──eventos──▶  ViewModel  ──▶  Repository  ──▶  Room / GPS / Backend (Retrofit)
         ▲                                │
         └──────── StateFlow<UiState> ────┘
 ```
@@ -165,7 +207,8 @@ Pantalla (Composable)  ──eventos──▶  ViewModel  ──▶  Repository 
 - **Model** (`data/model`): entidades (`Usuario`, `Preferencias`, `PuntoInteres`, `Capsula`, `ProgresoPunto`, `Comentario`, `Notificacion`, `CodigoRecuperacion`).
 - **Repository** (`data/repository`, `data/location`, `data/red`): una interfaz por fuente de datos, con la versión Room o real y una versión `Fake…Repository` en memoria para las pruebas.
 - **Reglas del juego** (`data/nivel`, `data/creador`, `data/notificaciones`, `data/sincronizacion`): nivel, cápsulas del creador, notificaciones locales y sincronización. Envuelven a los repositorios (`ProgresoConNivel`, `PuntosConAvisos`, `ProgresoConSincronizacion`) para que ninguna pantalla tenga que acordarse de ellas.
-- **Simulación** (`data/simulacion`): recuperación de contraseña, solicitudes de creador y servidor de sincronización, en el mismo teléfono.
+- **Remoto** (`data/remoto`, `data/externo`): Retrofit contra el backend y contra Wikipedia. Los repositorios `…ConBackend` envuelven a los de Room.
+- **Simulación** (`data/simulacion`): la recuperación de contraseña con código local y las notificaciones de las solicitudes de creador.
 - **ViewModel** (`ui/viewmodels`): un `UiState` por pantalla y sus `UiEvent`. Las validaciones están en `ui/validation` y los errores se muestran bajo cada campo con `MensajeError`.
 - **Screens y Composables** (`ui/screens`, `ui/components`): solo dibujan el estado. Los colores salen del tema (`ui/theme`), nunca escritos en una pantalla.
 
@@ -183,7 +226,9 @@ app/src/main/java/com/cookingplastic/triskeledu/
 │   ├── creador/         Reglas de las cápsulas del creador
 │   ├── notificaciones/  Notificaciones locales y sus reglas
 │   ├── sincronizacion/  ServidorApi, Sincronizador y WorkManager
-│   ├── simulacion/      Servidor simulado, recuperación y solicitudes
+│   ├── remoto/          Retrofit contra el backend (API, DTO y repositorios …ConBackend)
+│   ├── externo/         API externa de Wikipedia
+│   ├── simulacion/      Recuperación de contraseña y solicitudes (parte local)
 │   ├── red/             Estado de la conexión
 │   └── security/        Hash de contraseñas
 ├── navigation/          Rutas, barra inferior por rol y NavHost
@@ -215,14 +260,15 @@ app/src/main/java/com/cookingplastic/triskeledu/
 | Cámara y QR | CameraX, ML Kit (lectura), ZXing (generación) |
 | Video | Media3 ExoPlayer |
 | Imágenes | Coil 3 |
-| Pruebas | JUnit 4, kotlinx-coroutines-test |
+| Red | Retrofit 2, Gson, OkHttp |
+| Backend | Spring Boot, Spring Cloud Gateway, MySQL 8 (repositorio aparte) |
+| Pruebas | JUnit 4, kotlinx-coroutines-test, MockK, MockWebServer, JaCoCo |
 
-## Pendiente (requiere backend)
+## Pendiente
 
-- Backend en Spring Boot (BKD-01 a BKD-07): hoy lo reemplaza `data/simulacion/`.
-- Recuperación de contraseña por correo real, sesión que vence en el servidor (EXC-07) y servidor caído (EXC-06).
+- Recuperación de contraseña por correo real: hoy el código llega como notificación local.
 
 ## Flujo de ramas
 
-- `main/components`: rama principal e integración del equipo; cada integrante abre un pull request desde su rama.
-- `simon`, `Gabriel`, `Catalina`: ramas de trabajo de cada integrante.
+- `master`: rama principal; cada integrante abre un pull request desde su rama.
+- `simon-ep4`, `Gabriel`, `Catalina`: ramas de trabajo de cada integrante.
