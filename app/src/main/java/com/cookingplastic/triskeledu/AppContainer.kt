@@ -37,6 +37,7 @@ import com.cookingplastic.triskeledu.data.remoto.ActualizadorContenido
 import com.cookingplastic.triskeledu.data.remoto.BackendApi
 import com.cookingplastic.triskeledu.data.remoto.CapsulasConBackend
 import com.cookingplastic.triskeledu.data.remoto.ClienteBackend
+import com.cookingplastic.triskeledu.data.remoto.DireccionServidor
 import com.cookingplastic.triskeledu.data.remoto.PuntosConBackend
 import com.cookingplastic.triskeledu.data.remoto.RankingServidor
 import com.cookingplastic.triskeledu.data.remoto.RetrofitServidorApi
@@ -71,12 +72,23 @@ class AppContainer(context: Context) {
             .build()
     }
 
-    //BKD-01: backend propio a través del API Gateway. La URL sale de BuildConfig (app/build.gradle.kts):
-    //10.0.2.2 es el computador visto desde el emulador; en un teléfono, adb reverse tcp:8080 tcp:8080 y localhost
+    //BKD-01: backend propio a través del API Gateway. La dirección de fábrica sale de BuildConfig
+    //(10.0.2.2 es el computador visto desde el emulador); en un teléfono se escribe en P01, "Servidor",
+    //con la IP que el punto de acceso del celular le dio al computador, y queda guardada
+    private val preferenciasRed = context.getSharedPreferences("servidor", Context.MODE_PRIVATE)
+    val direccionServidor: DireccionServidor by lazy {
+        DireccionServidor(
+            porDefecto = BuildConfig.URL_BACKEND,
+            leer = { preferenciasRed.getString("url", null) },
+            guardar = { url -> preferenciasRed.edit().apply { if (url == null) remove("url") else putString("url", url) }.apply() }
+        )
+    }
+
     private val alcance = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     val backendApi: BackendApi by lazy {
         ClienteBackend.crear(
             urlBase = BuildConfig.URL_BACKEND,
+            servidor = { direccionServidor.actual.value },
             //el interceptor corre en un hilo de OkHttp, nunca en el principal: puede esperar a Room
             token = { runBlocking { database.usuarioDao().token() } },
             //EXC-07: token vencido o inválido; se cierra la sesión y la app vuelve al Login

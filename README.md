@@ -68,7 +68,7 @@ Cada tema tiene versión Día y Noche. Si los puntos bajan (por ejemplo, cuando 
 
 ## Backend (microservicios)
 
-El backend está en su propio repositorio: [CodigoUrbano-backend](https://github.com/simoninos/CodigoUrbano-backend). La app habla **solo con el API Gateway** (puerto 8080), que reenvía cada ruta al microservicio que corresponde. Cada microservicio tiene su propia base de datos MySQL.
+El backend está en su propio repositorio: [CodigoUrbano-backend](https://github.com/simoninos/CodigoUrbano-backend). La app habla **solo con el API Gateway** (puerto 8080), que reenvía cada ruta al microservicio que corresponde. Cada microservicio tiene su propia base de datos MySQL, y **todo corre en Docker**: un contenedor por servicio, más MySQL y el gateway.
 
 | Microservicio | Puerto | Base de datos | Qué hace |
 | --- | --- | --- | --- |
@@ -148,11 +148,11 @@ Mientras un lugar quede en `null`, su cápsula funciona sin video (RN-35). Si se
 - JDK 17 o superior (el que trae Android Studio sirve).
 - Emulador o teléfono con **Android 8.0 (API 26)** o superior y Google Play Services. La app compila contra la API 36.
 
-- Para el backend: Docker Desktop y JDK 21 (ver el README del repositorio del backend).
+- Para el backend: solo Docker Desktop (las imágenes compilan cada servicio con Maven y Java 21).
 
 **1. Encender el backend**
 
-En el repositorio del backend, `demo\iniciar-todo.ps1` levanta MySQL en Docker y los cuatro servicios, y espera a que respondan. Para comprobarlo: `http://localhost:8080/actuator/health` debe responder `UP`. La guía de la demostración en vivo está en `demo/GUIA-DEMO.md` de ese repositorio.
+En el repositorio del backend, `demo\iniciar-todo.ps1` levanta los cinco contenedores (MySQL, los tres microservicios y el gateway), espera a que respondan y muestra la IP del computador. Para comprobarlo: `http://localhost:8080/actuator/health` debe responder `UP`. La guía de la demostración en vivo está en `demo/GUIA-DEMO.md` de ese repositorio.
 
 **2. Ejecutar la app**
 1. Clonar el repositorio:
@@ -163,14 +163,14 @@ En el repositorio del backend, `demo\iniciar-todo.ps1` levanta MySQL en Docker y
 3. Elegir el emulador o el teléfono y presionar **Run ▶** (configuración `app`).
 4. Aceptar los permisos de **ubicación**, **cámara** y **notificaciones** cuando la app los pida.
 
-**Dirección del backend**
-- En el **emulador** no hay que configurar nada: la app usa `http://10.0.2.2:8080/`, que es el computador visto desde el emulador.
-- En un **teléfono por USB**: ejecutar `adb reverse tcp:8080 tcp:8080` y agregar en `gradle.properties` la línea `urlBackend=http://localhost:8080/`, y compilar de nuevo.
-- La app solo permite `http` sin cifrar hacia el computador de desarrollo (`res/xml/seguridad_red.xml`).
+**Dirección del backend** (en *Iniciar sesión*, abajo: **"Servidor: …"**)
+- En el **emulador** no hay que configurar nada: la dirección de fábrica es `http://10.0.2.2:8080`, que es el computador visto desde el emulador.
+- En un **teléfono, con el celular como punto de acceso** (así se hace la demo): conecta el computador a la red del celular, toca **"Servidor: …"**, escribe la IP del computador en esa red (la muestra `iniciar-todo.ps1`, o `ipconfig`) y toca **Guardar y probar**. Debe decir "El servidor responde". La dirección queda guardada y cada petición la usa, sin reinstalar la app.
+- El gateway del backend es `http` (sin certificado) y la IP la asigna el celular, por eso la app permite `http` (`res/xml/seguridad_red.xml`). Wikipedia, el mapa y los videos siguen yendo por `https`.
 
 **3. Pruebas unitarias**
 
-`./gradlew test` (en Windows, `gradlew test`). Son **219 pruebas** con JUnit, MockK y MockWebServer. `IntegracionBackendTest` prueba la app contra el backend real y **se salta sola** si el gateway no está encendido. El informe de cobertura de la lógica (sin pantallas) se genera con `gradlew coberturaLogica`, en `app/build/reports/jacoco/coberturaLogica/html/index.html`. Hoy cubre el **85,8 % de las líneas**.
+`./gradlew test` (en Windows, `gradlew test`). Son **226 pruebas** con JUnit, MockK y MockWebServer. `IntegracionBackendTest` prueba la app contra el backend real y **se salta sola** si el gateway no está encendido. El informe de cobertura de la lógica (sin pantallas) se genera con `gradlew coberturaLogica`, en `app/build/reports/jacoco/coberturaLogica/html/index.html`. Hoy cubre el **86,1 % de las líneas**.
 
 **En el emulador**
 - Fija la ubicación en Santiago: *Extended Controls (⋯) → Location*, por ejemplo en La Moneda (-33.44294, -70.65388). A menos de 100 m de un lugar sin escanear, su marcador late.

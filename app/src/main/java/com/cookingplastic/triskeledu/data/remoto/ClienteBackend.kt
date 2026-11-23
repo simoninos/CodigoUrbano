@@ -2,6 +2,7 @@ package com.cookingplastic.triskeledu.data.remoto
 
 import com.google.gson.Gson
 import kotlinx.coroutines.CancellationException
+import okhttp3.HttpUrl
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Response
@@ -80,8 +81,10 @@ object ClienteBackend {
     //tiempo corto: con el servidor apagado, la app avisa rápido en vez de quedarse cargando
     private const val SEGUNDOS = 10L
 
-    fun crear(urlBase: String, token: () -> String?, alVencer: () -> Unit): BackendApi {
+    //servidor: la dirección guardada en la app (DireccionServidor); si no se pasa, se usa urlBase tal cual
+    fun crear(urlBase: String, token: () -> String?, alVencer: () -> Unit, servidor: (() -> HttpUrl)? = null): BackendApi {
         val http = OkHttpClient.Builder()
+            .apply { if (servidor != null) addInterceptor(InterceptorServidor(servidor)) }
             .addInterceptor(InterceptorToken(token, alVencer))
             .connectTimeout(SEGUNDOS, TimeUnit.SECONDS)
             .readTimeout(SEGUNDOS, TimeUnit.SECONDS)

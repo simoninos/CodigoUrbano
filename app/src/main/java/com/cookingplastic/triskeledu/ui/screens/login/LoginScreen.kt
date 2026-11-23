@@ -81,7 +81,9 @@ fun LoginScreen(
         estado = estado,
         onEvent = viewModel::onEvent,
         alOlvidarClave = alOlvidarClave,
-        alCrearCuenta = alCrearCuenta
+        alCrearCuenta = alCrearCuenta,
+        //BKD-01: con su propio ViewModel; va como parámetro para que las vistas previas no lo necesiten
+        pie = { AjusteServidor() }
     )
 }
 
@@ -92,7 +94,8 @@ fun LoginContent(
     onEvent: (SesionUiEvent) -> Unit,
     alOlvidarClave: () -> Unit,
     alCrearCuenta: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    pie: @Composable () -> Unit = {}
 ) {
     //RN-18: el foco va al primer campo con error cada vez que se toca "Iniciar sesión"
     val focos = remember { CampoSesion.entries.associateWith { FocusRequester() } }
@@ -167,6 +170,7 @@ fun LoginContent(
 
         Spacer(modifier = Modifier.height(16.dp))
         AccesoRapido(usuarios = estado.usuariosDemo, alElegir = { onEvent(SesionUiEvent.OnAccesoRapido(it)) })
+        pie()
     }
 }
 
