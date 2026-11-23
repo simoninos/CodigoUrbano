@@ -20,3 +20,5 @@ local.properties
 *.keystore
 !/almacen-claves/*.jks
 keystore.properties
+# APK que genera el asistente "Generate Signed APK" (pesa ~50 MB: no va al repositorio)
+/app/release/
