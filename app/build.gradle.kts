@@ -29,7 +29,7 @@ android {
     }
 
     //RNF-08: la llave para firmar el APK release se lee de keystore.properties, en la raíz del proyecto.
-    //Ese archivo y la llave (.jks) están en .gitignore: nunca se suben. Sin el archivo, el release queda sin firmar
+    //Las contraseñas nunca se suben (.gitignore); el .jks sí, en almacen-claves/. Sin el archivo, el release queda sin firmar
     val archivoFirma = rootProject.file("keystore.properties")
     val firma = Properties().apply { if (archivoFirma.exists()) archivoFirma.inputStream().use { load(it) } }
     if (!firma.isEmpty) {
