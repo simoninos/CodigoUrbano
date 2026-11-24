@@ -48,6 +48,9 @@ android {
         //Informe: gradlew createDebugUnitTestCoverageReport -> app/build/reports/coverage/test/debug/index.html
         debug {
             enableUnitTestCoverage = true
+            //Con keystore.properties, el debug se firma con la misma llave que el release: así "Run" desde
+            //Android Studio se instala encima del APK firmado sin desinstalarlo (y sin perder la sesión ni el Servidor)
+            if (!firma.isEmpty) signingConfig = signingConfigs.getByName("release")
         }
         release {
             if (!firma.isEmpty) signingConfig = signingConfigs.getByName("release")
