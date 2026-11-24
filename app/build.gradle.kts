@@ -48,6 +48,9 @@ android {
         //Informe: gradlew createDebugUnitTestCoverageReport -> app/build/reports/coverage/test/debug/index.html
         debug {
             enableUnitTestCoverage = true
+            //Con keystore.properties, el debug se firma con la misma llave que el release: así "Run" desde
+            //Android Studio se instala encima del APK firmado sin desinstalarlo (y sin perder la sesión ni el Servidor)
+            if (!firma.isEmpty) signingConfig = signingConfigs.getByName("release")
         }
         release {
             if (!firma.isEmpty) signingConfig = signingConfigs.getByName("release")
@@ -133,7 +136,8 @@ dependencies {
 //Uso: gradlew coberturaLogica -> app/build/reports/jacoco/coberturaLogica/html/index.html
 val excluidosCobertura = listOf(
     "**/R.class", "**/R$*.class", "**/BuildConfig.*", "**/Manifest*.*",
-    "**/ui/screens/**", "**/ui/components/**", "**/ui/theme/**", "**/navigation/**",
+    "**/ui/screens/**/*Screen*", "**/ui/screens/**/SeccionApariencia*", "**/ui/screens/**/AjusteServidor*", "**/ui/screens/**/Terminos*",
+    "**/ui/components/**", "**/ui/theme/**", "**/navigation/**",
     "**/MainActivity*", "**/TriskeleduApp*", "**/AppContainer*",
     "**/*_Impl*", "**/data/local/dao/**", "**/data/local/AppDatabase*", "**/data/local/CargaInicial*",
     "**/data/local/Converters*", "**/data/repository/Room*",

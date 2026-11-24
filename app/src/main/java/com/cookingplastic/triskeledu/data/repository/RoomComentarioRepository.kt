@@ -3,6 +3,7 @@ package com.cookingplastic.triskeledu.data.repository
 import com.cookingplastic.triskeledu.data.local.dao.ComentarioDao
 import com.cookingplastic.triskeledu.data.model.Comentario
 import kotlinx.coroutines.flow.Flow
+import com.cookingplastic.triskeledu.domain.repository.ComentarioRepository
 
 //Versión con Room de los comentarios
 class RoomComentarioRepository(

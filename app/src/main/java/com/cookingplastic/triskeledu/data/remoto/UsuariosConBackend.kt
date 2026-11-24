@@ -4,7 +4,7 @@ import com.cookingplastic.triskeledu.data.local.dao.UsuarioDao
 import com.cookingplastic.triskeledu.data.model.EstadoSolicitud
 import com.cookingplastic.triskeledu.data.model.Sesion
 import com.cookingplastic.triskeledu.data.model.Usuario
-import com.cookingplastic.triskeledu.data.repository.UsuarioRepository
+import com.cookingplastic.triskeledu.domain.repository.UsuarioRepository
 import com.cookingplastic.triskeledu.data.security.HashContrasena
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

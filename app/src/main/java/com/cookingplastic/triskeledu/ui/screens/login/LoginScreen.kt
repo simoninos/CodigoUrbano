@@ -47,12 +47,12 @@ import com.cookingplastic.triskeledu.data.model.RolUsuario
 import com.cookingplastic.triskeledu.ui.components.BotonEnviar
 import com.cookingplastic.triskeledu.ui.components.EnfocarPrimerError
 import com.cookingplastic.triskeledu.ui.components.MensajeError
-import com.cookingplastic.triskeledu.ui.event.SesionUiEvent
-import com.cookingplastic.triskeledu.ui.state.CampoSesion
-import com.cookingplastic.triskeledu.ui.state.SesionUiState
-import com.cookingplastic.triskeledu.ui.state.UsuarioDemo
+import com.cookingplastic.triskeledu.ui.shared.SesionUiEvent
+import com.cookingplastic.triskeledu.ui.shared.CampoSesion
+import com.cookingplastic.triskeledu.ui.shared.SesionUiState
+import com.cookingplastic.triskeledu.ui.shared.UsuarioDemo
 import com.cookingplastic.triskeledu.ui.theme.TriskeleduTheme
-import com.cookingplastic.triskeledu.ui.viewmodels.SesionViewModel
+import com.cookingplastic.triskeledu.ui.shared.SesionViewModel
 
 @Composable
 //Screen se conecta a ViewModel

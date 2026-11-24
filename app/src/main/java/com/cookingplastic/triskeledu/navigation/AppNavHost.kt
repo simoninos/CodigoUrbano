@@ -31,11 +31,11 @@ import com.cookingplastic.triskeledu.ui.screens.login.RecuperarScreen
 import com.cookingplastic.triskeledu.ui.screens.login.RegistroScreen
 import com.cookingplastic.triskeledu.ui.screens.login.SolicitudRevisionScreen
 import com.cookingplastic.triskeledu.ui.screens.mapa.MapaScreen
-import com.cookingplastic.triskeledu.ui.screens.mislugares.MisLugaresAdminScreen
+import com.cookingplastic.triskeledu.ui.screens.admin.MisLugaresAdminScreen
 import com.cookingplastic.triskeledu.ui.screens.mislugares.MisLugaresScreen
 import com.cookingplastic.triskeledu.ui.screens.nivel.NivelScreen
 import com.cookingplastic.triskeledu.ui.screens.notificaciones.NotificacionesScreen
-import com.cookingplastic.triskeledu.ui.state.DestinoNotificacion
+import com.cookingplastic.triskeledu.ui.screens.notificaciones.DestinoNotificacion
 import com.cookingplastic.triskeledu.ui.screens.perfil.PerfilScreen
 import com.cookingplastic.triskeledu.ui.screens.ranking.RankingScreen
 import com.cookingplastic.triskeledu.ui.screens.selfie.SelfieScreen

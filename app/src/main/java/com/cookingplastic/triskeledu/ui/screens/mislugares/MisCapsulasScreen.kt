@@ -21,7 +21,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.cookingplastic.triskeledu.data.model.PUNTOS_CAPSULA
-import com.cookingplastic.triskeledu.ui.state.CapsulaDescubierta
 
 //P07-B (LUG-04): las cápsulas de los lugares escaneados. Tocar una abre P12, que elige el modo solo (RN-08)
 @Composable

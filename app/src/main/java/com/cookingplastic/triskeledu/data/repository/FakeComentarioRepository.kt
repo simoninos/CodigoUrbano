@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
+import com.cookingplastic.triskeledu.domain.repository.ComentarioRepository
 
 //Versión de prueba: guarda los comentarios en memoria hasta tener Room
 class FakeComentarioRepository(comentariosIniciales: List<Comentario> = emptyList()) : ComentarioRepository {

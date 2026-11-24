@@ -21,7 +21,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.cookingplastic.triskeledu.data.model.PUNTOS_ESCANEO
 import com.cookingplastic.triskeledu.ui.components.fechaCorta
-import com.cookingplastic.triskeledu.ui.state.QrEscaneado
 
 //P07-C (LUG-07): los QR escaneados, con fecha, hora y distancia. Tocar uno abre P04
 @Composable

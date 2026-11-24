@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import com.cookingplastic.triskeledu.domain.repository.PreferenciasRepository
 
 //Las preferencias son del usuario conectado; por eso también recibe el DAO de usuarios
 class RoomPreferenciasRepository(

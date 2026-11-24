@@ -3,8 +3,8 @@ package com.cookingplastic.triskeledu.data.remoto
 import com.cookingplastic.triskeledu.data.model.Capsula
 import com.cookingplastic.triskeledu.data.model.EstadoCapsula
 import com.cookingplastic.triskeledu.data.model.PuntoInteres
-import com.cookingplastic.triskeledu.data.repository.CapsulaRepository
-import com.cookingplastic.triskeledu.data.repository.PuntoInteresRepository
+import com.cookingplastic.triskeledu.domain.repository.CapsulaRepository
+import com.cookingplastic.triskeledu.domain.repository.PuntoInteresRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 

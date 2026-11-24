@@ -21,10 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cookingplastic.triskeledu.ui.components.MensajeError
-import com.cookingplastic.triskeledu.ui.event.ServidorUiEvent
-import com.cookingplastic.triskeledu.ui.state.ServidorUiState
 import com.cookingplastic.triskeledu.ui.theme.TriskeleduTheme
-import com.cookingplastic.triskeledu.ui.viewmodels.ServidorViewModel
 
 //P01: "Servidor: http://…" bajo el acceso rápido. Al tocarlo se escribe la IP del computador con el backend
 @Composable

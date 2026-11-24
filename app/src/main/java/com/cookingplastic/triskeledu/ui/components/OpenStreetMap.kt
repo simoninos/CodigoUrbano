@@ -32,8 +32,8 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.cookingplastic.triskeledu.data.model.EstadoPunto
 import com.cookingplastic.triskeledu.data.model.Ubicacion
 import com.cookingplastic.triskeledu.ui.theme.ColoresApp
-import com.cookingplastic.triskeledu.ui.state.CamaraMapa
-import com.cookingplastic.triskeledu.ui.state.PuntoMapa
+import com.cookingplastic.triskeledu.ui.screens.mapa.CamaraMapa
+import com.cookingplastic.triskeledu.ui.screens.mapa.PuntoMapa
 import org.osmdroid.events.MapEventsReceiver
 import org.osmdroid.events.MapListener
 import org.osmdroid.events.ScrollEvent

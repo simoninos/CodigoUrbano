@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
+import com.cookingplastic.triskeledu.domain.repository.ProgresoRepository
 
 //Versión de prueba: guarda el progreso en memoria hasta tener Room. Se pierde al cerrar la app
 class FakeProgresoRepository(filasIniciales: List<ProgresoPunto> = emptyList()) : ProgresoRepository {

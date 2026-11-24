@@ -2,8 +2,8 @@ package com.cookingplastic.triskeledu.data.simulacion
 
 import com.cookingplastic.triskeledu.data.model.Comentario
 import com.cookingplastic.triskeledu.data.model.ProgresoPunto
-import com.cookingplastic.triskeledu.data.repository.ProgresoRepository
-import com.cookingplastic.triskeledu.data.repository.PuntoInteresRepository
+import com.cookingplastic.triskeledu.domain.repository.ProgresoRepository
+import com.cookingplastic.triskeledu.domain.repository.PuntoInteresRepository
 import com.cookingplastic.triskeledu.data.sincronizacion.RespuestaRegistro
 import com.cookingplastic.triskeledu.data.sincronizacion.ServidorApi
 import kotlinx.coroutines.delay

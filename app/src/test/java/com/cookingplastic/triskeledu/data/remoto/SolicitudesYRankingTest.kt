@@ -6,7 +6,7 @@ import com.cookingplastic.triskeledu.data.model.RolUsuario
 import com.cookingplastic.triskeledu.data.model.Usuario
 import com.cookingplastic.triskeledu.data.simulacion.ResultadoSolicitud
 import com.cookingplastic.triskeledu.data.simulacion.SolicitudesRepository
-import com.cookingplastic.triskeledu.ui.state.PeriodoRanking
+import com.cookingplastic.triskeledu.ui.screens.ranking.PeriodoRanking
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every

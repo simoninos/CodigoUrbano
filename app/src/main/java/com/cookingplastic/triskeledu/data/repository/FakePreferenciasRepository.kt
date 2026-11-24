@@ -3,6 +3,7 @@ package com.cookingplastic.triskeledu.data.repository
 import com.cookingplastic.triskeledu.data.model.Preferencias
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import com.cookingplastic.triskeledu.domain.repository.PreferenciasRepository
 
 //lo mismo que hicimos en el otro repository fake, es simulación
 class FakePreferenciasRepository : PreferenciasRepository {

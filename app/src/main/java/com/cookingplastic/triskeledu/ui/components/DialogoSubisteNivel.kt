@@ -35,10 +35,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.cookingplastic.triskeledu.data.model.TemaApp
 import com.cookingplastic.triskeledu.data.nivel.SubidaNivel
-import com.cookingplastic.triskeledu.ui.event.SubidaNivelUiEvent
+import com.cookingplastic.triskeledu.ui.shared.SubidaNivelUiEvent
 import com.cookingplastic.triskeledu.ui.theme.ColoresApp
 import com.cookingplastic.triskeledu.ui.theme.TriskeleduTheme
-import com.cookingplastic.triskeledu.ui.validation.ReglaNivel
+import com.cookingplastic.triskeledu.domain.rules.ReglaNivel
 
 //P25 · ¡Subiste de nivel! (LVL-02). Aparece sobre la pantalla actual; atrás o tocar fuera es "Seguir explorando"
 @Composable

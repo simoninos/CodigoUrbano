@@ -11,7 +11,7 @@ import com.cookingplastic.triskeledu.data.model.Ubicacion
 import com.cookingplastic.triskeledu.data.repository.FakePuntoInteresRepository
 import com.cookingplastic.triskeledu.data.repository.FakeUsuarioRepository
 import com.cookingplastic.triskeledu.data.sincronizacion.MotivoRechazo
-import com.cookingplastic.triskeledu.ui.state.PeriodoRanking
+import com.cookingplastic.triskeledu.ui.screens.ranking.PeriodoRanking
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.flow.first

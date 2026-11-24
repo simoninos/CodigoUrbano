@@ -1,7 +1,7 @@
 package com.cookingplastic.triskeledu.data.remoto
 
-import com.cookingplastic.triskeledu.ui.event.ServidorUiEvent
-import com.cookingplastic.triskeledu.ui.viewmodels.ServidorViewModel
+import com.cookingplastic.triskeledu.ui.screens.login.ServidorUiEvent
+import com.cookingplastic.triskeledu.ui.screens.login.ServidorViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
