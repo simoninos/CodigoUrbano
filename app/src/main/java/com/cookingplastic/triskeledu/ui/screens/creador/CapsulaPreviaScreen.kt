@@ -25,13 +25,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cookingplastic.triskeledu.ui.components.MensajeError
-import com.cookingplastic.triskeledu.ui.event.CapsulaPreviaUiEvent
 import com.cookingplastic.triskeledu.ui.screens.video.VideoScreen
 import com.cookingplastic.triskeledu.ui.screens.video.textoTiempo
-import com.cookingplastic.triskeledu.ui.state.CapsulaPreviaUiState
-import com.cookingplastic.triskeledu.ui.state.VideoUiState
-import com.cookingplastic.triskeledu.ui.viewmodels.CapsulaPreviaViewModel
-import com.cookingplastic.triskeledu.ui.viewmodels.VideoViewModel
+import com.cookingplastic.triskeledu.ui.screens.video.VideoUiState
+import com.cookingplastic.triskeledu.ui.screens.video.VideoViewModel
 
 //P18-B · Vista previa y publicar (CRE-03, CRE-05). Usa el mismo reproductor de P12 con esVistaPrevia = true:
 //libre y sin sumar puntos. Abajo dice si el enlace funciona y permite publicar

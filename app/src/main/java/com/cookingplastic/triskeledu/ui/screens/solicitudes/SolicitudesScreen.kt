@@ -49,11 +49,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cookingplastic.triskeledu.data.local.DatosPrueba
 import com.cookingplastic.triskeledu.data.model.Usuario
 import com.cookingplastic.triskeledu.ui.components.fechaConAnio
-import com.cookingplastic.triskeledu.ui.event.SolicitudesUiEvent
-import com.cookingplastic.triskeledu.ui.screens.creador.CabeceraCreador
-import com.cookingplastic.triskeledu.ui.state.SolicitudesUiState
+import com.cookingplastic.triskeledu.ui.components.CabeceraCreador
 import com.cookingplastic.triskeledu.ui.theme.TriskeleduTheme
-import com.cookingplastic.triskeledu.ui.viewmodels.SolicitudesViewModel
 
 //P22 · Solicitudes de creador (ADM-10). Mientras no exista P16 (etapa 8), se llega desde la campana del mapa
 @Composable

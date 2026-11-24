@@ -5,8 +5,8 @@ import com.cookingplastic.triskeledu.data.model.Usuario
 import com.cookingplastic.triskeledu.data.security.HashContrasena
 import com.cookingplastic.triskeledu.data.simulacion.ResultadoSolicitud
 import com.cookingplastic.triskeledu.data.simulacion.SolicitudesRepository
-import com.cookingplastic.triskeledu.ui.state.FilaRanking
-import com.cookingplastic.triskeledu.ui.state.PeriodoRanking
+import com.cookingplastic.triskeledu.ui.screens.ranking.FilaRanking
+import com.cookingplastic.triskeledu.ui.screens.ranking.PeriodoRanking
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow

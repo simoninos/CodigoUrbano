@@ -73,12 +73,8 @@ import com.cookingplastic.triskeledu.ui.components.colorUbicacionUsuario
 import com.cookingplastic.triskeledu.ui.components.registrarRespuestaUbicacion
 import com.cookingplastic.triskeledu.ui.components.rememberActivarUbicacion
 import com.cookingplastic.triskeledu.ui.components.rememberEstadoUbicacion
-import com.cookingplastic.triskeledu.ui.event.MapaUiEvent
-import com.cookingplastic.triskeledu.ui.state.MapaUiState
-import com.cookingplastic.triskeledu.ui.state.PuntoMapa
 import com.cookingplastic.triskeledu.ui.theme.ColoresApp
 import com.cookingplastic.triskeledu.ui.theme.TriskeleduTheme
-import com.cookingplastic.triskeledu.ui.viewmodels.MapaViewModel
 import java.util.Locale
 import kotlin.math.roundToInt
 

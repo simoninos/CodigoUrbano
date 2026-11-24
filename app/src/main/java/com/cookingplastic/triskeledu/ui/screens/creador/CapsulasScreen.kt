@@ -44,13 +44,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cookingplastic.triskeledu.data.local.DatosPrueba
 import com.cookingplastic.triskeledu.data.model.CategoriaCapsula
 import com.cookingplastic.triskeledu.data.model.EstadoCapsula
-import com.cookingplastic.triskeledu.ui.event.CapsulasUiEvent
-import com.cookingplastic.triskeledu.ui.state.CapsulasUiState
-import com.cookingplastic.triskeledu.ui.state.FilaCapsula
-import com.cookingplastic.triskeledu.ui.state.FiltroEstadoCapsula
 import com.cookingplastic.triskeledu.ui.theme.TriskeleduTheme
-import com.cookingplastic.triskeledu.ui.viewmodels.CapsulasViewModel
-import com.cookingplastic.triskeledu.ui.viewmodels.armarCapsulas
+import com.cookingplastic.triskeledu.ui.components.CabeceraCreador
+import com.cookingplastic.triskeledu.ui.components.EtiquetaCategoria
+import com.cookingplastic.triskeledu.ui.components.EtiquetaEstadoCapsula
+import com.cookingplastic.triskeledu.ui.components.MiniaturaCapsula
 
 //P17 · Mis cápsulas (CRE-04): se llega desde la tarjeta "Mis cápsulas" de Configuración
 @Composable

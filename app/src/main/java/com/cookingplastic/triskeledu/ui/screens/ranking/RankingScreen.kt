@@ -43,14 +43,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cookingplastic.triskeledu.data.local.DatosPrueba
 import com.cookingplastic.triskeledu.ui.components.rememberReducirMovimiento
-import com.cookingplastic.triskeledu.ui.event.RankingUiEvent
-import com.cookingplastic.triskeledu.ui.state.FilaRanking
-import com.cookingplastic.triskeledu.ui.state.PeriodoRanking
-import com.cookingplastic.triskeledu.ui.state.RankingUiState
 import com.cookingplastic.triskeledu.ui.theme.ColoresApp
 import com.cookingplastic.triskeledu.ui.theme.TriskeleduTheme
-import com.cookingplastic.triskeledu.ui.viewmodels.RankingViewModel
-import com.cookingplastic.triskeledu.ui.viewmodels.armarRanking
 
 //P20 · Ranking (LUG-06): desde "Ver ranking ›" en la tarjeta "Mis puntos" de P07-A
 @Composable

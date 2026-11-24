@@ -133,7 +133,8 @@ dependencies {
 //Uso: gradlew coberturaLogica -> app/build/reports/jacoco/coberturaLogica/html/index.html
 val excluidosCobertura = listOf(
     "**/R.class", "**/R$*.class", "**/BuildConfig.*", "**/Manifest*.*",
-    "**/ui/screens/**", "**/ui/components/**", "**/ui/theme/**", "**/navigation/**",
+    "**/ui/screens/**/*Screen*", "**/ui/screens/**/SeccionApariencia*", "**/ui/screens/**/AjusteServidor*", "**/ui/screens/**/Terminos*",
+    "**/ui/components/**", "**/ui/theme/**", "**/navigation/**",
     "**/MainActivity*", "**/TriskeleduApp*", "**/AppContainer*",
     "**/*_Impl*", "**/data/local/dao/**", "**/data/local/AppDatabase*", "**/data/local/CargaInicial*",
     "**/data/local/Converters*", "**/data/repository/Room*",

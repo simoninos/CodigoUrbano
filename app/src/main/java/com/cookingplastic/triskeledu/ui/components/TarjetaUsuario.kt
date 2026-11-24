@@ -23,9 +23,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.cookingplastic.triskeledu.data.model.NivelUsuario
 import com.cookingplastic.triskeledu.data.model.TemaApp
-import com.cookingplastic.triskeledu.ui.state.avanceNivel
+import com.cookingplastic.triskeledu.ui.screens.nivel.avanceNivel
 import com.cookingplastic.triskeledu.ui.theme.TriskeleduTheme
-import com.cookingplastic.triskeledu.ui.validation.ReglaNivel
+import com.cookingplastic.triskeledu.domain.rules.ReglaNivel
 
 // Tarjeta del usuario sobre el mapa (RF-C14): inicial, nombre, puntos y lugares escaneados.
 // LVL-04: suma "Nv. X", el número sobre el avatar y la barra hasta el siguiente nivel; al tocarla abre P24.

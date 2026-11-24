@@ -68,18 +68,7 @@ import com.cookingplastic.triskeledu.ui.components.BotonMapa
 import com.cookingplastic.triskeledu.ui.components.EsferaAgua
 import com.cookingplastic.triskeledu.ui.components.MensajeError
 import com.cookingplastic.triskeledu.ui.components.rememberReducirMovimiento
-import com.cookingplastic.triskeledu.ui.event.MisLugaresUiEvent
-import com.cookingplastic.triskeledu.ui.state.CapsulaDescubierta
-import com.cookingplastic.triskeledu.ui.state.EstadoLugar
-import com.cookingplastic.triskeledu.ui.state.FiltroLugares
-import com.cookingplastic.triskeledu.ui.state.LugarDesbloqueado
-import com.cookingplastic.triskeledu.ui.state.LugarPorDescubrir
-import com.cookingplastic.triskeledu.ui.state.MisLugaresUiState
-import com.cookingplastic.triskeledu.ui.state.OrdenLugares
-import com.cookingplastic.triskeledu.ui.state.QrEscaneado
-import com.cookingplastic.triskeledu.ui.state.VistaDescubrimientos
 import com.cookingplastic.triskeledu.ui.theme.TriskeleduTheme
-import com.cookingplastic.triskeledu.ui.viewmodels.MisLugaresViewModel
 
 //Pantalla 7 (P07-A a P07-D, Mis descubrimientos): se conecta al ViewModel y avisa cuando hay que navegar
 @Composable

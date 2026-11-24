@@ -2,8 +2,8 @@ package com.cookingplastic.triskeledu.data
 
 import android.content.Context
 import com.cookingplastic.triskeledu.TriskeleduApp
-import com.cookingplastic.triskeledu.data.repository.ComentarioRepository
-import com.cookingplastic.triskeledu.data.repository.ProgresoRepository
+import com.cookingplastic.triskeledu.domain.repository.ComentarioRepository
+import com.cookingplastic.triskeledu.domain.repository.ProgresoRepository
 
 //Entrega el progreso y los comentarios guardados en Room, que crea AppContainer.
 //Es una sola instancia para toda la app: lo que se escanea en Escanear se ve al tiro en

@@ -10,7 +10,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.cookingplastic.triskeledu.ui.viewmodels.TemaViewModel
+import com.cookingplastic.triskeledu.ui.shared.TemaViewModel
 
 //Envuelve toda la app (va en MainActivity): elige la paleta por el tema elegido (LVL-03) y la preferencia temaNoche.
 //Al cambiar cualquiera de los dos, toda la app se vuelve a dibujar con los colores nuevos sin perder lo escrito (EXC-14)

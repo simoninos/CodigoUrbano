@@ -1,7 +1,7 @@
 package com.cookingplastic.triskeledu.data.notificaciones
 
 import com.cookingplastic.triskeledu.data.model.PuntoInteres
-import com.cookingplastic.triskeledu.data.repository.PuntoInteresRepository
+import com.cookingplastic.triskeledu.domain.repository.PuntoInteresRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 

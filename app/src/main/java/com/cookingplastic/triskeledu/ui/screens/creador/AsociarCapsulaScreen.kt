@@ -41,12 +41,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cookingplastic.triskeledu.data.local.DatosPrueba
 import com.cookingplastic.triskeledu.data.model.EstadoAdminPunto
 import com.cookingplastic.triskeledu.ui.components.MensajeError
-import com.cookingplastic.triskeledu.ui.event.AsociarCapsulaUiEvent
-import com.cookingplastic.triskeledu.ui.state.AsociarCapsulaUiState
-import com.cookingplastic.triskeledu.ui.state.OpcionCapsula
 import com.cookingplastic.triskeledu.ui.theme.TriskeleduTheme
-import com.cookingplastic.triskeledu.ui.viewmodels.AsociarCapsulaViewModel
-import com.cookingplastic.triskeledu.ui.viewmodels.armarAsociar
+import com.cookingplastic.triskeledu.ui.components.CabeceraCreador
+import com.cookingplastic.triskeledu.ui.components.EtiquetaCategoria
+import com.cookingplastic.triskeledu.ui.components.EtiquetaEstadoCapsula
+import com.cookingplastic.triskeledu.ui.components.MiniaturaCapsula
 
 //P21 · Asociar cápsula (CRE-08): desde la tarjeta de un punto Sin cápsula en el mapa del creador
 @Composable

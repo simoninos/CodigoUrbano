@@ -18,8 +18,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.cookingplastic.triskeledu.ui.components.DialogoSubisteNivel
-import com.cookingplastic.triskeledu.ui.viewmodels.RolViewModel
-import com.cookingplastic.triskeledu.ui.viewmodels.SubidaNivelViewModel
+import com.cookingplastic.triskeledu.ui.shared.RolViewModel
+import com.cookingplastic.triskeledu.ui.shared.SubidaNivelViewModel
 
 // Scaffold central de la app: dibuja la barra de navegación inferior en las tres pestañas y en el Detalle.
 // Cada pantalla dibuja su propia cabecera, como en el mockup.

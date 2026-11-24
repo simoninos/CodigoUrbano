@@ -7,6 +7,7 @@ import com.cookingplastic.triskeledu.data.model.ProgresoPunto
 import com.cookingplastic.triskeledu.data.model.Ubicacion
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import com.cookingplastic.triskeledu.domain.repository.ProgresoRepository
 
 //Versión con Room: el progreso queda guardado en SQLite y sigue ahí al cerrar la app.
 //Implementa la misma interfaz que la Fake, así que las pantallas no cambian al usarla

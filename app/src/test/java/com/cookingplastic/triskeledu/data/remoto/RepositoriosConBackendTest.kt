@@ -261,7 +261,7 @@ class RepositoriosConBackendTest {
         val moneda = DatosPrueba.PUNTO_LA_MONEDA
         coEvery { api.capsulas() } returns listOf(capsula.comoDto())
         coEvery { api.puntos() } returns listOf(moneda.comoDto(), puntoNuevo().comoDto())
-        val puntosQueFallan = object : com.cookingplastic.triskeledu.data.repository.PuntoInteresRepository by puntos {
+        val puntosQueFallan = object : com.cookingplastic.triskeledu.domain.repository.PuntoInteresRepository by puntos {
             override suspend fun guardar(punto: PuntoInteres) {
                 if (punto.id == "p-nuevo") error("clave foránea") else puntos.guardar(punto)
             }
