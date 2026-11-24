@@ -148,7 +148,7 @@ Mientras un lugar quede en `null`, su cápsula funciona sin video (RN-35). Si se
 - JDK 17 o superior (el que trae Android Studio sirve).
 - Emulador o teléfono con **Android 8.0 (API 26)** o superior y Google Play Services. La app compila contra la API 36.
 
-- Para el backend: solo Docker Desktop (las imágenes compilan cada servicio con Maven y Java 21).
+- Para el backend: solo Docker Desktop. No hace falta Java ni Maven: las imágenes, con versiones fijas (Maven 3.9.16, Java 21.0.12, MySQL 8.4.9), compilan, prueban y ejecutan cada servicio.
 
 **1. Encender el backend**
 
@@ -193,6 +193,18 @@ El almacén de claves está en **`almacen-claves/triskeledu.jks`**, en el reposi
 4. El APK queda en `app/build/outputs/apk/release/app-release.apk`. Se instala con `adb install app-release.apk` o copiándolo al teléfono.
 
 Sin `keystore.properties`, `assembleRelease` genera un APK sin firmar (`app-release-unsigned.apk`), que Android no deja instalar.
+
+**Descarga:** el APK firmado está adjunto a la versión [`EP4-Entrega`](https://github.com/simoninos/CodigoUrbano/releases/tag/EP4-Entrega) (*Releases*), generado desde ese mismo commit. No se guarda en el código para no inflar el repositorio con un binario de 40 MB.
+
+### Capturas del APK firmado y del .jks
+
+`apksigner` confirma la firma (esquema v2) y el certificado del almacén `triskeledu.jks` (DN y huella SHA-256):
+
+![APK firmado verificado con apksigner](docs/capturas/apk-firmado.png)
+
+El almacén en `almacen-claves/`, la plantilla de `keystore.properties` (sin las contraseñas reales) y la configuración de firma en `app/build.gradle.kts`:
+
+![Almacén de claves .jks y configuración de firma](docs/capturas/almacen-claves-jks.png)
 
 ## Arquitectura
 
