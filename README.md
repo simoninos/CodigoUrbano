@@ -194,6 +194,8 @@ El almacén de claves está en **`almacen-claves/triskeledu.jks`**, en el reposi
 
 Sin `keystore.properties`, `assembleRelease` genera un APK sin firmar (`app-release-unsigned.apk`), que Android no deja instalar.
 
+Con `keystore.properties`, el build **debug** también se firma con `triskeledu.jks`: así *Run* desde Android Studio se instala encima del APK firmado sin pedir desinstalarlo, y no se pierden la sesión ni la dirección del **Servidor**.
+
 **Descarga:** el APK firmado está adjunto a la versión [`EP4-Entrega`](https://github.com/simoninos/CodigoUrbano/releases/tag/EP4-Entrega) (*Releases*), generado desde ese mismo commit. No se guarda en el código para no inflar el repositorio con un binario de 40 MB.
 
 ### Capturas del APK firmado y del .jks
@@ -236,7 +238,6 @@ app/src/main/java/com/cookingplastic/triskeledu/
 │   ├── model/           Entidades
 │   ├── local/           AppDatabase (Room v3), DAO, carga inicial y DatosPrueba (con ENLACES_CAPSULAS)
 │   ├── repository/      Implementaciones Room y Fake
-│   ├── remote/          Vacío: aquí entra la conexión con el backend
 │   ├── location/        GPS y servicio de "Lugar cercano" en segundo plano
 │   ├── nivel/           Nivel, temas y "¡Subiste de nivel!"
 │   ├── creador/         Reglas de las cápsulas del creador
