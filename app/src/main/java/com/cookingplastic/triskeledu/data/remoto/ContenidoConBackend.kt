@@ -12,9 +12,14 @@ import kotlinx.coroutines.flow.first
 //que vuelve a revisar el rol y las reglas (RN-14, RN-30); solo si acepta, guarda en Room la versión que devolvió.
 //Si el servidor rechaza, el error (ErrorBackend) llega al ViewModel con su mensaje y en el teléfono no cambia nada.
 //Las lecturas siguen saliendo de Room, que se llena desde el servidor con ActualizadorContenido
+//Sin conexión no se edita nada: si el cambio no necesita llamar al servidor (guardar sin cambios), igual se
+//revisa que responda (EstadoServidor.exigir), para que el teléfono nunca quede con cambios que el servidor no tiene
 class PuntosConBackend(
     private val local: PuntoInteresRepository,
-    private val api: BackendApi
+    private val api: BackendApi,
+    private val estado: EstadoServidor? = null,
+    //ADM-05: el administrador puede quitarle la cápsula a un punto desde P10; el creador no (lo hace al retirarla)
+    private val esAdministrador: suspend () -> Boolean = { false }
 ) : PuntoInteresRepository by local {
 
     override suspend fun guardar(punto: PuntoInteres) {
@@ -23,18 +28,22 @@ class PuntosConBackend(
         if (anterior == null) {
             //ADM-08: punto nuevo; el servidor lo crea Inactivo o Sin cápsula con el mismo id del teléfono
             servidor = llamar { api.crearPunto(PuntoEnvioDto.desde(punto)) }
-        } else if (cambiaronLosDatos(anterior, punto)) {
+        } else if (cambiaronLosDatos(anterior, punto) || (quitaLaCapsula(anterior, punto) && esAdministrador())) {
             servidor = llamar { api.editarPunto(punto.id, PuntoEnvioDto.desde(punto)) }
         } else if (punto.capsulaId != null && punto.capsulaId != anterior.capsulaId) {
             //CRE-08: el creador solo asocia su cápsula (no puede editar el resto del punto: 403)
             servidor = llamar { api.asociarCapsula(punto.id, AsociarDto(punto.capsulaId)) }
         }
-        //quitar la cápsula (capsulaId = null) lo hace el servidor al retirarla (CapsulasConBackend.retirar)
+        //el creador quita la cápsula al retirarla: el servidor ya soltó el punto (CapsulasConBackend.retirar)
         if (punto.activo != (servidor?.activo ?: anterior?.activo ?: false)) {
             servidor = llamar { api.cambiarActivo(punto.id, ActivoDto(punto.activo)) }
         }
+        if (servidor == null) estado?.exigir()
         local.guardar(servidor?.aPunto() ?: punto)
     }
+
+    private fun quitaLaCapsula(anterior: PuntoInteres, nuevo: PuntoInteres) =
+        anterior.capsulaId != null && nuevo.capsulaId == null
 
     //ADM-09: el servidor responde 409 con lo que falta si el punto no puede activarse (RN-14)
     override suspend fun cambiarActivo(id: String, activo: Boolean): Boolean {
@@ -58,22 +67,29 @@ class PuntosConBackend(
 //GestorCapsulas cambia el estado con guardar(); aquí cada cambio de estado se traduce a su endpoint
 class CapsulasConBackend(
     private val local: CapsulaRepository,
-    private val api: BackendApi
+    private val api: BackendApi,
+    private val estado: EstadoServidor? = null
 ) : CapsulaRepository by local {
 
     override suspend fun guardar(capsula: Capsula) {
         val anterior = local.obtenerPorId(capsula.id)
+        var llamo = true
         if (anterior == null) {
             //CRE-02: el servidor la crea como BORRADOR del creador del token
             llamar { api.crearCapsula(CapsulaEnvioDto.desde(capsula)) }
         } else if (CapsulaEnvioDto.desde(anterior) != CapsulaEnvioDto.desde(capsula)) {
             llamar { api.editarCapsula(capsula.id, CapsulaEnvioDto.desde(capsula)) }
+        } else {
+            llamo = false
         }
         val estadoServidor = anterior?.estado ?: EstadoCapsula.BORRADOR
         if (capsula.estado != estadoServidor) {
             //CRE-05: publicar, o retirar (el servidor suelta el punto si estaba inactivo, RN-21)
             llamar { if (capsula.estado == EstadoCapsula.PUBLICADA) api.publicarCapsula(capsula.id) else api.retirarCapsula(capsula.id) }
+            llamo = true
         }
+        //sin conexión no se guarda ni siquiera una cápsula sin cambios
+        if (!llamo) estado?.exigir()
         local.guardar(capsula)
     }
 

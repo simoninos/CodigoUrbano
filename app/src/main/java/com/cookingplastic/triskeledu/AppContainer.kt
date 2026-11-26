@@ -38,6 +38,8 @@ import com.cookingplastic.triskeledu.data.remoto.BackendApi
 import com.cookingplastic.triskeledu.data.remoto.CapsulasConBackend
 import com.cookingplastic.triskeledu.data.remoto.ClienteBackend
 import com.cookingplastic.triskeledu.data.remoto.DireccionServidor
+import com.cookingplastic.triskeledu.data.remoto.EstadoServidor
+import com.cookingplastic.triskeledu.data.model.RolUsuario
 import com.cookingplastic.triskeledu.data.remoto.PuntosConBackend
 import com.cookingplastic.triskeledu.data.remoto.RankingServidor
 import com.cookingplastic.triskeledu.data.remoto.RetrofitServidorApi
@@ -46,7 +48,7 @@ import com.cookingplastic.triskeledu.data.remoto.UsuariosConBackend
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.runBlocking
-import com.cookingplastic.triskeledu.data.sincronizacion.ComentariosConSincronizacion
+import com.cookingplastic.triskeledu.data.sincronizacion.ComentariosConServidor
 import com.cookingplastic.triskeledu.data.sincronizacion.ProgramadorSincronizacion
 import com.cookingplastic.triskeledu.data.sincronizacion.ProgresoConSincronizacion
 import com.cookingplastic.triskeledu.data.sincronizacion.ServidorApi
@@ -92,8 +94,14 @@ class AppContainer(context: Context) {
             //el interceptor corre en un hilo de OkHttp, nunca en el principal: puede esperar a Room
             token = { runBlocking { database.usuarioDao().token() } },
             //EXC-07: token vencido o inválido; se cierra la sesión y la app vuelve al Login
-            alVencer = { alcance.launch { usuarioRepository.cerrarSesion() } }
+            alVencer = { alcance.launch { usuarioRepository.cerrarSesion() } },
+            estado = estadoServidor
         )
+    }
+
+    //EXC-06: si el servidor responde; las pantallas de edición avisan y no dejan guardar sin conexión
+    val estadoServidor: EstadoServidor by lazy {
+        EstadoServidor(probar = { DireccionServidor.responde(direccionServidor.actual.value) })
     }
 
     //Room sigue siendo la base del teléfono (offline-first); los repositorios ConBackend escriben primero en el
@@ -104,13 +112,19 @@ class AppContainer(context: Context) {
         RoomPreferenciasRepository(database.preferenciasDao(), database.usuarioDao())
     }
     private val capsulasRoom: CapsulaRepository by lazy { RoomCapsulaRepository(database.capsulaDao()) }
-    val capsulaRepository: CapsulaRepository by lazy { CapsulasConBackend(capsulasRoom, backendApi) }
+    val capsulaRepository: CapsulaRepository by lazy { CapsulasConBackend(capsulasRoom, backendApi, estadoServidor) }
     private val puntosRoom: PuntoInteresRepository by lazy {
         RoomPuntoInteresRepository(database.puntoInteresDao(), database.capsulaDao())
     }
     //RN-24: al activarse un punto se avisa "Nueva cápsula"; PuntosConAvisos envuelve a PuntosConBackend
     val puntoInteresRepository: PuntoInteresRepository by lazy {
-        PuntosConAvisos(PuntosConBackend(puntosRoom, backendApi), generadorNotificaciones)
+        PuntosConAvisos(
+            PuntosConBackend(
+                puntosRoom, backendApi, estadoServidor,
+                esAdministrador = { usuarioRepository.usuarioActual().first()?.rol == RolUsuario.ADMINISTRADOR }
+            ),
+            generadorNotificaciones
+        )
     }
     //trae del servidor las cápsulas y los puntos que el usuario puede ver; escribe directo en Room
     val actualizadorContenido: ActualizadorContenido by lazy { ActualizadorContenido(backendApi, capsulasRoom, puntosRoom) }
@@ -130,7 +144,7 @@ class AppContainer(context: Context) {
         ProgresoConSincronizacion(conNivel, programadorSincronizacion::programar)
     }
     val comentarioRepository: ComentarioRepository by lazy {
-        ComentariosConSincronizacion(RoomComentarioRepository(database.comentarioDao()), programadorSincronizacion::programar)
+        ComentariosConServidor(RoomComentarioRepository(database.comentarioDao()), servidorApi)
     }
 
     //notificaciones del sistema; el applicationContext vive mientras la app esté abierta

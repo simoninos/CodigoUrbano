@@ -3,10 +3,11 @@ package com.cookingplastic.triskeledu.data.sincronizacion
 import com.cookingplastic.triskeledu.data.model.Comentario
 import com.cookingplastic.triskeledu.data.model.ProgresoPunto
 import com.cookingplastic.triskeledu.data.model.Ubicacion
+import com.cookingplastic.triskeledu.data.remoto.SinServidor
 import com.cookingplastic.triskeledu.domain.repository.ComentarioRepository
 import com.cookingplastic.triskeledu.domain.repository.ProgresoRepository
 
-//ESC-02 y BKD-06: después de guardar algo en Room se pide una sincronización. Si no hay red, queda esperando.
+//ESC-02: después de guardar un escaneo en Room se pide una sincronización. Si no hay red, queda esperando.
 //"by" delega lo demás sin cambios, igual que ProgresoConNivel
 class ProgresoConSincronizacion(
     private val progreso: ProgresoRepository,
@@ -23,13 +24,26 @@ class ProgresoConSincronizacion(
         progreso.registrarSelfie(usuarioId, puntoId, selfieUri).also { if (it) programar() }
 }
 
-class ComentariosConSincronizacion(
+//BKD-06: comentar exige conexión. El comentario va primero al servidor, que lo revisa (RN-17); solo si lo acepta
+//se guarda en Room, ya sincronizado. Sin servidor no se guarda nada y el texto queda en el formulario
+class ComentariosConServidor(
     private val comentarios: ComentarioRepository,
-    private val programar: () -> Unit
+    private val servidor: ServidorApi
 ) : ComentarioRepository by comentarios {
 
     override suspend fun agregar(comentario: Comentario) {
+        val respuesta = try {
+            servidor.confirmarComentarios(comentario.usuarioId, listOf(comentario)).firstOrNull { it.id == comentario.id }
+        } catch (e: SinServidor) {
+            throw SinServidor(e, "No hay conexión con el servidor. Necesitas conexión para comentar")
+        }
+        if (respuesta == null || !respuesta.aceptado) {
+            throw ComentarioRechazado(respuesta?.motivo?.explicacion ?: "El servidor no aceptó el comentario")
+        }
         comentarios.agregar(comentario)
-        programar()
+        comentarios.marcarSincronizados(listOf(comentario.id))
     }
 }
+
+//El servidor respondió, pero no aceptó el comentario; el mensaje es el motivo
+class ComentarioRechazado(motivo: String) : Exception(motivo)

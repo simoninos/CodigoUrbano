@@ -17,6 +17,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.cookingplastic.triskeledu.ui.components.BarraSinConexion
 import com.cookingplastic.triskeledu.ui.components.DialogoSubisteNivel
 import com.cookingplastic.triskeledu.ui.shared.RolViewModel
 import com.cookingplastic.triskeledu.ui.shared.SubidaNivelViewModel
@@ -26,6 +27,8 @@ import com.cookingplastic.triskeledu.ui.shared.SubidaNivelViewModel
 @Composable
 fun AppScaffold(
     modifier: Modifier = Modifier,
+    //EXC-06: el servidor no responde; se muestra la barra superior "Sin conexión"
+    sinConexion: Boolean = false,
     subidaNivelViewModel: SubidaNivelViewModel = viewModel(factory = SubidaNivelViewModel.Factory),
     rolViewModel: RolViewModel = viewModel(factory = RolViewModel.Factory)
 ) {
@@ -41,6 +44,7 @@ fun AppScaffold(
 
     Scaffold(
         modifier = modifier,
+        topBar = { BarraSinConexion(visible = sinConexion) },
         bottomBar = {
             // La barra entra deslizándose desde abajo al llegar a una pestaña
             AnimatedVisibility(

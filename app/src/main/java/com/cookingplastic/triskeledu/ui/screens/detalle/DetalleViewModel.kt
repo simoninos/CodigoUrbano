@@ -13,6 +13,8 @@ import com.cookingplastic.triskeledu.data.RepositoriosProgreso
 import com.cookingplastic.triskeledu.data.location.UbicacionRepository
 import com.cookingplastic.triskeledu.data.model.Capsula
 import com.cookingplastic.triskeledu.data.model.Comentario
+import com.cookingplastic.triskeledu.data.remoto.mensajeParaUsuario
+import com.cookingplastic.triskeledu.data.sincronizacion.ComentarioRechazado
 import com.cookingplastic.triskeledu.data.model.EstadoPunto
 import com.cookingplastic.triskeledu.data.model.ProgresoPunto
 import com.cookingplastic.triskeledu.data.model.PuntoInteres
@@ -222,12 +224,16 @@ class DetalleViewModel(
                         errorComentario = null,
                         formularioComentarioAbierto = false,
                         guardandoComentario = false,
-                        mensaje = "Comentario guardado"
+                        mensaje = "Comentario publicado"
                     )
                 }
             } catch (e: Exception) {
-                // El texto se mantiene para que el usuario pueda intentarlo de nuevo
-                _estado.update { it.copy(guardandoComentario = false, mensaje = "No se pudo guardar el comentario") }
+                // El texto se mantiene para que el usuario pueda intentarlo de nuevo. Sin conexión no se publica
+                val mensaje = when (e) {
+                    is ComentarioRechazado -> e.message
+                    else -> e.mensajeParaUsuario("No se pudo publicar el comentario")
+                }
+                _estado.update { it.copy(guardandoComentario = false, mensaje = mensaje) }
             }
         }
     }
