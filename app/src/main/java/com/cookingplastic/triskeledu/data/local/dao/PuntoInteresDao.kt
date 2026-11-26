@@ -24,7 +24,8 @@ interface PuntoInteresDao {
     @Query("SELECT * FROM puntos_interes WHERE id = :id")
     suspend fun buscarPorId(id: String): PuntoInteres?
 
-    @Query("SELECT * FROM puntos_interes WHERE codigoQr = :codigo LIMIT 1")
+    //SEG-03: el administrador y el creador guardan el código firmado ("TRISKEL-PI-001.xxxx"); los demás, solo el código
+    @Query("SELECT * FROM puntos_interes WHERE codigoQr = :codigo OR codigoQr LIKE :codigo || '.%' LIMIT 1")
     suspend fun obtenerPorCodigoQr(codigo: String): PuntoInteres?
 
     // Upsert: inserta si el id no existe; si existe, lo actualiza

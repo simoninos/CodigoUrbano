@@ -5,10 +5,12 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Location
+import android.os.Build
 import android.os.Looper
 import androidx.core.content.ContextCompat
 import com.cookingplastic.triskeledu.data.local.DatosPrueba
 import com.cookingplastic.triskeledu.data.model.Ubicacion
+import com.cookingplastic.triskeledu.data.model.LecturaGps
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
@@ -36,6 +38,9 @@ interface UbicacionRepository {
     // La última posición conocida, o null si todavía no hay ninguna
     suspend fun ultimaUbicacion(): Ubicacion?
 
+    // SEG-01: la última posición con lo que dice el GPS de ella (si es simulada y su precisión), para escanear
+    suspend fun lecturaParaEscaneo(): LecturaGps? = ultimaUbicacion()?.let { LecturaGps(it) }
+
     // Distancia en metros entre dos ubicaciones, sin considerar la altitud
     fun distanciaMetros(a: Ubicacion, b: Ubicacion): Double = distanciaEnMetros(a, b)
 }
@@ -61,6 +66,8 @@ class GpsUbicacionRepository(private val context: Context) : UbicacionRepository
 
     // Última posición recibida, para entregarla al instante a la próxima pantalla (U-08)
     private val ultima = MutableStateFlow<Ubicacion?>(null)
+    // SEG-01: la misma, con la marca de simulada y la precisión
+    private val ultimaLectura = MutableStateFlow<LecturaGps?>(null)
 
     private fun tienePermiso(): Boolean =
         ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) ==
@@ -87,6 +94,7 @@ class GpsUbicacionRepository(private val context: Context) : UbicacionRepository
                 val location = resultado.lastLocation ?: return
                 val ubicacion = location.aUbicacion()
                 ultima.value = ubicacion
+                ultimaLectura.value = location.aLectura()
                 trySend(ubicacion)
             }
         }
@@ -118,6 +126,28 @@ class GpsUbicacionRepository(private val context: Context) : UbicacionRepository
         }
     }
 
+    @SuppressLint("MissingPermission")
+    override suspend fun lecturaParaEscaneo(): LecturaGps? {
+        ultimaLectura.value?.let { return it }
+        if (!tienePermiso()) return null
+        return suspendCancellableCoroutine { continuacion ->
+            try {
+                cliente.lastLocation
+                    .addOnSuccessListener { location -> continuacion.resume(location?.aLectura()) }
+                    .addOnFailureListener { continuacion.resume(null) }
+            } catch (e: SecurityException) {
+                continuacion.resume(null)
+            }
+        }
+    }
+
+    // SEG-01: Android marca la posición que entrega una app de "ubicación de prueba" (opciones de desarrollador)
+    private fun Location.aLectura(): LecturaGps = LecturaGps(
+        ubicacion = aUbicacion(),
+        simulada = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) isMock else @Suppress("DEPRECATION") isFromMockProvider,
+        precision = if (hasAccuracy()) accuracy.toDouble() else null
+    )
+
     // U-02: si el teléfono no informa altitud, se usa 0
     private fun Location.aUbicacion(): Ubicacion = Ubicacion(
         latitud = latitude,
@@ -133,6 +163,11 @@ class FakeUbicacionRepository(
 ) : UbicacionRepository {
 
     private val actual = MutableStateFlow(inicial)
+
+    // SEG-01: para probar el bloqueo con una app de GPS falso
+    var simulada = false
+
+    override suspend fun lecturaParaEscaneo(): LecturaGps = LecturaGps(actual.value, simulada, 8.0)
 
     override fun ubicaciones(): Flow<Ubicacion> = actual
 

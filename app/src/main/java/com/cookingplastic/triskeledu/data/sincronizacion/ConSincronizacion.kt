@@ -1,6 +1,7 @@
 package com.cookingplastic.triskeledu.data.sincronizacion
 
 import com.cookingplastic.triskeledu.data.model.Comentario
+import com.cookingplastic.triskeledu.data.model.DatosEscaneo
 import com.cookingplastic.triskeledu.data.model.ProgresoPunto
 import com.cookingplastic.triskeledu.data.model.Ubicacion
 import com.cookingplastic.triskeledu.data.remoto.SinServidor
@@ -14,8 +15,8 @@ class ProgresoConSincronizacion(
     private val programar: () -> Unit
 ) : ProgresoRepository by progreso {
 
-    override suspend fun registrarEscaneo(usuarioId: String, puntoId: String, ubicacion: Ubicacion): ProgresoPunto =
-        progreso.registrarEscaneo(usuarioId, puntoId, ubicacion).also { programar() }
+    override suspend fun registrarEscaneo(usuarioId: String, puntoId: String, ubicacion: Ubicacion, datos: DatosEscaneo): ProgresoPunto =
+        progreso.registrarEscaneo(usuarioId, puntoId, ubicacion, datos).also { programar() }
 
     override suspend fun registrarVistaCapsula(usuarioId: String, puntoId: String): Boolean =
         progreso.registrarVistaCapsula(usuarioId, puntoId).also { if (it) programar() }

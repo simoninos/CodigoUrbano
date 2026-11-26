@@ -39,6 +39,9 @@ import com.cookingplastic.triskeledu.data.remoto.CapsulasConBackend
 import com.cookingplastic.triskeledu.data.remoto.ClienteBackend
 import com.cookingplastic.triskeledu.data.remoto.DireccionServidor
 import com.cookingplastic.triskeledu.data.remoto.EstadoServidor
+import com.cookingplastic.triskeledu.data.security.ClaveAndroidKeyStore
+import com.cookingplastic.triskeledu.data.security.ClaveDispositivo
+import com.cookingplastic.triskeledu.data.local.MIGRACION_3_4
 import com.cookingplastic.triskeledu.data.model.RolUsuario
 import com.cookingplastic.triskeledu.data.remoto.PuntosConBackend
 import com.cookingplastic.triskeledu.data.remoto.RankingServidor
@@ -68,6 +71,8 @@ class AppContainer(context: Context) {
         Room.databaseBuilder(context, AppDatabase::class.java, "triskeledu.db")
             //la primera vez que se crea la base, se llena con DatosPrueba
             .addCallback(CargaInicial)
+            //EP4: la versión 4 agrega columnas sin borrar lo guardado (SEG-01 y SEG-03)
+            .addMigrations(MIGRACION_3_4)
             //mientras desarrollamos: si sube la versión, la base se borra y se crea de nuevo en vez de
             //cerrar la app. CargaInicial vuelve a llenarla con los datos de prueba
             .fallbackToDestructiveMigration(dropAllTables = true)
@@ -107,7 +112,11 @@ class AppContainer(context: Context) {
     //Room sigue siendo la base del teléfono (offline-first); los repositorios ConBackend escriben primero en el
     //servidor y después en Room. Los Fake quedan para las pruebas. Una sola instancia: todas las pantallas ven lo mismo
     private val usuariosRoom: UsuarioRepository by lazy { RoomUsuarioRepository(database.usuarioDao()) }
-    val usuarioRepository: UsuarioRepository by lazy { UsuariosConBackend(usuariosRoom, database.usuarioDao(), backendApi) }
+    //SEG-05: la clave del teléfono para Key Attestation, en el chip de seguridad
+    val claveDispositivo: ClaveDispositivo by lazy { ClaveAndroidKeyStore() }
+    val usuarioRepository: UsuarioRepository by lazy {
+        UsuariosConBackend(usuariosRoom, database.usuarioDao(), backendApi, clave = claveDispositivo)
+    }
     val preferenciasRepository: PreferenciasRepository by lazy {
         RoomPreferenciasRepository(database.preferenciasDao(), database.usuarioDao())
     }
@@ -181,7 +190,7 @@ class AppContainer(context: Context) {
 
     //ESC-02: ms-progreso revalida los escaneos y comentarios. Es la misma interfaz que implementaba ServidorSimulado
     //(sigue en data/simulacion para las pruebas): solo cambió esta línea, ni el Sincronizador ni los ViewModels
-    val servidorApi: ServidorApi by lazy { RetrofitServidorApi(backendApi) }
+    val servidorApi: ServidorApi by lazy { RetrofitServidorApi(backendApi, claveDispositivo) }
     val sincronizador: Sincronizador by lazy {
         Sincronizador(servidorApi, progresoRepository, comentarioRepository, puntoInteresRepository, usuarioRepository, generadorNotificaciones)
     }

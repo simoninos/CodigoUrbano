@@ -1,6 +1,7 @@
 package com.cookingplastic.triskeledu.data.nivel
 
 import com.cookingplastic.triskeledu.data.model.ProgresoPunto
+import com.cookingplastic.triskeledu.data.model.DatosEscaneo
 import com.cookingplastic.triskeledu.data.model.Ubicacion
 import com.cookingplastic.triskeledu.data.model.estaCompletado
 import com.cookingplastic.triskeledu.domain.repository.ProgresoRepository
@@ -17,8 +18,8 @@ class ProgresoConNivel(
     private val alCompletarLugar: suspend (usuarioId: String, puntoId: String) -> Unit = { _, _ -> }
 ) : ProgresoRepository by progreso {
 
-    override suspend fun registrarEscaneo(usuarioId: String, puntoId: String, ubicacion: Ubicacion): ProgresoPunto {
-        val fila = progreso.registrarEscaneo(usuarioId, puntoId, ubicacion)
+    override suspend fun registrarEscaneo(usuarioId: String, puntoId: String, ubicacion: Ubicacion, datos: DatosEscaneo): ProgresoPunto {
+        val fila = progreso.registrarEscaneo(usuarioId, puntoId, ubicacion, datos)
         revisarNivel(usuarioId)
         return fila
     }

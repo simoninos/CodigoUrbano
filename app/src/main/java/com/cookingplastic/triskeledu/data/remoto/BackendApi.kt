@@ -21,6 +21,10 @@ interface BackendApi {
     @POST("api/auth/login")
     suspend fun iniciarSesion(@Body cuerpo: LoginDto): SesionDto
 
+    //SEG-05: desafío de un solo uso para crear la clave del teléfono
+    @GET("api/auth/desafio")
+    suspend fun desafio(): DesafioDto
+
     @GET("api/solicitudes")
     suspend fun solicitudesPendientes(): List<UsuarioDto>
 

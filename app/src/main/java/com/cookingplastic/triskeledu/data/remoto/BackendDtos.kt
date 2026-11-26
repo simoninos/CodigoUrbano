@@ -29,7 +29,15 @@ data class RegistroDto(
     val quiereSerCreador: Boolean
 )
 
-data class LoginDto(val correo: String, val clave: String)
+//SEG-05: desafio y atestacion son para Key Attestation; null si el teléfono no pudo crear la clave
+data class LoginDto(
+    val correo: String,
+    val clave: String,
+    val desafio: String? = null,
+    val atestacion: List<String>? = null
+)
+
+data class DesafioDto(val desafio: String, val expiraEn: Long)
 
 //token es null si la cuenta está en revisión (RN-29)
 data class SesionDto(
@@ -184,10 +192,16 @@ data class EscaneoDto(
     val altitud: Double,
     val capsulaVistaEn: Long?,
     val selfieEn: Long?,
-    val selfieUri: String?
+    val selfieUri: String?,
+    //SEG-01, SEG-03 y SEG-05: lo revisa ms-progreso
+    val simulada: Boolean = false,
+    val precision: Double? = null,
+    val codigoQr: String? = null,
+    val firma: String? = null
 ) {
     companion object {
-        fun desde(p: ProgresoPunto) = EscaneoDto(
+        //firma: la de la clave del teléfono sobre textoFirmado(p), o null si no hay clave
+        fun desde(p: ProgresoPunto, firma: String? = null) = EscaneoDto(
             id = p.id,
             puntoId = p.puntoId,
             escaneadoEn = p.escaneadoEn,
@@ -196,7 +210,11 @@ data class EscaneoDto(
             altitud = p.escaneoUbicacion.altitud,
             capsulaVistaEn = p.capsulaVistaEn,
             selfieEn = p.selfieEn,
-            selfieUri = p.selfieUri
+            selfieUri = p.selfieUri,
+            simulada = p.escaneoSimulado,
+            precision = p.escaneoPrecision,
+            codigoQr = p.codigoQrLeido,
+            firma = firma
         )
     }
 }

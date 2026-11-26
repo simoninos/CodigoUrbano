@@ -3,6 +3,7 @@ package com.cookingplastic.triskeledu.data.repository
 import com.cookingplastic.triskeledu.data.model.PUNTOS_CAPSULA
 import com.cookingplastic.triskeledu.data.model.PUNTOS_SELFIE
 import com.cookingplastic.triskeledu.data.model.ProgresoPunto
+import com.cookingplastic.triskeledu.data.model.DatosEscaneo
 import com.cookingplastic.triskeledu.data.model.Ubicacion
 import com.cookingplastic.triskeledu.data.model.puntosTotales
 import kotlinx.coroutines.flow.Flow
@@ -24,7 +25,7 @@ class FakeProgresoRepository(filasIniciales: List<ProgresoPunto> = emptyList()) 
     override fun progresoDePunto(usuarioId: String, puntoId: String): Flow<ProgresoPunto?> =
         filas.map { lista -> lista.find { it.usuarioId == usuarioId && it.puntoId == puntoId } }
 
-    override suspend fun registrarEscaneo(usuarioId: String, puntoId: String, ubicacion: Ubicacion): ProgresoPunto {
+    override suspend fun registrarEscaneo(usuarioId: String, puntoId: String, ubicacion: Ubicacion, datos: DatosEscaneo): ProgresoPunto {
         //si ya lo escaneó antes, no se crea otra fila ni se suman otros 10 puntos
         val existente = filas.value.find { it.usuarioId == usuarioId && it.puntoId == puntoId }
         if (existente != null) return existente
@@ -33,7 +34,10 @@ class FakeProgresoRepository(filasIniciales: List<ProgresoPunto> = emptyList()) 
         val nueva = ProgresoPunto(
             usuarioId = usuarioId,
             puntoId = puntoId,
-            escaneoUbicacion = ubicacion
+            escaneoUbicacion = ubicacion,
+            escaneoSimulado = datos.simulada,
+            escaneoPrecision = datos.precision,
+            codigoQrLeido = datos.codigoQr
         )
         filas.update { it + nueva }
         return nueva
