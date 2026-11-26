@@ -37,8 +37,8 @@ Cada tema tiene versión Día y Noche. Si los puntos bajan (por ejemplo, cuando 
 - **Recuperar contraseña** con un código de 6 dígitos que llega como notificación local (vence a los 15 minutos y sirve una vez).
 - **Mapa** (OpenStreetMap) con la ubicación del usuario, el círculo de 100 m y un marcador por estado (bloqueado, desbloqueado, completado). Un lugar sin escanear a 100 m o menos **late con un halo** para indicar que se puede escanear. La tarjeta del usuario muestra su nivel y abre **Mi nivel** (niveles, temas y cuánto falta).
 - Sin permiso de ubicación o con el GPS apagado, el mapa y Escanear muestran **"Activa la ubicación para encontrar lugares"** con un botón que pide el permiso, abre los ajustes de la app (si se negó dos veces) o los del GPS.
-- **Escanear QR**: desbloquea solo a 100 m o menos (+10 y la celebración "Lugar encontrado"). Un código ajeno muestra "Este código no es de Aprendo IA"; un lugar inactivo o eliminado, "Este lugar no está disponible"; uno ya escaneado, "Ya descubriste este lugar" y abre su detalle sin sumar.
-- **Detalle del lugar**: esfera de avance, distancia, comentarios y las tres actividades:
+- **Escanear QR**: desbloquea solo a 100 m o menos (+10 y la celebración "Lugar encontrado"). Un código ajeno muestra "Este código no es de Aprendo IA"; un lugar inactivo o eliminado, "Este lugar no está disponible"; uno ya escaneado, "Ya descubriste este lugar" y abre su detalle sin sumar. Con una app de ubicación falsa no se escanea: "Tu ubicación parece simulada. Desactiva las apps de ubicación falsa para escanear".
+- **Detalle del lugar**: esfera de avance, distancia, comentarios y las tres actividades. La fila con el botón de volver queda fija arriba al bajar; "Escanea el QR del lugar" abre Escanear; mientras se ve el detalle no se marca ninguna pestaña de la barra inferior, y al tocar una pestaña se sale del detalle:
   - **Cápsula de video** (Media3): la primera vez va bloqueada (no se puede adelantar) y al llegar al final suma 50; después queda libre. Seis lugares tienen su video en Drive (necesitan internet); los demás, mientras no tengan enlace, se marcan vistas al tocarlas.
   - **Selfie** con la cámara frontal (+20).
 - **Mis descubrimientos**: la tarjeta "Mis puntos" con **Ver ranking ›**, "Lugares escaneados X de Y" y los cuadros QR, Cápsulas y Selfie. Cada vista lista lo desbloqueado y lo que falta por descubrir, que se puede abrir en el mapa.
@@ -54,14 +54,23 @@ Cada tema tiene versión Día y Noche. Si los puntos bajan (por ejemplo, cuando 
 
 ### Administrador
 - **Mis lugares (P07-Admin)**: lista con filtros por estado, interruptor para activar o desactivar y eliminación (solo si nadie lo ha escaneado).
-- **Crear y editar puntos** con foto, ubicación elegida en el mapa, cápsula asociada y QR generado al guardar (`TRISKEL-PI-NNN`), que se puede descargar.
+- **Crear y editar puntos** con foto, ubicación elegida en el mapa, cápsula asociada y QR generado al guardar, que se puede descargar. El QR que se imprime lleva la **firma del servidor** (`TRISKEL-PI-001.xxxxxxxxxxxxxxxx`): solo el administrador y el creador del punto lo reciben firmado, y sin la firma correcta el servidor no acepta el escaneo.
 - **Solicitudes de creador**: aprobar o rechazar desde la campana.
 - En el mapa ve también los puntos Sin cápsula e Inactivos.
 
 ### Sincronización con el servidor
-- Los escaneos y comentarios se guardan primero en el teléfono (Room) con `sincronizado = false`.
-- Al volver la red, **WorkManager** envía lo pendiente de la cuenta conectada a **ms-progreso**, que revalida cada escaneo (100 m o menos del lugar, sin duplicado y de un lugar activo) y cada comentario. Lo aceptado pasa a `sincronizado = true`.
+- **Iniciar sesión, comentar y editar** (puntos y cápsulas del administrador y del creador) **necesitan el servidor**. Sin conexión se muestra el mensaje y no se guarda nada en el teléfono. Una sesión que ya estaba abierta se mantiene.
+- Cuando se pierde la conexión aparece arriba la barra **"Sin conexión"**; la app revisa el servidor cada 10 segundos y la quita cuando vuelve.
+- Los **escaneos** sí se pueden hacer sin conexión: se guardan en el teléfono (Room) con `sincronizado = false`.
+- Al volver la red, **WorkManager** envía lo pendiente de la cuenta conectada a **ms-progreso**, que revalida cada escaneo: que el lugar exista y esté activo, que no esté repetido, que la ubicación no sea simulada, los 100 m, que no haya un salto imposible desde el escaneo anterior (más de 150 km/h), el QR firmado y la firma de la app. Lo aceptado pasa a `sincronizado = true`.
 - Si un escaneo no pasa, se quitan los puntos de ese lugar, llega la notificación **"No pudimos validar tu visita a [lugar]"** y el resto se mantiene.
+
+### Seguridad de los escaneos
+Los puntos se ganan en el teléfono, pero el que decide es el servidor. Cada escaneo lleva:
+- **GPS simulado** (SEG-01): Android marca la ubicación que viene de una app de ubicación falsa (`Location.isMock`). La app no escanea con ella, y el servidor rechaza el escaneo con `UBICACION_SIMULADA` si llega marcado.
+- **Reglas del servidor** (SEG-02): dos escaneos demasiado lejos en muy poco tiempo se rechazan (`VELOCIDAD_IMPOSIBLE`). La precisión siempre igual, la altitud en cero o muchos escaneos seguidos no se rechazan, pero el escaneo queda marcado como sospechoso para el administrador (`GET /api/escaneos/sospechosos`).
+- **QR firmado** (SEG-03): el código impreso trae una firma HMAC que solo conoce el servidor. Inventar `TRISKEL-PI-005` sin haber estado en el lugar ya no sirve (`QR_INVALIDO`).
+- **App verificada** (SEG-05): al iniciar sesión, la app crea una clave en el chip de seguridad del teléfono (**Key Attestation**) atada a un desafío del servidor. ms-usuarios revisa que la cadena termine en una raíz de Google, que la clave sea de esta app firmada con el certificado de la entrega y que el teléfono tenga el arranque verificado. Si pasa, la clave va en el token y la app firma con ella cada escaneo. Con `INTEGRIDAD_MODO=estricto` un escaneo sin esa firma se rechaza (`APP_NO_VERIFICADA`); con `registrar` (el valor de la demo, que también sirve en el emulador) se acepta y queda como sospechoso.
 
 ### API externa: Wikipedia
 - El detalle de cada lugar muestra un **resumen de Wikipedia** en español (Retrofit contra la API REST de Wikipedia). Si no hay internet o el artículo no existe, la sección no aparece y el resto del detalle funciona igual.
@@ -77,12 +86,13 @@ El backend está en su propio repositorio: [CodigoUrbano-backend](https://github
 | `ms-contenido` | 8082 | `triskeledu_contenido` | Puntos de interés y cápsulas (CRUD del administrador y del creador) |
 | `ms-progreso` | 8083 | `triskeledu_progreso` | Escaneos, comentarios y ranking |
 
-**Endpoints que usa la app** (todos con `Authorization: Bearer <token>`, salvo registro e inicio de sesión):
+**Endpoints que usa la app** (todos con `Authorization: Bearer <token>`, salvo registro, desafío e inicio de sesión):
 
 | Método y ruta | Uso en la app |
 | --- | --- |
 | `POST /api/auth/registro` | Registro (P02) |
-| `POST /api/auth/login` | Inicio de sesión (P01) |
+| `GET /api/auth/desafio` | Desafío para la clave del teléfono (Key Attestation), antes de iniciar sesión |
+| `POST /api/auth/login` | Inicio de sesión (P01), con el desafío y la cadena de certificados |
 | `GET /api/solicitudes` · `POST /api/solicitudes/{id}/aprobar` · `POST /api/solicitudes/{id}/rechazar` | Solicitudes de creador (P22) |
 | `GET /api/puntos` · `POST /api/puntos` · `PUT /api/puntos/{id}` · `PATCH /api/puntos/{id}/activo` · `DELETE /api/puntos/{id}` | CRUD de puntos del administrador |
 | `PUT /api/puntos/{id}/capsula` | El creador asocia su cápsula a un punto |
@@ -93,7 +103,8 @@ El backend está en su propio repositorio: [CodigoUrbano-backend](https://github
 Cómo se integra (`data/remoto/`):
 - `BackendApi` es la interfaz de Retrofit y `ClienteBackend` agrega el token a cada petición. Un 401 con sesión cierra la sesión (EXC-07); sin conexión se muestra "No hay conexión con el servidor. Intenta más tarde" (EXC-06).
 - Los repositorios `…ConBackend` envuelven a los de Room: **escriben primero en el servidor** y, si acepta, guardan en Room lo que devolvió. Si el servidor rechaza (por ejemplo, eliminar un lugar que ya tiene escaneos), se muestra su mensaje y el teléfono no cambia.
-- Al iniciar sesión se traen del servidor los puntos y cápsulas actuales. Sin servidor, el inicio de sesión usa la copia del teléfono y el ranking se calcula con Room.
+- Al iniciar sesión se traen del servidor los puntos y cápsulas actuales. Sin servidor no se inicia sesión ("Necesitas conexión para iniciar sesión"); con la sesión ya abierta, el ranking se calcula con Room.
+- `EstadoServidor` sabe si el servidor responde: lo informa cada petición y lo revisa cada 10 segundos. Con eso se muestra la barra "Sin conexión" y se bloquea editar.
 
 ## Usuarios de prueba
 
@@ -170,11 +181,12 @@ En el repositorio del backend, `demo\iniciar-todo.ps1` levanta los cinco contene
 
 **3. Pruebas unitarias**
 
-`./gradlew test` (en Windows, `gradlew test`). Son **226 pruebas** con JUnit, MockK y MockWebServer. `IntegracionBackendTest` prueba la app contra el backend real y **se salta sola** si el gateway no está encendido. El informe de cobertura de la lógica (sin pantallas) se genera con `gradlew coberturaLogica`, en `app/build/reports/jacoco/coberturaLogica/html/index.html`. Hoy cubre el **86,1 % de las líneas**.
+`./gradlew test` (en Windows, `gradlew test`). Son **245 pruebas** con JUnit, MockK y MockWebServer. `IntegracionBackendTest` prueba la app contra el backend real y **se salta sola** si el gateway no está encendido. El informe de cobertura de la lógica (sin pantallas) se genera con `gradlew coberturaLogica`, en `app/build/reports/jacoco/coberturaLogica/html/index.html`. Hoy cubre el **86,1 % de las líneas**.
 
 **En el emulador**
 - Fija la ubicación en Santiago: *Extended Controls (⋯) → Location*, por ejemplo en La Moneda (-33.44294, -70.65388). A menos de 100 m de un lugar sin escanear, su marcador late.
-- Para probar la sincronización: activa el modo avión, escanea un lugar y desactiva el modo avión; WorkManager lo envía solo.
+- Para probar la sincronización: activa el modo avión, escanea un lugar y desactiva el modo avión; WorkManager lo envía solo. Arriba se ve la barra "Sin conexión" mientras no hay red.
+- Los QR impresos con una versión anterior no traen firma: hay que **volver a descargarlos** desde la edición del punto (administrador).
 - Para probar el rechazo (EXC-08): entra con `explorador_demo` con internet.
 
 ## APK release firmado (RNF-08)
@@ -257,7 +269,8 @@ app/src/main/java/com/cookingplastic/triskeledu/
 ```
 
 ### Persistencia local
-- **Room (SQLite)**, versión 3, guarda usuarios, sesión, preferencias, puntos, cápsulas, progreso, comentarios, notificaciones y códigos de recuperación.
+- **Room (SQLite)**, versión 4, guarda usuarios, sesión, preferencias, puntos, cápsulas, progreso, comentarios, notificaciones y códigos de recuperación.
+- De la versión 3 a la 4 se agregan tres columnas al progreso (ubicación simulada, precisión y QR leído) con una **migración** (`MIGRACION_3_4`): al actualizar la app no se pierden la sesión ni los escaneos que esperan sincronizarse.
 - La primera vez que se abre la app, `CargaInicial` llena la base con `DatosPrueba`.
 - `AppContainer` crea la base y los repositorios una sola vez; cada ViewModel los recibe con su fábrica.
 
