@@ -168,13 +168,7 @@ fun AppNavHost(
                 notificacionesSinLeer = notificacionesSinLeer,
                 alVerCapsula = { capsulaId, puntoId -> navController.navigate(Rutas.video(capsulaId, puntoId)) },
                 //ver en mapa: cambia a la pestaña Mapa igual que la barra inferior; el punto lo centra PedidoMapa
-                alIrAlMapa = {
-                    navController.navigate(Destination.MAPA.route) {
-                        popUpTo(Destination.MAPA.route) { saveState = true }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                },
+                alIrAlMapa = { navController.irAPestana(Destination.MAPA.route) },
                 //LUG-06: "Ver ranking ›" abre P20
                 alVerRanking = { navController.navigate(Rutas.RANKING) }
             )
@@ -200,7 +194,11 @@ fun AppNavHost(
                 alVolver = { navController.popBackStack() },
                 alAbrirConfiguracion = { navController.abrirConfiguracion() },
                 alVerCapsula = { capsulaId, puntoId -> navController.navigate(Rutas.video(capsulaId, puntoId)) },
-                alTomarSelfie = { puntoId -> navController.navigate(Rutas.selfie(puntoId)) }
+                alTomarSelfie = { puntoId -> navController.navigate(Rutas.selfie(puntoId)) },
+                //"Escanea el QR del lugar" abre la pestaña Escanear; el administrador no la tiene (MAP-01)
+                alEscanear = if (rol == RolUsuario.ADMINISTRADOR) null else {
+                    { navController.irAPestana(Destination.ESCANEAR.route) }
+                }
             )
         }
         composable(

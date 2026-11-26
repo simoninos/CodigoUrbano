@@ -35,16 +35,9 @@ fun AppScaffold(
     val notificacionesSinLeer by rolViewModel.notificacionesSinLeer.collectAsStateWithLifecycle()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val rutaActual = navBackStackEntry?.destination?.route
-    // El Detalle mantiene la barra inferior con la pestaña desde donde se abrió seleccionada
-    // (Mapa, Escanear o Mis lugares); la pestaña es la pantalla anterior en el historial
-    val enDetalle = rutaActual == Rutas.DETALLE
-    val pestanaDelDetalle = if (enDetalle) {
-        Destination.entries.find { it.route == navController.previousBackStackEntry?.destination?.route }
-            ?: Destination.MAPA
-    } else {
-        null
-    }
-    val mostrarBarra = Destination.esPestana(rutaActual) || enDetalle
+    // El Detalle mantiene la barra inferior, pero sin ninguna pestaña marcada (pestanaMarcada)
+    val mostrarBarra = Destination.esPestana(rutaActual) || rutaActual == Rutas.DETALLE
+    val marcada = pestanaMarcada(rutaActual)
 
     Scaffold(
         modifier = modifier,
@@ -58,18 +51,10 @@ fun AppScaffold(
                 NavigationBar {
                     // MAP-01: el administrador no tiene la pestaña Escanear
                     Destination.pestanasPara(rol).forEach { destino ->
-                        val seleccionada = rutaActual == destino.route || destino == pestanaDelDetalle
+                        val seleccionada = destino == marcada
                         NavigationBarItem(
                             selected = seleccionada,
-                            onClick = {
-                                navController.navigate(destino.route) {
-                                    // Vuelve al Mapa, base del historial después del login, guardando
-                                    // el estado de cada pestaña para no apilar pantallas al cambiar
-                                    popUpTo(Destination.MAPA.route) { saveState = true }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
-                            },
+                            onClick = { navController.irAPestana(destino.route) },
                             icon = {
                                 Icon(
                                     imageVector = if (seleccionada) destino.iconSelected else destino.icon,
