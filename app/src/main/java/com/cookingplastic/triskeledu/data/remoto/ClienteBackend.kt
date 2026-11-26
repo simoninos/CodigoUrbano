@@ -21,7 +21,7 @@ class ErrorBackend(
 ) : Exception(message)
 
 //EXC-06: no hubo respuesta (servidor apagado, sin red o tiempo agotado)
-class SinServidor(causa: Throwable) : IOException("No hay conexión con el servidor. Intenta más tarde", causa)
+class SinServidor(causa: Throwable, mensaje: String = "No hay conexión con el servidor. Intenta más tarde") : IOException(mensaje, causa)
 
 //Mensaje para mostrar al usuario: el del servidor si lo hay, o el que da la pantalla
 fun Throwable.mensajeParaUsuario(porDefecto: String): String = when (this) {
@@ -82,9 +82,17 @@ object ClienteBackend {
     private const val SEGUNDOS = 10L
 
     //servidor: la dirección guardada en la app (DireccionServidor); si no se pasa, se usa urlBase tal cual
-    fun crear(urlBase: String, token: () -> String?, alVencer: () -> Unit, servidor: (() -> HttpUrl)? = null): BackendApi {
+    //estado: se entera de si el servidor respondió o no en cada llamada (EstadoServidor)
+    fun crear(
+        urlBase: String,
+        token: () -> String?,
+        alVencer: () -> Unit,
+        servidor: (() -> HttpUrl)? = null,
+        estado: EstadoServidor? = null
+    ): BackendApi {
         val http = OkHttpClient.Builder()
             .apply { if (servidor != null) addInterceptor(InterceptorServidor(servidor)) }
+            .apply { if (estado != null) addInterceptor(InterceptorEstado(estado)) }
             .addInterceptor(InterceptorToken(token, alVencer))
             .connectTimeout(SEGUNDOS, TimeUnit.SECONDS)
             .readTimeout(SEGUNDOS, TimeUnit.SECONDS)

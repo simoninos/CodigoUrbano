@@ -378,7 +378,7 @@ fun AdminEditarContent(
         BotonEnviar(
             texto = if (estado.esEdicion) "Guardar punto" else "Crear punto",
             alPresionar = { onEvent(AdminEditarUiEvent.OnGuardar) },
-            atenuado = !estado.puedeGuardar,
+            atenuado = !estado.puedeGuardar || estado.sinConexion,
             cargando = estado.guardando,
             textoCargando = "Guardando..."
         )

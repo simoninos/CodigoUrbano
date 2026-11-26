@@ -7,12 +7,20 @@ object ReglaQr {
     private const val PREFIJO = "TRISKEL-PI-"
     private val patron = Regex("""^TRISKEL-PI-(\d+)$""")
 
+    //SEG-03: el QR impreso es "TRISKEL-PI-001.<firma>". La firma la pone y la revisa el servidor (la app no tiene la
+    //clave); aquí solo se separa el código del lugar para buscarlo
+    fun sinFirma(codigo: String): String {
+        val limpio = codigo.trim()
+        val punto = limpio.lastIndexOf('.')
+        return if (punto > 0) limpio.substring(0, punto) else limpio
+    }
+
     //EXC-04: true si el código tiene el formato del juego, aunque su punto ya no exista
-    fun esCodigoDelJuego(codigo: String): Boolean = patron.matches(codigo.trim())
+    fun esCodigoDelJuego(codigo: String): Boolean = patron.matches(sinFirma(codigo))
 
     //el siguiente número libre: uno más que el mayor que ya existe. Nunca repite uno usado (el índice es único)
     fun siguienteCodigo(existentes: Collection<String>): String {
-        val mayor = existentes.mapNotNull { patron.find(it)?.groupValues?.get(1)?.toIntOrNull() }.maxOrNull() ?: 0
+        val mayor = existentes.mapNotNull { patron.find(sinFirma(it))?.groupValues?.get(1)?.toIntOrNull() }.maxOrNull() ?: 0
         return PREFIJO + (mayor + 1).toString().padStart(3, '0')
     }
 }

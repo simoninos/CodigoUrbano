@@ -1,5 +1,6 @@
 package com.cookingplastic.triskeledu.domain.repository
 import com.cookingplastic.triskeledu.data.model.ProgresoPunto
+import com.cookingplastic.triskeledu.data.model.DatosEscaneo
 import com.cookingplastic.triskeledu.data.model.Ubicacion
 import kotlinx.coroutines.flow.Flow
 
@@ -13,7 +14,8 @@ interface ProgresoRepository {
     fun progresoDePunto(usuarioId: String, puntoId: String): Flow<ProgresoPunto?>
 
     //crea la fila con +10 puntos (RN-01). Si ya existía, la devuelve sin sumar de nuevo
-    suspend fun registrarEscaneo(usuarioId: String, puntoId: String, ubicacion: Ubicacion): ProgresoPunto
+    //datos (SEG-01 y SEG-03): si la ubicación era simulada, la precisión del GPS y el QR leído con su firma
+    suspend fun registrarEscaneo(usuarioId: String, puntoId: String, ubicacion: Ubicacion, datos: DatosEscaneo = DatosEscaneo()): ProgresoPunto
 
     //suma de los puntos de todos los lugares del usuario
     fun totalPuntos(usuarioId: String): Flow<Int>

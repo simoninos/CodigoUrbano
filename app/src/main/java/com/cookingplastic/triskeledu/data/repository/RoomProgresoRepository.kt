@@ -4,6 +4,7 @@ import com.cookingplastic.triskeledu.data.local.dao.ProgresoDao
 import com.cookingplastic.triskeledu.data.model.PUNTOS_CAPSULA
 import com.cookingplastic.triskeledu.data.model.PUNTOS_SELFIE
 import com.cookingplastic.triskeledu.data.model.ProgresoPunto
+import com.cookingplastic.triskeledu.data.model.DatosEscaneo
 import com.cookingplastic.triskeledu.data.model.Ubicacion
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -20,11 +21,14 @@ class RoomProgresoRepository(
     override fun progresoDePunto(usuarioId: String, puntoId: String): Flow<ProgresoPunto?> =
         dao.progresoDePunto(usuarioId, puntoId)
 
-    override suspend fun registrarEscaneo(usuarioId: String, puntoId: String, ubicacion: Ubicacion): ProgresoPunto {
+    override suspend fun registrarEscaneo(usuarioId: String, puntoId: String, ubicacion: Ubicacion, datos: DatosEscaneo): ProgresoPunto {
         //si ya lo escaneó antes, no se crea otra fila ni se suman otros 10 puntos
         dao.buscar(usuarioId, puntoId)?.let { return it }
 
-        val nueva = ProgresoPunto(usuarioId = usuarioId, puntoId = puntoId, escaneoUbicacion = ubicacion)
+        val nueva = ProgresoPunto(
+            usuarioId = usuarioId, puntoId = puntoId, escaneoUbicacion = ubicacion,
+            escaneoSimulado = datos.simulada, escaneoPrecision = datos.precision, codigoQrLeido = datos.codigoQr
+        )
         dao.insertar(nueva)
         return nueva
     }

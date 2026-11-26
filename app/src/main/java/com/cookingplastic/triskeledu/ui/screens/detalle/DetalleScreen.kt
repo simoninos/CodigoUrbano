@@ -94,6 +94,8 @@ fun DetalleScreen(
     alVerCapsula: (capsulaId: String, puntoId: String) -> Unit,
     // P13 (ACT-03): abre la cámara para la selfie de este punto
     alTomarSelfie: (puntoId: String) -> Unit = {},
+    // "Escanea el QR del lugar" abre la pestaña Escanear; null para el administrador, que no escanea
+    alEscanear: (() -> Unit)? = null,
     viewModel: DetalleViewModel = viewModel(factory = DetalleViewModel.Factory)
 ) {
     val estado by viewModel.estado.collectAsStateWithLifecycle()
@@ -120,7 +122,8 @@ fun DetalleScreen(
         estado = estado,
         onEvent = viewModel::onEvent,
         alVolver = alVolver,
-        alAbrirConfiguracion = alAbrirConfiguracion
+        alAbrirConfiguracion = alAbrirConfiguracion,
+        alEscanear = alEscanear
     )
 }
 
@@ -130,7 +133,8 @@ fun DetalleContent(
     onEvent: (DetalleUiEvent) -> Unit,
     alVolver: () -> Unit,
     alAbrirConfiguracion: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    alEscanear: (() -> Unit)? = null
 ) {
     val snackbar = remember { SnackbarHostState() }
     val abridorEnlaces = LocalUriHandler.current
@@ -157,244 +161,251 @@ fun DetalleContent(
             .background(MaterialTheme.colorScheme.background)
     ) {
         val punto = estado.punto
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(20.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
-            // D-02: volver a la izquierda y engranaje a la derecha
-            item {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    BotonCabecera(Icons.AutoMirrored.Filled.ArrowBack, "Volver al mapa", alVolver)
-                    BotonCabecera(Icons.Filled.Settings, "Abrir configuración", alAbrirConfiguracion)
-                }
+        Column(modifier = Modifier.fillMaxSize()) {
+            // D-02: volver a la izquierda y engranaje a la derecha. Quedan fijos arriba, fuera de la lista,
+            // para volver sin tener que subir hasta el principio
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.background)
+                    .padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                BotonCabecera(Icons.AutoMirrored.Filled.ArrowBack, "Volver al mapa", alVolver)
+                BotonCabecera(Icons.Filled.Settings, "Abrir configuración", alAbrirConfiguracion)
             }
-
-            when {
-                estado.cargando -> item {
-                    Box(Modifier.fillMaxWidth().padding(48.dp), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
-                    }
-                }
-
-                // D-01
-                punto == null -> item {
-                    Column(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 48.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        Text("Este lugar ya no existe", style = MaterialTheme.typography.titleMedium)
-                        Button(onClick = alVolver, shape = RoundedCornerShape(16.dp)) { Text("Volver al mapa") }
-                    }
-                }
-
-                else -> {
-                    // D-04: imagen con esquinas redondeadas
-                    item {
-                        ImagenPunto(
-                            imagenUri = punto.imagenUri,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(180.dp)
-                                .clip(RoundedCornerShape(20.dp))
-                        )
-                    }
-
-                    // D-05: nombre, tipo y distancia en vivo; D-15: esfera de avance a la derecha
-                    item {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            Column(
-                                modifier = Modifier.weight(1f),
-                                verticalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                Text(
-                                    text = punto.nombre,
-                                    style = MaterialTheme.typography.headlineMedium,
-                                    color = MaterialTheme.colorScheme.onBackground
-                                )
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    Text(
-                                        text = punto.tipo.descripcion,
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.onSurface,
-                                        maxLines = 1,
-                                        modifier = Modifier
-                                            .weight(1f, fill = false)
-                                            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
-                                            .padding(horizontal = 10.dp, vertical = 2.dp)
-                                    )
-                                    Text(
-                                        text = textoDistancia(estado.distanciaMetros),
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        maxLines = 1
-                                    )
-                                }
-                            }
-                            EsferaAgua(
-                                puntos = estado.puntosLugar,
-                                maximo = estado.puntosMaximos,
-                                modifier = Modifier.size(64.dp)
-                            )
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth().weight(1f),
+                contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 6.dp, bottom = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                when {
+                    estado.cargando -> item {
+                        Box(Modifier.fillMaxWidth().padding(48.dp), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator()
                         }
                     }
 
-                    // D-06 y D-07
-                    if (!punto.descripcion.isNullOrBlank() || punto.descubreMasUrl != null) {
+                    // D-01
+                    punto == null -> item {
+                        Column(
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 48.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            Text("Este lugar ya no existe", style = MaterialTheme.typography.titleMedium)
+                            Button(onClick = alVolver, shape = RoundedCornerShape(16.dp)) { Text("Volver al mapa") }
+                        }
+                    }
+
+                    else -> {
+                        // D-04: imagen con esquinas redondeadas
                         item {
-                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                if (!punto.descripcion.isNullOrBlank()) {
-                                    Text("Descripción", style = MaterialTheme.typography.titleSmall)
+                            ImagenPunto(
+                                imagenUri = punto.imagenUri,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(180.dp)
+                                    .clip(RoundedCornerShape(20.dp))
+                            )
+                        }
+
+                        // D-05: nombre, tipo y distancia en vivo; D-15: esfera de avance a la derecha
+                        item {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Column(
+                                    modifier = Modifier.weight(1f),
+                                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
                                     Text(
-                                        text = punto.descripcion,
-                                        style = MaterialTheme.typography.bodyMedium,
+                                        text = punto.nombre,
+                                        style = MaterialTheme.typography.headlineMedium,
                                         color = MaterialTheme.colorScheme.onBackground
                                     )
-                                }
-                                punto.descubreMasUrl?.let { url ->
-                                    TextButton(
-                                        onClick = {
-                                            try {
-                                                abridorEnlaces.openUri(url)
-                                            } catch (e: Exception) {
-                                                onEvent(DetalleUiEvent.OnEnlaceNoDisponible)
-                                            }
-                                        },
-                                        contentPadding = PaddingValues(0.dp)
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
-                                        Text("Descubre más", style = MaterialTheme.typography.labelLarge)
-                                        Spacer(Modifier.width(6.dp))
-                                        Icon(
-                                            Icons.AutoMirrored.Filled.OpenInNew,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(18.dp)
+                                        Text(
+                                            text = punto.tipo.descripcion,
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                            maxLines = 1,
+                                            modifier = Modifier
+                                                .weight(1f, fill = false)
+                                                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
+                                                .padding(horizontal = 10.dp, vertical = 2.dp)
                                         )
+                                        Text(
+                                            text = textoDistancia(estado.distanciaMetros),
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            maxLines = 1
+                                        )
+                                    }
+                                }
+                                EsferaAgua(
+                                    puntos = estado.puntosLugar,
+                                    maximo = estado.puntosMaximos,
+                                    modifier = Modifier.size(64.dp)
+                                )
+                            }
+                        }
+
+                        // D-06 y D-07
+                        if (!punto.descripcion.isNullOrBlank() || punto.descubreMasUrl != null) {
+                            item {
+                                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    if (!punto.descripcion.isNullOrBlank()) {
+                                        Text("Descripción", style = MaterialTheme.typography.titleSmall)
+                                        Text(
+                                            text = punto.descripcion,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onBackground
+                                        )
+                                    }
+                                    punto.descubreMasUrl?.let { url ->
+                                        TextButton(
+                                            onClick = {
+                                                try {
+                                                    abridorEnlaces.openUri(url)
+                                                } catch (e: Exception) {
+                                                    onEvent(DetalleUiEvent.OnEnlaceNoDisponible)
+                                                }
+                                            },
+                                            contentPadding = PaddingValues(0.dp)
+                                        ) {
+                                            Text("Descubre más", style = MaterialTheme.typography.labelLarge)
+                                            Spacer(Modifier.width(6.dp))
+                                            Icon(
+                                                Icons.AutoMirrored.Filled.OpenInNew,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
 
-                    // API externa: resumen del artículo de Wikipedia del lugar
-                    if (estado.cargandoWikipedia || estado.wikipedia != null || estado.wikipediaNoDisponible) {
+                        // API externa: resumen del artículo de Wikipedia del lugar
+                        if (estado.cargandoWikipedia || estado.wikipedia != null || estado.wikipediaNoDisponible) {
+                            item {
+                                ResumenWikipedia(
+                                    resumen = estado.wikipedia,
+                                    cargando = estado.cargandoWikipedia,
+                                    noDisponible = estado.wikipediaNoDisponible
+                                )
+                            }
+                        }
+
+                        // D-08 y D-09: actividades
                         item {
-                            ResumenWikipedia(
-                                resumen = estado.wikipedia,
-                                cargando = estado.cargandoWikipedia,
-                                noDisponible = estado.wikipediaNoDisponible
-                            )
-                        }
-                    }
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text("Actividades", style = MaterialTheme.typography.titleSmall)
 
-                    // D-08 y D-09: actividades
-                    item {
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text("Actividades", style = MaterialTheme.typography.titleSmall)
-
-                            if (estado.desbloqueado) {
+                                if (estado.desbloqueado) {
+                                    Actividad(
+                                        icono = Icons.Filled.Check,
+                                        fondoIcono = MaterialTheme.colorScheme.primary,
+                                        colorIcono = MaterialTheme.colorScheme.onPrimary,
+                                        titulo = "QR escaneado",
+                                        detalle = "+$PUNTOS_ESCANEO pts · Completado",
+                                        fondo = MaterialTheme.colorScheme.primaryContainer,
+                                        borde = null
+                                    )
+                                } else {
+                                    Actividad(
+                                        icono = Icons.Filled.QrCodeScanner,
+                                        titulo = "Escanea el QR del lugar",
+                                        detalle = "+$PUNTOS_ESCANEO pts · Pendiente",
+                                        alPresionar = alEscanear
+                                    )
+                                }
+                                if (estado.capsulaVista) {
+                                    Actividad(
+                                        icono = Icons.Filled.Check,
+                                        fondoIcono = MaterialTheme.colorScheme.primary,
+                                        colorIcono = MaterialTheme.colorScheme.onPrimary,
+                                        titulo = "Cápsula vista",
+                                        detalle = listOfNotNull(estado.capsula?.titulo, "+$PUNTOS_CAPSULA pts · Completado").joinToString(" · "),
+                                        fondo = MaterialTheme.colorScheme.primaryContainer,
+                                        borde = null,
+                                        // ACT-06: se puede ver de nuevo, ya con la barra para adelantar
+                                        alPresionar = { onEvent(DetalleUiEvent.OnVerVideo) }
+                                    )
+                                } else {
+                                    Actividad(
+                                        icono = Icons.Filled.PlayArrow,
+                                        fondoIcono = MaterialTheme.colorScheme.secondary,
+                                        colorIcono = MaterialTheme.colorScheme.onSecondary,
+                                        // D-21: título y duración de la cápsula del punto
+                                        titulo = estado.capsula?.titulo ?: "Mira la cápsula sobre IA",
+                                        detalle = listOfNotNull(
+                                            "+$PUNTOS_CAPSULA pts",
+                                            estado.capsula?.duracionSegundos?.let { textoDuracion(it) },
+                                            "Hay que verlo completo"
+                                        ).joinToString(" · "),
+                                        borde = MaterialTheme.colorScheme.primary,
+                                        alPresionar = { onEvent(DetalleUiEvent.OnVerVideo) }
+                                    )
+                                }
+                                //ACT-03: hecha, se ve igual que la cápsula vista
+                                if (estado.selfieTomada) {
+                                    Actividad(
+                                        icono = Icons.Filled.Check,
+                                        fondoIcono = MaterialTheme.colorScheme.primary,
+                                        colorIcono = MaterialTheme.colorScheme.onPrimary,
+                                        titulo = "Selfie subida",
+                                        detalle = "+$PUNTOS_SELFIE pts · Completado",
+                                        fondo = MaterialTheme.colorScheme.primaryContainer,
+                                        borde = null,
+                                        alPresionar = { onEvent(DetalleUiEvent.OnTomarSelfie) }
+                                    )
+                                } else {
+                                    Actividad(
+                                        icono = Icons.Filled.PhotoCamera,
+                                        titulo = "Sube tu selfie",
+                                        detalle = "+$PUNTOS_SELFIE pts · Evidencia de tu visita",
+                                        alPresionar = { onEvent(DetalleUiEvent.OnTomarSelfie) }
+                                    )
+                                }
                                 Actividad(
-                                    icono = Icons.Filled.Check,
-                                    fondoIcono = MaterialTheme.colorScheme.primary,
-                                    colorIcono = MaterialTheme.colorScheme.onPrimary,
-                                    titulo = "QR escaneado",
-                                    detalle = "+$PUNTOS_ESCANEO pts · Completado",
-                                    fondo = MaterialTheme.colorScheme.primaryContainer,
-                                    borde = null
+                                    icono = Icons.Filled.ChatBubbleOutline,
+                                    titulo = "Comenta algo interesante",
+                                    detalle = "Se guarda en tu teléfono",
+                                    alPresionar = { onEvent(DetalleUiEvent.OnComentar) }
                                 )
-                            } else {
-                                Actividad(
-                                    icono = Icons.Filled.QrCodeScanner,
-                                    titulo = "Escanea el QR del lugar",
-                                    detalle = "+$PUNTOS_ESCANEO pts · Pendiente"
-                                )
-                            }
-                            if (estado.capsulaVista) {
-                                Actividad(
-                                    icono = Icons.Filled.Check,
-                                    fondoIcono = MaterialTheme.colorScheme.primary,
-                                    colorIcono = MaterialTheme.colorScheme.onPrimary,
-                                    titulo = "Cápsula vista",
-                                    detalle = listOfNotNull(estado.capsula?.titulo, "+$PUNTOS_CAPSULA pts · Completado").joinToString(" · "),
-                                    fondo = MaterialTheme.colorScheme.primaryContainer,
-                                    borde = null,
-                                    // ACT-06: se puede ver de nuevo, ya con la barra para adelantar
-                                    alPresionar = { onEvent(DetalleUiEvent.OnVerVideo) }
-                                )
-                            } else {
-                                Actividad(
-                                    icono = Icons.Filled.PlayArrow,
-                                    fondoIcono = MaterialTheme.colorScheme.secondary,
-                                    colorIcono = MaterialTheme.colorScheme.onSecondary,
-                                    // D-21: título y duración de la cápsula del punto
-                                    titulo = estado.capsula?.titulo ?: "Mira la cápsula sobre IA",
-                                    detalle = listOfNotNull(
-                                        "+$PUNTOS_CAPSULA pts",
-                                        estado.capsula?.duracionSegundos?.let { textoDuracion(it) },
-                                        "Hay que verlo completo"
-                                    ).joinToString(" · "),
-                                    borde = MaterialTheme.colorScheme.primary,
-                                    alPresionar = { onEvent(DetalleUiEvent.OnVerVideo) }
-                                )
-                            }
-                            //ACT-03: hecha, se ve igual que la cápsula vista
-                            if (estado.selfieTomada) {
-                                Actividad(
-                                    icono = Icons.Filled.Check,
-                                    fondoIcono = MaterialTheme.colorScheme.primary,
-                                    colorIcono = MaterialTheme.colorScheme.onPrimary,
-                                    titulo = "Selfie subida",
-                                    detalle = "+$PUNTOS_SELFIE pts · Completado",
-                                    fondo = MaterialTheme.colorScheme.primaryContainer,
-                                    borde = null,
-                                    alPresionar = { onEvent(DetalleUiEvent.OnTomarSelfie) }
-                                )
-                            } else {
-                                Actividad(
-                                    icono = Icons.Filled.PhotoCamera,
-                                    titulo = "Sube tu selfie",
-                                    detalle = "+$PUNTOS_SELFIE pts · Evidencia de tu visita",
-                                    alPresionar = { onEvent(DetalleUiEvent.OnTomarSelfie) }
-                                )
-                            }
-                            Actividad(
-                                icono = Icons.Filled.ChatBubbleOutline,
-                                titulo = "Comenta algo interesante",
-                                detalle = "Se guarda en tu teléfono",
-                                alPresionar = { onEvent(DetalleUiEvent.OnComentar) }
-                            )
-                            // D-16: el formulario se despliega bajo la actividad
-                            AnimatedVisibility(
-                                visible = estado.formularioComentarioAbierto,
-                                enter = expandVertically() + fadeIn(),
-                                exit = shrinkVertically() + fadeOut()
-                            ) {
-                                FormularioComentario(estado = estado, onEvent = onEvent)
+                                // D-16: el formulario se despliega bajo la actividad
+                                AnimatedVisibility(
+                                    visible = estado.formularioComentarioAbierto,
+                                    enter = expandVertically() + fadeIn(),
+                                    exit = shrinkVertically() + fadeOut()
+                                ) {
+                                    FormularioComentario(estado = estado, onEvent = onEvent)
+                                }
                             }
                         }
-                    }
 
-                    // D-20: comentarios del lugar, del más nuevo al más antiguo
-                    if (estado.comentarios.isNotEmpty()) {
-                        item {
-                            Text(
-                                text = "Comentarios (${estado.comentarios.size})",
-                                style = MaterialTheme.typography.titleSmall
-                            )
-                        }
-                        // key permite que cada comentario nuevo entre con animación y no redibuje los demás
-                        items(estado.comentarios, key = { it.id }) { comentario ->
-                            TarjetaComentario(
-                                comentario = comentario,
-                                esMio = comentario.usuarioId == estado.usuarioId,
-                                modifier = Modifier.animateItem()
-                            )
+                        // D-20: comentarios del lugar, del más nuevo al más antiguo
+                        if (estado.comentarios.isNotEmpty()) {
+                            item {
+                                Text(
+                                    text = "Comentarios (${estado.comentarios.size})",
+                                    style = MaterialTheme.typography.titleSmall
+                                )
+                            }
+                            // key permite que cada comentario nuevo entre con animación y no redibuje los demás
+                            items(estado.comentarios, key = { it.id }) { comentario ->
+                                TarjetaComentario(
+                                    comentario = comentario,
+                                    esMio = comentario.usuarioId == estado.usuarioId,
+                                    modifier = Modifier.animateItem()
+                                )
+                            }
                         }
                     }
                 }

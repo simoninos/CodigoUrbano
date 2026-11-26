@@ -78,13 +78,18 @@ class RepositoriosConBackendTest {
     }
 
     @Test
-    fun login_sinServidor_entraConLaCopiaDelTelefono_EXC06() = runTest {
+    fun login_sinServidor_noEntraAunqueElTelefonoTengaLaCopia_EXC06() = runTest {
         coEvery { api.iniciarSesion(any()) } throws ConnectException("apagado")
-        val repo = UsuariosConBackend(FakeUsuarioRepository(), mockk(relaxed = true), api)
+        val dao = mockk<UsuarioDao>(relaxed = true)
+        val repo = UsuariosConBackend(FakeUsuarioRepository(), dao, api)
 
-        val usuario = repo.iniciarSesion(DatosPrueba.USUARIO_CAMILA.correo, DatosPrueba.CLAVE_DE_PRUEBA)
-
-        assertEquals(DatosPrueba.USUARIO_CAMILA.id, usuario?.id)
+        try {
+            repo.iniciarSesion(DatosPrueba.USUARIO_CAMILA.correo, DatosPrueba.CLAVE_DE_PRUEBA)
+            fail("sin servidor no debía entrar")
+        } catch (e: SinServidor) {
+            assertEquals("No hay conexión con el servidor. Necesitas conexión para iniciar sesión", e.message)
+        }
+        coVerify(exactly = 0) { dao.guardarSesion(any()) }
     }
 
     @Test

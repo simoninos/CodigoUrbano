@@ -29,6 +29,8 @@ data class AdminEditarUiState(
     //ADM-08: null en un punto nuevo; el QR se genera solo al guardarlo
     val codigoQr: String? = null,
     val activo: Boolean = false,
+    //EXC-06: el servidor no responde; el botón se atenúa y al tocarlo explica por qué no se guarda
+    val sinConexion: Boolean = false,
     //un error por cada campo que tiene regla en Validaciones
     val errorNombre: String? = null,
     val errorTipo: String? = null,

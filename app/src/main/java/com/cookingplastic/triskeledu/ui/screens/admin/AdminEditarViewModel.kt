@@ -1,5 +1,6 @@
 package com.cookingplastic.triskeledu.ui.screens.admin
 
+import com.cookingplastic.triskeledu.data.remoto.EstadoServidor
 import com.cookingplastic.triskeledu.data.remoto.mensajeParaUsuario
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -35,7 +36,9 @@ class AdminEditarViewModel(
     private val puntoRepository: PuntoInteresRepository,
     private val ubicacionRepository: UbicacionRepository,
     //null = punto nuevo; con un id = editar ese punto
-    puntoId: String? = null
+    puntoId: String? = null,
+    //EXC-06: si el servidor responde (EstadoServidor); sin conexión no se deja guardar
+    conectado: StateFlow<Boolean> = MutableStateFlow(true)
 ) : ViewModel() {
 
     private val _estado = MutableStateFlow(AdminEditarUiState())
@@ -43,6 +46,7 @@ class AdminEditarViewModel(
 
     //ADM-07: el menú de cápsulas solo ofrece las PUBLICADAS y libres (de cualquier creador)
     init {
+        viewModelScope.launch { conectado.collect { hay -> _estado.update { it.copy(sinConexion = !hay) } } }
         viewModelScope.launch {
             combine(capsulaRepository.capsulas(), puntoRepository.obtenerTodos()) { capsulas, puntos -> capsulas to puntos }
                 .collect { (capsulas, puntos) ->
@@ -248,6 +252,10 @@ class AdminEditarViewModel(
 
     private fun guardar() {
         if (_estado.value.guardando) return
+        if (_estado.value.sinConexion) {
+            _estado.update { it.copy(mensajeError = EstadoServidor.SIN_CONEXION_EDITAR) }
+            return
+        }
         val actual = revisarTodo(_estado.value)
         //con errores: se muestran todos, el foco va al primero y no se guarda
         if (actual.campoConError != null) {
@@ -314,7 +322,8 @@ class AdminEditarViewModel(
                     puntoRepository = app.container.puntoInteresRepository,
                     ubicacionRepository = RepositoriosCompartidos.ubicacion(app),
                     //la ruta admin/editar?puntoId=... deja el id en el SavedStateHandle; sin él, es un punto nuevo
-                    puntoId = createSavedStateHandle().get<String>(Rutas.ARG_PUNTO_ID)
+                    puntoId = createSavedStateHandle().get<String>(Rutas.ARG_PUNTO_ID),
+                    conectado = app.container.estadoServidor.conectado
                 )
             }
         }

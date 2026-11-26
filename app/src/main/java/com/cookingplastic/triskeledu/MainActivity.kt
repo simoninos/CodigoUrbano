@@ -4,7 +4,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.getValue
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.cookingplastic.triskeledu.data.location.ServicioLugaresCercanos
@@ -22,17 +24,24 @@ class MainActivity : ComponentActivity() {
         Configuration.getInstance().userAgentValue = packageName
 
         enableEdgeToEdge()
+        val container = (application as TriskeleduApp).container
 
         setContent {
             TemaDiaNoche {
-                AppScaffold()
+                //EXC-06: la barra "Sin conexión" se ve en cualquier pantalla mientras el servidor no responde
+                val conectado by container.estadoServidor.conectado.collectAsStateWithLifecycle()
+                AppScaffold(sinConexion = !conectado)
             }
+        }
+
+        //mientras la app está a la vista se pregunta al servidor si responde; minimizada, no gasta batería
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) { container.estadoServidor.vigilar(this) }
         }
 
         //RNF-03: mientras la app está a la vista se decide si corre la búsqueda en segundo plano. Se vuelve a
         //revisar al volver a la app (después de dar el permiso en el diálogo o en Ajustes), al iniciar o cerrar sesión
         //y al cambiar los interruptores. El servicio sigue corriendo al minimizar la app
-        val container = (application as TriskeleduApp).container
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.RESUMED) {
                 combine(container.usuarioRepository.usuarioActual(), container.preferenciasRepository.preferencias()) { usuario, preferencias ->

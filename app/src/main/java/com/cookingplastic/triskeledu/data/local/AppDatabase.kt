@@ -3,6 +3,8 @@ package com.cookingplastic.triskeledu.data.local
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.cookingplastic.triskeledu.data.local.dao.CapsulaDao
 import com.cookingplastic.triskeledu.data.local.dao.CodigoRecuperacionDao
 import com.cookingplastic.triskeledu.data.local.dao.ComentarioDao
@@ -30,8 +32,9 @@ import com.cookingplastic.triskeledu.data.model.Usuario
         Notificacion::class, CodigoRecuperacion::class
     ],
     //versión 3 (EP3): cápsulas con creador y estado, solicitudes de creador, puntajes 10/50/20,
-    //notificaciones y códigos de recuperación. Si cambia el esquema, la versión debe subir
-    version = 3,
+    //notificaciones y códigos de recuperación. Versión 4 (EP4): datos de seguridad del escaneo (MIGRACION_3_4).
+    //Si cambia el esquema, la versión debe subir
+    version = 4,
     exportSchema = false
 )
 //Aquí van los Converters debido a los converters, ejemplo los de RolUsuario a texto (Converters.kt)
@@ -46,4 +49,14 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun comentarioDao(): ComentarioDao
     abstract fun notificacionDao(): NotificacionDao
     abstract fun codigoRecuperacionDao(): CodigoRecuperacionDao
+}
+
+//SEG-01 y SEG-03: de la versión 3 a la 4 solo se agregan tres columnas a progreso_puntos. Con una migración (y no
+//borrando la base) se conservan la sesión y los escaneos que esperan sincronizarse
+val MIGRACION_3_4 = object : Migration(3, 4) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE progreso_puntos ADD COLUMN escaneoSimulado INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("ALTER TABLE progreso_puntos ADD COLUMN escaneoPrecision REAL")
+        db.execSQL("ALTER TABLE progreso_puntos ADD COLUMN codigoQrLeido TEXT")
+    }
 }

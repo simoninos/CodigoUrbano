@@ -10,6 +10,7 @@ import com.cookingplastic.triskeledu.data.RepositoriosCompartidos
 import com.cookingplastic.triskeledu.data.RepositoriosProgreso
 import com.cookingplastic.triskeledu.data.location.UbicacionRepository
 import com.cookingplastic.triskeledu.data.model.PuntoInteres
+import com.cookingplastic.triskeledu.data.model.DatosEscaneo
 import com.cookingplastic.triskeledu.domain.repository.ProgresoRepository
 import com.cookingplastic.triskeledu.domain.repository.PuntoInteresRepository
 import com.cookingplastic.triskeledu.domain.repository.UsuarioRepository
@@ -53,8 +54,9 @@ class ProcesadorEscaneo(
     suspend fun procesar(codigo: String, usuarioId: String?): ResultadoEscaneo {
         if (usuarioId == null) return ResultadoEscaneo.Rechazado("Inicia sesión para guardar tus lugares")
 
-        //EXC-04: un QR que no es del juego, o de un lugar desactivado o eliminado, no desbloquea nada
-        val punto = puntoInteresRepository.obtenerPorCodigoQr(codigo)
+        //EXC-04: un QR que no es del juego, o de un lugar desactivado o eliminado, no desbloquea nada.
+        //SEG-03: el lugar se busca por el código sin la firma; la firma la revisa el servidor al sincronizar
+        val punto = puntoInteresRepository.obtenerPorCodigoQr(ReglaQr.sinFirma(codigo))
             ?: return ResultadoEscaneo.Rechazado(if (ReglaQr.esCodigoDelJuego(codigo)) LUGAR_NO_DISPONIBLE else CODIGO_AJENO)
         if (!punto.activo) return ResultadoEscaneo.Rechazado(LUGAR_NO_DISPONIBLE)
 
@@ -64,8 +66,11 @@ class ProcesadorEscaneo(
         }
 
         //sin GPS no se escanea
-        val ubicacion = ubicacionRepository.ultimaUbicacion()
+        val lectura = ubicacionRepository.lecturaParaEscaneo()
             ?: return ResultadoEscaneo.Rechazado("Activa el GPS para escanear")
+        //SEG-01: con una app de ubicación falsa no se escanea
+        if (lectura.simulada) return ResultadoEscaneo.Rechazado(UBICACION_SIMULADA)
+        val ubicacion = lectura.ubicacion
         val distancia = ubicacionRepository.distanciaMetros(ubicacion, punto.ubicacion)
 
         //regla de los 100 m
@@ -73,7 +78,10 @@ class ProcesadorEscaneo(
         if (rechazo != null) return ResultadoEscaneo.Rechazado(rechazo)
 
         //fecha, ubicación, +10 puntos y sincronizado = false; si ya existía, no suma de nuevo
-        progresoRepository.registrarEscaneo(usuarioId, punto.id, ubicacion)
+        progresoRepository.registrarEscaneo(
+            usuarioId, punto.id, ubicacion,
+            DatosEscaneo(simulada = false, precision = lectura.precision, codigoQr = codigo.trim())
+        )
         return ResultadoEscaneo.Desbloqueado(punto, distancia)
     }
 
@@ -82,6 +90,8 @@ class ProcesadorEscaneo(
         const val CODIGO_AJENO = "Este código no es de Aprendo IA"
         const val LUGAR_NO_DISPONIBLE = "Este lugar no está disponible"
         const val YA_DESCUBIERTO = "Ya descubriste este lugar"
+        //SEG-01
+        const val UBICACION_SIMULADA = "Tu ubicación parece simulada. Desactiva las apps de ubicación falsa para escanear"
     }
 }
 

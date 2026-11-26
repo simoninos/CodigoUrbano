@@ -2,6 +2,7 @@ package com.cookingplastic.triskeledu.data.repository
 
 import com.cookingplastic.triskeledu.data.local.DatosPrueba
 import com.cookingplastic.triskeledu.data.model.PuntoInteres
+import com.cookingplastic.triskeledu.domain.rules.ReglaQr
 import com.cookingplastic.triskeledu.data.model.puedeActivarse
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,7 +30,7 @@ class FakePuntoInteresRepository(
         puntos.map { lista -> lista.find { it.id == id } }
 
     override suspend fun obtenerPorCodigoQr(codigo: String): PuntoInteres? =
-        puntos.value.find { it.codigoQr == codigo }
+        puntos.value.find { ReglaQr.sinFirma(it.codigoQr) == codigo }
 
     // Se crea siempre una lista nueva: StateFlow solo emite cuando el valor cambia,
     // y una lista modificada por dentro seguiría siendo la misma para él

@@ -38,6 +38,11 @@ import com.cookingplastic.triskeledu.data.remoto.BackendApi
 import com.cookingplastic.triskeledu.data.remoto.CapsulasConBackend
 import com.cookingplastic.triskeledu.data.remoto.ClienteBackend
 import com.cookingplastic.triskeledu.data.remoto.DireccionServidor
+import com.cookingplastic.triskeledu.data.remoto.EstadoServidor
+import com.cookingplastic.triskeledu.data.security.ClaveAndroidKeyStore
+import com.cookingplastic.triskeledu.data.security.ClaveDispositivo
+import com.cookingplastic.triskeledu.data.local.MIGRACION_3_4
+import com.cookingplastic.triskeledu.data.model.RolUsuario
 import com.cookingplastic.triskeledu.data.remoto.PuntosConBackend
 import com.cookingplastic.triskeledu.data.remoto.RankingServidor
 import com.cookingplastic.triskeledu.data.remoto.RetrofitServidorApi
@@ -46,7 +51,7 @@ import com.cookingplastic.triskeledu.data.remoto.UsuariosConBackend
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.runBlocking
-import com.cookingplastic.triskeledu.data.sincronizacion.ComentariosConSincronizacion
+import com.cookingplastic.triskeledu.data.sincronizacion.ComentariosConServidor
 import com.cookingplastic.triskeledu.data.sincronizacion.ProgramadorSincronizacion
 import com.cookingplastic.triskeledu.data.sincronizacion.ProgresoConSincronizacion
 import com.cookingplastic.triskeledu.data.sincronizacion.ServidorApi
@@ -66,6 +71,8 @@ class AppContainer(context: Context) {
         Room.databaseBuilder(context, AppDatabase::class.java, "triskeledu.db")
             //la primera vez que se crea la base, se llena con DatosPrueba
             .addCallback(CargaInicial)
+            //EP4: la versión 4 agrega columnas sin borrar lo guardado (SEG-01 y SEG-03)
+            .addMigrations(MIGRACION_3_4)
             //mientras desarrollamos: si sube la versión, la base se borra y se crea de nuevo en vez de
             //cerrar la app. CargaInicial vuelve a llenarla con los datos de prueba
             .fallbackToDestructiveMigration(dropAllTables = true)
@@ -92,25 +99,41 @@ class AppContainer(context: Context) {
             //el interceptor corre en un hilo de OkHttp, nunca en el principal: puede esperar a Room
             token = { runBlocking { database.usuarioDao().token() } },
             //EXC-07: token vencido o inválido; se cierra la sesión y la app vuelve al Login
-            alVencer = { alcance.launch { usuarioRepository.cerrarSesion() } }
+            alVencer = { alcance.launch { usuarioRepository.cerrarSesion() } },
+            estado = estadoServidor
         )
+    }
+
+    //EXC-06: si el servidor responde; las pantallas de edición avisan y no dejan guardar sin conexión
+    val estadoServidor: EstadoServidor by lazy {
+        EstadoServidor(probar = { DireccionServidor.responde(direccionServidor.actual.value) })
     }
 
     //Room sigue siendo la base del teléfono (offline-first); los repositorios ConBackend escriben primero en el
     //servidor y después en Room. Los Fake quedan para las pruebas. Una sola instancia: todas las pantallas ven lo mismo
     private val usuariosRoom: UsuarioRepository by lazy { RoomUsuarioRepository(database.usuarioDao()) }
-    val usuarioRepository: UsuarioRepository by lazy { UsuariosConBackend(usuariosRoom, database.usuarioDao(), backendApi) }
+    //SEG-05: la clave del teléfono para Key Attestation, en el chip de seguridad
+    val claveDispositivo: ClaveDispositivo by lazy { ClaveAndroidKeyStore() }
+    val usuarioRepository: UsuarioRepository by lazy {
+        UsuariosConBackend(usuariosRoom, database.usuarioDao(), backendApi, clave = claveDispositivo)
+    }
     val preferenciasRepository: PreferenciasRepository by lazy {
         RoomPreferenciasRepository(database.preferenciasDao(), database.usuarioDao())
     }
     private val capsulasRoom: CapsulaRepository by lazy { RoomCapsulaRepository(database.capsulaDao()) }
-    val capsulaRepository: CapsulaRepository by lazy { CapsulasConBackend(capsulasRoom, backendApi) }
+    val capsulaRepository: CapsulaRepository by lazy { CapsulasConBackend(capsulasRoom, backendApi, estadoServidor) }
     private val puntosRoom: PuntoInteresRepository by lazy {
         RoomPuntoInteresRepository(database.puntoInteresDao(), database.capsulaDao())
     }
     //RN-24: al activarse un punto se avisa "Nueva cápsula"; PuntosConAvisos envuelve a PuntosConBackend
     val puntoInteresRepository: PuntoInteresRepository by lazy {
-        PuntosConAvisos(PuntosConBackend(puntosRoom, backendApi), generadorNotificaciones)
+        PuntosConAvisos(
+            PuntosConBackend(
+                puntosRoom, backendApi, estadoServidor,
+                esAdministrador = { usuarioRepository.usuarioActual().first()?.rol == RolUsuario.ADMINISTRADOR }
+            ),
+            generadorNotificaciones
+        )
     }
     //trae del servidor las cápsulas y los puntos que el usuario puede ver; escribe directo en Room
     val actualizadorContenido: ActualizadorContenido by lazy { ActualizadorContenido(backendApi, capsulasRoom, puntosRoom) }
@@ -130,7 +153,7 @@ class AppContainer(context: Context) {
         ProgresoConSincronizacion(conNivel, programadorSincronizacion::programar)
     }
     val comentarioRepository: ComentarioRepository by lazy {
-        ComentariosConSincronizacion(RoomComentarioRepository(database.comentarioDao()), programadorSincronizacion::programar)
+        ComentariosConServidor(RoomComentarioRepository(database.comentarioDao()), servidorApi)
     }
 
     //notificaciones del sistema; el applicationContext vive mientras la app esté abierta
@@ -167,7 +190,7 @@ class AppContainer(context: Context) {
 
     //ESC-02: ms-progreso revalida los escaneos y comentarios. Es la misma interfaz que implementaba ServidorSimulado
     //(sigue en data/simulacion para las pruebas): solo cambió esta línea, ni el Sincronizador ni los ViewModels
-    val servidorApi: ServidorApi by lazy { RetrofitServidorApi(backendApi) }
+    val servidorApi: ServidorApi by lazy { RetrofitServidorApi(backendApi, claveDispositivo) }
     val sincronizador: Sincronizador by lazy {
         Sincronizador(servidorApi, progresoRepository, comentarioRepository, puntoInteresRepository, usuarioRepository, generadorNotificaciones)
     }

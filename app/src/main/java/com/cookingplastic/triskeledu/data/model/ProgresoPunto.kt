@@ -49,7 +49,12 @@ data class ProgresoPunto(
     val selfieEn: Long? = null,
     val puntosSelfie: Int = 0,
     //false hasta que el servidor confirme el escaneo
-    val sincronizado: Boolean = false
+    val sincronizado: Boolean = false,
+    //SEG-01: la ubicación del escaneo venía de una app de GPS falso, y la precisión que informó el GPS
+    val escaneoSimulado: Boolean = false,
+    val escaneoPrecision: Double? = null,
+    //SEG-03: el texto completo del QR leído, con su firma; el servidor la revisa al sincronizar
+    val codigoQrLeido: String? = null
 )
 
 //El estado y el avance no se guardan: se calculan con estas dos funciones.

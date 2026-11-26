@@ -27,5 +27,10 @@ enum class MotivoRechazo(val explicacion: String) {
     LEJOS("El escaneo quedó a más de 100 m del lugar"),
     DUPLICADO("Ese lugar ya estaba registrado en tu cuenta"),
     LUGAR_DESCONOCIDO("El lugar ya no existe"),
-    TEXTO_INVALIDO("El comentario no cumple las reglas")
+    TEXTO_INVALIDO("El comentario no cumple las reglas"),
+    //SEG-01 a SEG-05
+    UBICACION_SIMULADA("La ubicación del escaneo era simulada"),
+    VELOCIDAD_IMPOSIBLE("Hubo dos escaneos demasiado lejos en muy poco tiempo"),
+    QR_INVALIDO("El código QR no es válido"),
+    APP_NO_VERIFICADA("No se pudo verificar que la app sea la original")
 }
